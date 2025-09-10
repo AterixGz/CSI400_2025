@@ -1,4 +1,7 @@
 import { useMemo, useState } from "react";
+import Nav from "./components/navbar";
+import Footer from "./components/footer";
+import { CATEGORIES, PRODUCTS } from "./data/seed-list";
 
 /**
  * Minimal Fashion — React (Vite) + TailwindCSS (JavaScript)
@@ -7,227 +10,13 @@ import { useMemo, useState } from "react";
  * ตั้งค่า Tailwind ตามคอมเมนต์ส่วนหัวก่อนหน้านี้
  */
 
-// -------------------- Mock Data --------------------
-const CATEGORIES = [
-  { id: "home", label: "หน้าแรก" },
-  { id: "women", label: "เสื้อผ้าผู้หญิง" },
-  { id: "men", label: "เสื้อผ้าผู้ชาย" },
-  { id: "acc", label: "อุปกรณ์เสริม" },
-  { id: "sale", label: "ลดราคา" },
-];
-
-const PRODUCTS = [
-  {
-    id: "p1",
-    name: "เสื้อเชิ้ตคอตตอน",
-    category: "men",
-    price: 1290,
-    compareAt: 1590,
-    rating: 4.6,
-    reviews: 89,
-    colors: ["#e5e7eb", "#111827", "#f3f4f6"],
-    isNew: false,
-    isSale: true,
-    image:
-      "https://images.unsplash.com/photo-1520975954732-35dd221bb62a?q=80&w=1200&auto=format&fit=crop",
-  },
-  {
-    id: "p2",
-    name: "กางเกงขายาวผ้าลินิน",
-    category: "men",
-    price: 1890,
-    rating: 4.6,
-    reviews: 89,
-    colors: ["#e2e8f0", "#f7fee7", "#f1f5f9"],
-    isNew: true,
-    isSale: false,
-    image:
-      "https://images.unsplash.com/photo-1618354691438-c7eac9745f07?q=80&w=1200&auto=format&fit=crop",
-  },
-  {
-    id: "p3",
-    name: "เดรสแขนยาว",
-    category: "women",
-    price: 2290,
-    rating: 4.7,
-    reviews: 120,
-    colors: ["#0f172a", "#e2e8f0"],
-    isNew: false,
-    isSale: false,
-    image:
-      "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?q=80&w=1200&auto=format&fit=crop",
-  },
-  {
-    id: "p4",
-    name: "เสื้อยืดพรีเมียม",
-    category: "men",
-    price: 890,
-    rating: 4.4,
-    reviews: 67,
-    colors: ["#111827", "#e5e7eb", "#94a3b8"],
-    isNew: false,
-    isSale: false,
-    image:
-      "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=1200&auto=format&fit=crop",
-  },
-  {
-    id: "p5",
-    name: "รองเท้าผ้าใบขาว",
-    category: "acc",
-    price: 2590,
-    compareAt: 2990,
-    rating: 4.6,
-    reviews: 134,
-    colors: ["#f8fafc", "#e2e8f0"],
-    isNew: false,
-    isSale: true,
-    image:
-      "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?q=80&w=1200&auto=format&fit=crop",
-  },
-  {
-    id: "p6",
-    name: "กระเป๋าสะพายนังแท้",
-    category: "acc",
-    price: 3290,
-    rating: 4.8,
-    reviews: 67,
-    colors: ["#111827", "#e5e7eb", "#b45309"],
-    isNew: false,
-    isSale: false,
-    image:
-      "https://images.unsplash.com/photo-1525966222134-7b74d18c3426?q=80&w=1200&auto=format&fit=crop",
-  },
-  {
-    id: "p7",
-    name: "กางเกงยีนส์ขายาว",
-    category: "men",
-    price: 2190,
-    rating: 4.4,
-    reviews: 92,
-    colors: ["#1e3a8a", "#0f172a"],
-    isNew: true,
-    isSale: false,
-    image:
-      "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=1200&auto=format&fit=crop",
-  },
-  {
-    id: "p8",
-    name: "เสื้อสายเดี่ยวผ้าซาติน",
-    category: "women",
-    price: 1190,
-    rating: 4.5,
-    reviews: 58,
-    colors: ["#f1f5f9", "#fde68a", "#fef9c3"],
-    isNew: true,
-    isSale: false,
-    image:
-      "https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1200&auto=format&fit=crop",
-  },
-];
-
 // -------------------- Small helpers --------------------
 const baht = (n) => `฿${n.toLocaleString("th-TH")}`;
 const stars = (value = 0) => `${value.toFixed(1)}`;
 
-// -------------------- Icons (Heroicons แบบ inline SVG) --------------------
-const Icon = {
-  Search: (props) => (
-    <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.8" stroke="currentColor" {...props}>
-      <circle cx="11" cy="11" r="7" />
-      <path d="M20 20l-3.5-3.5" />
-    </svg>
-  ),
-  User: (props) => (
-    <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.8" stroke="currentColor" {...props}>
-      <path d="M4 20a8 8 0 0 1 16 0" />
-      <circle cx="12" cy="7" r="4" />
-    </svg>
-  ),
-  Heart: (props) => (
-    <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.8" stroke="currentColor" {...props}>
-      <path d="M12 21s-7-4.4-9-8.6C1.7 9.3 3.3 6 6.6 6c1.9 0 3.1 1 3.9 2 0.8-1 2-2 3.9-2 3.3 0 4.9 3.3 3.6 6.4-2 4.2-9 8.6-9 8.6z" />
-    </svg>
-  ),
-  Bag: (props) => (
-    <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.8" stroke="currentColor" {...props}>
-      <path d="M6 7h12l-1 13H7L6 7z" />
-      <path d="M9 7a3 3 0 1 1 6 0" />
-    </svg>
-  ),
-  Grid: (props) => (
-    <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.8" stroke="currentColor" {...props}>
-      <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
-      <rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" />
-    </svg>
-  ),
-  List: (props) => (
-    <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.8" stroke="currentColor" {...props}>
-      <path d="M4 7h16M4 12h16M4 17h16" />
-    </svg>
-  ),
-  ChevronDown: (props) => (
-    <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.8" stroke="currentColor" {...props}>
-      <path d="M6 9l6 6 6-6" />
-    </svg>
-  ),
-};
+
 
 // -------------------- UI --------------------
-function Nav({ active, onSelect, cartCount, go }) {
-  return (
-    <header className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b">
-      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between relative">
-        {/* Left: Brand */}
-        <button onClick={() => go("home")} className="flex items-center gap-2 font-extrabold tracking-wide text-slate-900">
-          <span className="w-4 h-4 rounded-full bg-teal-800 inline-block" />
-          <span>MINIMAL</span>
-        </button>
-
-        {/* Center: Menu (ตรงกลางเป๊ะตามภาพ) */}
-        <nav className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-6">
-          {CATEGORIES.map((c) => (
-            <a
-              key={c.id}
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                onSelect(c.id);
-                if (c.id !== "home") go("products");
-                else go("home");
-              }}
-              className={`text-[15px] py-2 transition-colors ${
-                active === c.id
-                  ? "font-semibold text-teal-800"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              {c.label}
-            </a>
-          ))}
-        </nav>
-
-        {/* Right: Icons 3 ตัว + ถุงช้อปปิ้ง */}
-        <div className="flex items-center gap-4 text-slate-700">
-          <button className="p-2 hover:text-slate-900" title="ค้นหา">
-            <Icon.Search className="w-5 h-5" />
-          </button>
-          <button className="p-2 hover:text-slate-900" title="บัญชีผู้ใช้">
-            <Icon.User className="w-5 h-5" />
-          </button>
-          <button className="p-2 hover:text-slate-900" title="รายการที่ชอบ">
-            <Icon.Heart className="w-5 h-5" />
-          </button>
-          <button className="relative p-2 hover:text-slate-900" title="ตะกร้า">
-            <Icon.Bag className="w-5 h-5" />
-            <span className="absolute -top-1 -right-1 text-[11px] leading-none px-1.5 py-0.5 rounded-full bg-orange-500 text-white font-bold">
-              {cartCount}
-            </span>
-          </button>
-        </div>
-      </div>
-    </header>
-  );
-}
 
 function Hero() {
   return (
@@ -428,57 +217,13 @@ function ProductsPage({ onAdd }) {
   );
 }
 
-function Footer() {
-  return (
-    <footer className="mt-10 border-top">
-      <div className="max-w-6xl mx-auto px-6 py-8 text-slate-700">
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
-          <div>
-            <div className="flex items-center gap-2 font-extrabold text-slate-900 mb-2">
-              <span className="w-4 h-4 rounded-full bg-teal-800 inline-block" />
-              <span>MINIMAL</span>
-            </div>
-            <p>แฟชั่นมินิมอลคุณภาพสูง เพื่อการแต่งกายที่สมบูรณ์แบบ</p>
-          </div>
-          <div>
-            <b>ลิงก์ด่วน</b>
-            <ul className="mt-2 space-y-1 text-slate-600">
-              <li>เกี่ยวกับเรา</li>
-              <li>ติดต่อเรา</li>
-              <li>คู่มือขนาด</li>
-              <li>วิธีดูแลเสื้อผ้า</li>
-            </ul>
-          </div>
-          <div>
-            <b>บริการลูกค้า</b>
-            <ul className="mt-2 space-y-1 text-slate-600">
-              <li>การจัดส่ง</li>
-              <li>การคืนสินค้า</li>
-              <li>คำถามที่พบบ่อย</li>
-              <li>ศูนย์ช่วยเหลือ</li>
-            </ul>
-          </div>
-          <div>
-            <b>ติดต่อเรา</b>
-            <ul className="mt-2 space-y-1 text-slate-600">
-              <li>โทร: 02-xxx-xxxx</li>
-              <li>อีเมล: info@minimal.co.th</li>
-              <li>จันทร์–ศุกร์ 9:00-18:00</li>
-            </ul>
-          </div>
-        </div>
-        <p className="mt-4 text-slate-500">© 2025 MINIMAL. สงวนลิขสิทธิ์</p>
-      </div>
-    </footer>
-  );
-}
 
 export default function App() {
   const [activeCat, setActiveCat] = useState("home");
   const [cart, setCart] = useState([]);
   const [route, setRoute] = useState("home"); // "home" | "products"
 
-  const filtered = useMemo(() => {
+   const filtered = useMemo(() => {
     if (activeCat === "home") return PRODUCTS;
     if (activeCat === "sale") return PRODUCTS.filter((p) => p.isSale);
     if (activeCat === "acc") return PRODUCTS.filter((p) => p.category === 'acc');
