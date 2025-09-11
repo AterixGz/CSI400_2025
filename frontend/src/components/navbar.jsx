@@ -1,4 +1,5 @@
-// ...existing code...
+import { Link } from "react-router-dom";
+
 export default function Nav({ categories = [], active, onSelect, cartCount, go }) {
   const CATS = categories.length ? categories : [
     { id: "home", label: "หน้าแรก" },
@@ -68,9 +69,12 @@ export default function Nav({ categories = [], active, onSelect, cartCount, go }
           <button className="p-2 hover:text-slate-900" title="ค้นหา">
             <Icon.Search className="w-5 h-5" />
           </button>
-          <button className="p-2 hover:text-slate-900" title="บัญชีผู้ใช้">
+
+          {/* changed: use Link for client-side routing to /profile */}
+          <Link to="/profile" className="p-2 hover:text-slate-900" title="บัญชีผู้ใช้" aria-label="บัญชีผู้ใช้">
             <Icon.User className="w-5 h-5" />
-          </button>
+          </Link>
+
           <button className="p-2 hover:text-slate-900" title="รายการที่ชอบ">
             <Icon.Heart className="w-5 h-5" />
           </button>
@@ -85,4 +89,3 @@ export default function Nav({ categories = [], active, onSelect, cartCount, go }
     </header>
   );
 }
-// ...existing code...
