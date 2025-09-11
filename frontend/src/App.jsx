@@ -7,7 +7,8 @@ import SidebarFilters from "./components/sidebarFilter";
 import ProductsPage from "./pages/products";
 import ProductCard from "./components/ProductCard";
 import ProfilePage from "./pages/profile";
-
+import RecommendedProducts from "./components/recommendedProducts";
+import CartPage from "./pages/cart";
 // -------------------- UI --------------------
 
 function Hero() {
@@ -43,7 +44,7 @@ function Hero() {
 export default function App() {
   const [activeCat, setActiveCat] = useState("home");
   const [cart, setCart] = useState([]);
-  const [route, setRoute] = useState("home"); // "home" | "products"
+  const [_route, setRoute] = useState("home"); // "home" | "products"
 
   const filtered = useMemo(() => {
     if (activeCat === "home") return PRODUCTS;
@@ -54,42 +55,25 @@ export default function App() {
 
   return (
     <div className="text-slate-900 bg-white">
-      <Nav active={activeCat} onSelect={setActiveCat} cartCount={cart.length} go={setRoute} />
+  <Nav active={activeCat} onSelect={setActiveCat} cartCount={cart.length} go={setRoute} />
 
       <Routes>
         <Route
           path="/"
           element={
-            <>
-              {route === 'home' && (
                 <>
                   <Hero />
-                  <main className="max-w-6xl mx-auto px-6">
-                    <h2 className="text-2xl font-extrabold mt-8 mb-3">สินค้าแนะนำ</h2>
-                    {filtered.length === 0 ? (
-                      <p className="text-slate-500">ยังไม่มีสินค้าในหมวดนี้</p>
-                    ) : (
-                      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {filtered.map((p) => (
-                          <ProductCard key={p.id} p={p} onAdd={(item) => setCart((c) => [...c, item])} />
-                        ))}
-                      </section>
-                    )}
-
-                    <div className="flex justify-center my-7">
-                      <button onClick={()=>setRoute('products')} className="px-4 py-2 rounded-xl bg-white border border-slate-200 font-bold">ดูสินค้าทั้งหมด</button>
-                    </div>
-                  </main>
+                    <RecommendedProducts
+                      filtered={filtered}
+                      onAdd={(item) => setCart((c) => [...c, item])}
+                      onViewAll={() => setRoute("products")}
+                    />
                 </>
-              )}
-
-              {route === 'products' && (
-                <ProductsPage onAdd={(item)=> setCart((c)=>[...c,item])} />
-              )}
-            </>
           }
         />
+        <Route path="/products" element={<ProductsPage onAdd={(item)=> setCart((c)=>[...c,item])} />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/cart" element={<CartPage />} />
       </Routes>
 
       <Footer />

@@ -1,13 +1,6 @@
 import { Link } from "react-router-dom";
 
-export default function Nav({ categories = [], active, onSelect, cartCount, go }) {
-  const CATS = categories.length ? categories : [
-    { id: "home", label: "หน้าแรก" },
-    { id: "women", label: "เสื้อผ้าผู้หญิง" },
-    { id: "men", label: "เสื้อผ้าผู้ชาย" },
-    { id: "acc", label: "อุปกรณ์เสริม" },
-    { id: "sale", label: "ลดราคา" },
-  ];
+export default function Nav({ active, cartCount, onSelect = () => {} }) {
 
   const Icon = {
     Search: (props) => (
@@ -38,31 +31,52 @@ export default function Nav({ categories = [], active, onSelect, cartCount, go }
   return (
     <header className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between relative">
-        <button onClick={() => go("home")} className="flex items-center gap-2 font-extrabold tracking-wide text-slate-900">
+        <Link to="/" className="flex items-center gap-2 font-extrabold tracking-wide text-slate-900">
           <span className="w-4 h-4 rounded-full bg-teal-800 inline-block" />
           <span>MINIMAL</span>
-        </button>
+        </Link>
 
+    {/* middle nav */}
         <nav className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-6">
-          {CATS.map((c) => (
-            <a
-              key={c.id}
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                onSelect(c.id);
-                if (c.id !== "home") go("products");
-                else go("home");
-              }}
-              className={`text-[15px] py-2 transition-colors ${
-                active === c.id
-                  ? "font-semibold text-teal-800"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              {c.label}
-            </a>
-          ))}
+          <Link
+            to="/"
+            onClick={() => onSelect('home')}
+            aria-current={active === 'home' ? 'page' : undefined}
+            className={`hover:text-slate-900 ${active === 'home' ? "font-semibold text-teal-800" : "text-slate-600 hover:text-slate-900"}`}>
+            <p>หน้าแรก</p>
+          </Link>
+
+          <Link
+            to="/"
+            onClick={() => onSelect('women')}
+            aria-current={active === 'women' ? 'page' : undefined}
+            className={`hover:text-slate-900 ${active === 'women' ? "font-semibold text-teal-800" : "text-slate-600 hover:text-slate-900"}`}>
+            <p>เสื้อผ้าผู้หญิง</p>
+          </Link>
+
+          <Link
+            to="/"
+            onClick={() => onSelect('men')}
+            aria-current={active === 'men' ? 'page' : undefined}
+            className={`hover:text-slate-900 ${active === 'men' ? "font-semibold text-teal-800" : "text-slate-600 hover:text-slate-900"}`}>
+            <p>เสื้อผ้าผู้ชาย</p>
+          </Link>
+
+          <Link
+            to="/"
+            onClick={() => onSelect('accessories')}
+            aria-current={active === 'accessories' ? 'page' : undefined}
+            className={`hover:text-slate-900 ${active === 'accessories' ? "font-semibold text-teal-800" : "text-slate-600 hover:text-slate-900"}`}>
+            <p>อุปกรณ์เสริม</p>
+          </Link>
+
+          <Link
+            to="/"
+            onClick={() => onSelect('sale')}
+            aria-current={active === 'sale' ? 'page' : undefined}
+            className={`hover:text-slate-900 ${active === 'sale' ? "font-semibold text-teal-800" : "text-slate-600 hover:text-slate-900"}`}>
+            <p>ลดราคา</p>
+          </Link>
         </nav>
 
         <div className="flex items-center gap-4 text-slate-700">
@@ -78,12 +92,12 @@ export default function Nav({ categories = [], active, onSelect, cartCount, go }
           <button className="p-2 hover:text-slate-900" title="รายการที่ชอบ">
             <Icon.Heart className="w-5 h-5" />
           </button>
-          <button className="relative p-2 hover:text-slate-900" title="ตะกร้า">
+          <Link to="/cart" className="relative p-2 hover:text-slate-900" title="ตะกร้า">
             <Icon.Bag className="w-5 h-5" />
             <span className="absolute -top-1 -right-1 text-[11px] leading-none px-1.5 py-0.5 rounded-full bg-orange-500 text-white font-bold">
               {cartCount}
             </span>
-          </button>
+          </Link>
         </div>
       </div>
     </header>
