@@ -25,8 +25,8 @@ function CartItem({ item, onChangeQty, onRemove }) {
   );
 }
 
-export default function CartPage() {
-  // create a small mock cart using PRODUCTS (first 3)
+export default function CartPage({ items: propsItems, onChangeQty: propsChangeQty, onRemove: propsRemove }) {
+  // create a small mock cart using PRODUCTS (first 3) when no props provided
   const initial = PRODUCTS.slice(0, 3).map((p, i) => ({
     id: p.id,
     name: p.name,
@@ -37,10 +37,11 @@ export default function CartPage() {
     color: i === 0 ? "ขาว" : i === 1 ? "น้ำเงิน" : "ขาว/น้ำเงิน",
   }));
 
-  const [items, setItems] = useState(initial);
+  const [localItems, setLocalItems] = useState(initial);
 
-  const changeQty = (id, qty) => setItems((cur) => cur.map((it) => (it.id === id ? { ...it, qty } : it)));
-  const remove = (id) => setItems((cur) => cur.filter((it) => it.id !== id));
+  const items = propsItems ?? localItems;
+  const changeQty = propsChangeQty ?? ((id, qty) => setLocalItems((cur) => cur.map((it) => (it.id === id ? { ...it, qty } : it))));
+  const remove = propsRemove ?? ((id) => setLocalItems((cur) => cur.filter((it) => it.id !== id)));
 
   const subtotal = items.reduce((s, it) => s + it.price * it.qty, 0);
   const shipping = subtotal >= 1000 || subtotal === 0 ? 0 : 50; // mimic free shipping over ฿1000
@@ -49,7 +50,7 @@ export default function CartPage() {
     <section className="max-w-6xl mx-auto px-6 py-10">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
-          <div className="rounded-2xl border bg-[#f7fbfb] p-6">
+          <div className="rounded-2xl border bg-white p-6">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-lg">รถเข็นของคุณ ({items.length} รายการ)</h3>
               <div className="text-slate-600 text-sm">&nbsp;</div>
@@ -63,7 +64,7 @@ export default function CartPage() {
           </div>
         </div>
 
-        <aside className="rounded-2xl border bg-[#f7fbfb] p-6">
+        <aside className="rounded-2xl border bg-white p-6">
           <h3 className="font-bold text-lg">สรุปคำสั่งซื้อ</h3>
           <div className="mt-4 text-sm text-slate-600 flex justify-between">
             <div>ยอดรวมสินค้า</div>

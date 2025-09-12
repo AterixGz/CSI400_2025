@@ -1,6 +1,15 @@
 import { Link } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";
 
-export default function Nav({ active, cartCount, onSelect = () => {} }) {
+export default function Nav({ active, cartCount, onSelect = () => {}, onSearch = () => {} }) {
+
+  const [showSearch, setShowSearch] = useState(false);
+  const [query, setQuery] = useState("");
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (showSearch && inputRef.current) inputRef.current.focus();
+  }, [showSearch]);
 
   const Icon = {
     Search: (props) => (
@@ -32,7 +41,7 @@ export default function Nav({ active, cartCount, onSelect = () => {} }) {
     <header className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between relative">
         <Link to="/" className="flex items-center gap-2 font-extrabold tracking-wide text-slate-900">
-          <span className="w-4 h-4 rounded-full bg-teal-800 inline-block" />
+          <span className="w-4 h-4 rounded-full bg-black inline-block" />
           <span>MINIMAL</span>
         </Link>
 
@@ -40,17 +49,9 @@ export default function Nav({ active, cartCount, onSelect = () => {} }) {
         <nav className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-6">
           <Link
             to="/"
-            onClick={() => onSelect('home')}
-            aria-current={active === 'home' ? 'page' : undefined}
-            className={`hover:text-slate-900 ${active === 'home' ? "font-semibold text-teal-800" : "text-slate-600 hover:text-slate-900"}`}>
-            <p>หน้าแรก</p>
-          </Link>
-
-          <Link
-            to="/"
             onClick={() => onSelect('women')}
             aria-current={active === 'women' ? 'page' : undefined}
-            className={`hover:text-slate-900 ${active === 'women' ? "font-semibold text-teal-800" : "text-slate-600 hover:text-slate-900"}`}>
+            className={`hover:text-slate-900 ${active === 'women' ? "font-semibold text-black" : "text-slate-600 hover:text-slate-900"}`}>
             <p>เสื้อผ้าผู้หญิง</p>
           </Link>
 
@@ -58,7 +59,7 @@ export default function Nav({ active, cartCount, onSelect = () => {} }) {
             to="/"
             onClick={() => onSelect('men')}
             aria-current={active === 'men' ? 'page' : undefined}
-            className={`hover:text-slate-900 ${active === 'men' ? "font-semibold text-teal-800" : "text-slate-600 hover:text-slate-900"}`}>
+            className={`hover:text-slate-900 ${active === 'men' ? "font-semibold text-black" : "text-slate-600 hover:text-slate-900"}`}>
             <p>เสื้อผ้าผู้ชาย</p>
           </Link>
 
@@ -66,7 +67,7 @@ export default function Nav({ active, cartCount, onSelect = () => {} }) {
             to="/"
             onClick={() => onSelect('accessories')}
             aria-current={active === 'accessories' ? 'page' : undefined}
-            className={`hover:text-slate-900 ${active === 'accessories' ? "font-semibold text-teal-800" : "text-slate-600 hover:text-slate-900"}`}>
+            className={`hover:text-slate-900 ${active === 'accessories' ? "font-semibold text-black" : "text-slate-600 hover:text-slate-900"}`}>
             <p>อุปกรณ์เสริม</p>
           </Link>
 
@@ -74,24 +75,54 @@ export default function Nav({ active, cartCount, onSelect = () => {} }) {
             to="/"
             onClick={() => onSelect('sale')}
             aria-current={active === 'sale' ? 'page' : undefined}
-            className={`hover:text-slate-900 ${active === 'sale' ? "font-semibold text-teal-800" : "text-slate-600 hover:text-slate-900"}`}>
+            className={`hover:text-slate-900 ${active === 'sale' ? "font-semibold text-black" : "text-slate-600 hover:text-slate-900"}`}>
             <p>ลดราคา</p>
           </Link>
         </nav>
 
         <div className="flex items-center gap-4 text-slate-700">
-          <button className="p-2 hover:text-slate-900" title="ค้นหา">
-            <Icon.Search className="w-5 h-5" />
-          </button>
+          <div className="relative">
+            {!showSearch && (
+              <button
+                className="p-2 hover:text-slate-900"
+                title="ค้นหา"
+                onClick={() => setShowSearch(true)}
+                aria-label="เปิดค้นหา"
+              >
+                <Icon.Search className="w-5 h-5" />
+              </button>
+            )}
+
+            {showSearch && (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  onSearch(query);
+                  setShowSearch(false);
+                }}
+                className="flex items-center"
+              >
+                <input
+                  ref={inputRef}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onBlur={() => setShowSearch(false)}
+                  placeholder="ค้นหา"
+                  className="w-24 md:w-32 rounded-md border px-3 py-1 text-sm outline-none"
+                  aria-label="ค้นหา"
+                />
+              </form>
+            )}
+          </div>
 
           {/* changed: use Link for client-side routing to /profile */}
           <Link to="/profile" className="p-2 hover:text-slate-900" title="บัญชีผู้ใช้" aria-label="บัญชีผู้ใช้">
             <Icon.User className="w-5 h-5" />
           </Link>
 
-          <button className="p-2 hover:text-slate-900" title="รายการที่ชอบ">
+          <Link to="/favorites" className="p-2 hover:text-slate-900" title="รายการที่ชอบ">
             <Icon.Heart className="w-5 h-5" />
-          </button>
+          </Link>
           <Link to="/cart" className="relative p-2 hover:text-slate-900" title="ตะกร้า">
             <Icon.Bag className="w-5 h-5" />
             <span className="absolute -top-1 -right-1 text-[11px] leading-none px-1.5 py-0.5 rounded-full bg-orange-500 text-white font-bold">

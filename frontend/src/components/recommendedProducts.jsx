@@ -1,7 +1,7 @@
 import ProductCard from "./ProductCard";
 import { Link } from "react-router-dom";
 
-export default function RecommendedProducts({ filtered = [], onAdd = () => {}, onViewAll = () => {} }) {
+export default function RecommendedProducts({ filtered = [], onAdd = () => {}, onViewAll = () => {}, onFavorite = () => {}, favorites = [] }) {
   return (
     <main className="max-w-6xl mx-auto px-8">
       <h2 className="text-2xl font-extrabold mt-8 mb-3">สินค้าแนะนำ</h2>
@@ -10,7 +10,13 @@ export default function RecommendedProducts({ filtered = [], onAdd = () => {}, o
       ) : (
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {filtered.map((p) => (
-            <ProductCard key={p.id} p={p} onAdd={(item) => onAdd(item)} />
+            <ProductCard
+              key={p.id}
+              p={p}
+              onAdd={(item) => onAdd(item)}
+              onFavorite={(item) => onFavorite(item)}
+              isFavorite={favorites.some((f) => f.id === p.id)}
+            />
           ))}
         </section>
       )}

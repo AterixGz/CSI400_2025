@@ -1,7 +1,7 @@
 export default function SidebarFilters() {
   return (
     <aside className="hidden lg:block w-72 shrink-0">
-      <div className="rounded-2xl border bg-[#e9f9f8] p-5">
+      <div className="rounded-2xl border bg-[#ffffff] p-5">
         <h3 className="font-bold text-lg">ตัวกรองสินค้า</h3>
         <div className="mt-4 space-y-6">
           <div>

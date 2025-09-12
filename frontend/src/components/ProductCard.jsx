@@ -1,12 +1,12 @@
 const baht = (n) => `฿${n.toLocaleString("th-TH")}`;
 const stars = (value = 0) => `${value.toFixed(1)}`;
 
-export default function ProductCard({ p, onAdd }) {
+export default function ProductCard({ p, onAdd, onFavorite = () => {}, isFavorite = false }) {
   return (
-    <article className="rounded-2xl overflow-hidden border border-slate-200 bg-[#f0fbfb]">
+    <article className="rounded-2xl overflow-hidden border border-slate-200 bg-white">
       <div className="relative">
         {p.isNew && (
-          <span className="absolute top-3 left-3 text-xs px-3 py-1 rounded-full bg-teal-700 text-white font-bold">
+          <span className="absolute top-3 left-3 text-xs px-3 py-1 rounded-full bg-yellow-400 text-white font-bold">
             ใหม่
           </span>
         )}
@@ -21,8 +21,15 @@ export default function ProductCard({ p, onAdd }) {
           className="w-full h-72 object-cover"
           loading="lazy"
         />
+        <button
+          onClick={() => onFavorite(p)}
+          aria-label={isFavorite ? `เอาออกจากรายการที่ชื่นชอบ` : `เพิ่มลงรายการที่ชื่นชอบ`}
+          className="absolute top-3 right-3 bg-white/90 rounded-full p-2 border text-red-600 hover:bg-white"
+        >
+          {isFavorite ? '❤️' : '🤍'}
+        </button>
       </div>
-      <div className="p-4 bg-[#e8fbfb]">
+      <div className="p-4 bg-[#ffffff]">
         <div className="font-bold">{p.name}</div>
         <div className="mt-1 flex items-center gap-2 text-sm text-slate-600">
           <span>⭐ {stars(p.rating)}</span>
