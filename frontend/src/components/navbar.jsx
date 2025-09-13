@@ -67,7 +67,7 @@ export default function Nav({
   };
 
   return (
-    <header className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b">
+    <header className="sticky top-0 z-30 bg-white/100 ">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between relative">
         <Link
           to="/"

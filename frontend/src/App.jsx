@@ -9,6 +9,7 @@ import CartPage from "./pages/cart";
 import FavoriteProducts from "./pages/favoriteProducts";
 import SmallPromoNav from "./components/smallPromoNav";
 import Hero from "./pages/mainPage";
+import ProductDetailPage from "./pages/productsDetail";
 
 export default function App() {
   const [activeCat, setActiveCat] = useState("home");
@@ -68,6 +69,22 @@ export default function App() {
           }
         />
         <Route path="/products" element={<ProductsPage onAdd={addToCart} />} />
+        <Route
+          path="/products/:id"
+          element={
+            <ProductDetailPage
+              onAdd={addToCart}
+              onFavorite={(item) =>
+                setFavorites((cur) =>
+                  cur.some((f) => f.id === item.id)
+                    ? cur.filter((f) => f.id !== item.id)
+                    : [...cur, item]
+                )
+              }
+              favorites={favorites}
+            />
+          }
+        />
         <Route path="/profile" element={<ProfilePage />} />
         <Route
           path="/cart"

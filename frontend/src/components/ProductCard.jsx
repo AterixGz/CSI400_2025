@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 const baht = (n) => `฿${n.toLocaleString("th-TH")}`;
 const stars = (value = 0) => `${value.toFixed(1)}`;
 
@@ -20,12 +22,14 @@ export default function ProductCard({
             ลดราคา
           </span>
         )}
-        <img
-          src={p.image}
-          alt={p.name}
-          className="w-full h-72 object-cover"
-          loading="lazy"
-        />
+        <Link to={`/products/${p.id}`} className="block">
+          <img
+            src={p.image}
+            alt={p.name}
+            className="w-full h-72 object-cover"
+            loading="lazy"
+          />
+        </Link>
         <button
           onClick={() => onFavorite(p)}
           aria-label={
@@ -61,11 +65,11 @@ export default function ProductCard({
         </button>
       </div>
       <div className="p-4 bg-[#ffffff]">
-        <div className="font-bold">{p.name}</div>
-        <div className="mt-1 flex items-center gap-2 text-sm text-slate-600">
+        <Link to={`/products/${p.id}`} className="font-bold block">{p.name}</Link>
+        {/* <div className="mt-1 flex items-center gap-2 text-sm text-slate-600">
           <span>⭐ {stars(p.rating)}</span>
           <span>({p.reviews})</span>
-        </div>
+        </div> */}
         <div className="mt-1 flex items-baseline gap-2">
           <div className="text-2xl font-extrabold">{baht(p.price)}</div>
           {p.compareAt && (
