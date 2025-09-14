@@ -114,3 +114,36 @@ export const PRODUCTS = [
       "https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1200&auto=format&fit=crop",
   },
 ]
+
+export const accountSeed = {
+  name: "John Doe",
+  email: "johndoe@gmail.com",
+  avatar: "https://i.pravatar.cc/150?u=johndoe",
+  address: "123 Main St, Bangkok, Thailand",
+  phone: "081-234-5678",
+  favorites: ["p1", "p5", "p3"],
+  orders: [
+    {
+      id: "o1",
+      date: "2023-08-15",
+      total: 4580,
+      items: [
+        { productId: "p1", name: "เสื้อเชิ้ตคอตตอน", price: 1290, quantity: 1 },
+        { productId: "p5", name: "รองเท้าผ้าใบขาว", price: 2590, quantity: 1 },
+        { productId: "p3", name: "เดรสแขนยาว", price: 800, quantity: 1 },
+      ],
+      status: "จัดส่งแล้ว", // ตัวอย่างสถานะ: รอดำเนินการ, จัดส่งแล้ว, ยกเลิก
+      trackingNumber: "TH1234567890",
+    },
+    {
+      id: "o2",
+      date: "2023-07-10",
+      total: 1890,
+      items: [
+        { productId: "p2", name: "กางเกงขายาวผ้าลินิน", price: 1890, quantity: 1 },
+      ],
+      status: "จัดส่งแล้ว",
+      trackingNumber: "TH0987654321",
+    },
+  ],
+};

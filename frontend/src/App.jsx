@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import Nav from "./components/navbar";
 import Footer from "./components/footer";
 import { CATEGORIES, PRODUCTS } from "./data/seed-list";
@@ -10,8 +10,10 @@ import FavoriteProducts from "./pages/favoriteProducts";
 import SmallPromoNav from "./components/smallPromoNav";
 import Hero from "./pages/mainPage";
 import ProductDetailPage from "./pages/productsDetail";
+import LoginPage from "./pages/login";
 
 export default function App() {
+  const location = useLocation();
   const [activeCat, setActiveCat] = useState("home");
   const [cart, setCart] = useState([]);
   // cart handlers
@@ -86,6 +88,7 @@ export default function App() {
           }
         />
         <Route path="/profile" element={<ProfilePage />} />
+  <Route path="/login" element={<LoginPage />} />
         <Route
           path="/cart"
           element={
@@ -116,7 +119,8 @@ export default function App() {
         />
       </Routes>
 
-      <Footer />
+          {/* Footer จะหายไปถ้า path เริ่มต้นด้วย /login */}
+      {!(location.pathname || "").startsWith("/login") && <Footer />}
     </div>
   );
 }

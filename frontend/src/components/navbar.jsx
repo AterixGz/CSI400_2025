@@ -168,7 +168,7 @@ export default function Nav({
 
           {/* changed: use Link for client-side routing to /profile */}
           <Link
-            to="/profile"
+            to="/login"
             className="p-2 hover:text-slate-900"
             title="บัญชีผู้ใช้"
             aria-label="บัญชีผู้ใช้"
