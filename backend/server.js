@@ -6,6 +6,10 @@ import { dirname } from 'path';
 import passport from 'passport';
 import session from 'express-session';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import loginRouter from './routes/login.js';
+import cors from 'cors';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,7 +17,7 @@ const PORT = process.env.PORT || 3000;
 
 // Session middleware (จำเป็นสำหรับ Passport)
 app.use(session({
-  secret: 'your_secret_key',
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: true
 }));
@@ -24,10 +28,15 @@ app.use(passport.session());
 
 // Middleware สำหรับแปลง body เป็น JSON
 app.use(express.json());
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
+
 // Passport Google OAuth2 Strategy
 passport.use(new GoogleStrategy({
-  clientID: '1012259711015-ts0jtk15uljdtggi3r4f5ihmn0l9f1vl.apps.googleusercontent.com', // <-- ใส่ client id ของคุณ
-  clientSecret: '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', // <-- ใส่ client secret ของคุณ
+  clientID: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
   callbackURL: '/auth/google/callback'
 }, (accessToken, refreshToken, profile, done) => {
   // สามารถบันทึก profile ลง database ได้ที่นี่
@@ -50,41 +59,20 @@ app.get('/auth/google',
 app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/' }),
   (req, res) => {
-    // สำเร็จ: ส่งข้อมูล user กลับ หรือ redirect ไปหน้าอื่น
-    res.json({ success: true, user: req.user });
+    // ส่งข้อมูล user google กลับไปหน้า login
+    const googleUser = encodeURIComponent(JSON.stringify({
+      displayName: req.user.displayName,
+      email: req.user.emails?.[0]?.value
+    }));
+    res.redirect(`http://localhost:5173/login?googleUser=${googleUser}`);
   }
 );
-
-app.get('/', (req, res) => {
-  res.send('Hello World!');
-});
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // เพิ่ม API สำหรับ Login
-app.post('/login', (req, res) => {
-  const { username, password } = req.body;
-  const usersPath = path.join(__dirname || '.', 'users.json');
-  let users = [];
-  try {
-    const data = fs.readFileSync(usersPath, 'utf-8');
-    users = JSON.parse(data);
-  } catch (err) {
-    return res.status(500).json({ success: false, message: 'Cannot read users data' });
-  }
-  const foundUser = users.find(u => u.username === username && u.password === password);
-  if (foundUser) {
-    res.json({
-      success: true,
-      message: 'Login successful',
-      role: foundUser.role,
-      id: foundUser.id
-    });
-  } else {
-    res.status(401).json({ success: false, message: 'Invalid credentials' });
-  }
-});
+app.post('/login', loginRouter);
 
 
 app.listen(PORT, () => {
