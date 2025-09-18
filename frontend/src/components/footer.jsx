@@ -1,4 +1,6 @@
 // ...existing code...
+import VYNE from "../assets/VYNE.png";
+
 export default function Footer() {
   return (
     <footer className="mt-10 border-top">
@@ -6,8 +8,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
           <div>
             <div className="flex items-center gap-2 font-extrabold text-slate-900 mb-2">
-              <span className="w-4 h-4 rounded-full bg-teal-800 inline-block" />
-              <span>MINIMAL</span>
+              <img src={VYNE} alt="VYNE Logo" className="h-12 w-12" />
+              {/* <span>VYNE</span> */}
             </div>
             <p>แฟชั่นมินิมอลคุณภาพสูง เพื่อการแต่งกายที่สมบูรณ์แบบ</p>
           </div>
