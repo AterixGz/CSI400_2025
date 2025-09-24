@@ -14,7 +14,7 @@ const __dirname = path.dirname(__filename);
 
 // POST /login
 router.post("/login", (req, res) => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
 
   // อ่านข้อมูล users จากไฟล์ JSON
   const usersPath = path.join(__dirname, "../data/users.JSON");
@@ -23,13 +23,13 @@ router.post("/login", (req, res) => {
 
   // ตรวจสอบ user
   const user = users.find(
-    (u) => u.username === username && u.password === password
+    (u) => u.email === email && u.password === password
   );
 
   if (user) {
     // สร้าง JWT token
     const token = jwt.sign(
-      { id: user.id, username: user.username, role: user.role },
+      { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET || "changeme",
       { expiresIn: "2h" }
     );
@@ -37,7 +37,7 @@ router.post("/login", (req, res) => {
   } else {
     return res
       .status(401)
-      .json({ success: false, message: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" });
+      .json({ success: false, message: "อีเมลใช้หรือรหัสผ่านไม่ถูกต้อง" });
   }
 });
 
