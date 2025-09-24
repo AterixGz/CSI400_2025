@@ -12,6 +12,7 @@ import Hero from "./pages/mainPage";
 import ProductDetailPage from "./pages/productsDetail";
 import LoginPage from "./pages/login";
 import { setupAuthWatcher } from "./utils/api";
+import AdminDashboard from "./pages/admin/admin";
 
 export default function App() {
   const location = useLocation();
@@ -95,6 +96,7 @@ export default function App() {
         />
         <Route path="/profile" element={<ProfilePage />} />
   <Route path="/login" element={<LoginPage />} />
+    <Route path="/admin" element={<AdminDashboard />} />
         <Route
           path="/cart"
           element={

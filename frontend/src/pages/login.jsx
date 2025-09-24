@@ -29,6 +29,7 @@ export default function LoginPage() {
       if (res.ok && data.success) {
         setRegisterSuccess(true);
         setMessage("✅ สมัครสมาชิกสำเร็จ");
+        setTimeout(() => navigate("/"), 800);
       } else {
         setMessage("❌ " + (data.message || "สมัครสมาชิกไม่สำเร็จ"));
       }
@@ -59,7 +60,7 @@ export default function LoginPage() {
   const [mode, setMode] = useState("login"); // 'login' | 'register'
   const navigate = useNavigate();
 
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [loggedIn, setLoggedIn] = useState(false);
@@ -70,7 +71,7 @@ export default function LoginPage() {
       const res = await fetch("http://localhost:3000/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -111,7 +112,7 @@ export default function LoginPage() {
                 onClick={() => {
                   setLoggedIn(false);
                   setUser(null);
-                  setUsername("");
+                  setEmail("");
                   setPassword("");
                   localStorage.removeItem("token");
                   localStorage.removeItem("user");
@@ -230,13 +231,14 @@ export default function LoginPage() {
                 >
                   <label className="block">
                     <div className="text-sm text-slate-700 mb-1">
-                      ชื่อผู้ใช้
+                      อีเมล
                     </div>
                     <input
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       className="w-full rounded-lg border px-3 py-3 bg-white/80"
-                      placeholder="กรอกชื่อผู้ใช้ของคุณ"
+                      placeholder="กรอกอีเมลของคุณ"
+                      type="email"
                     />
                   </label>
                   <label className="block">

@@ -31,7 +31,7 @@ router.post("/login", (req, res) => {
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET || "changeme",
-      { expiresIn: "2h" }
+      { expiresIn: "24h" }
     );
     return res.json({ success: true, message: "Login สำเร็จ", user, token });
   } else {

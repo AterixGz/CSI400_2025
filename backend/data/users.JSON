@@ -70,5 +70,14 @@
     "number": "0865894123",
     "role": "user",
     "email": "Mo@gmail.com"
+  },
+  {
+    "id": 9,
+    "username": "Test",
+    "lastname": "test",
+    "password": "test",
+    "number": "0230492093",
+    "role": "user",
+    "email": "test"
   }
 ]
