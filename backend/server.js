@@ -7,6 +7,7 @@ import passport from 'passport';
 import session from 'express-session';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import loginRouter from './routes/login.js';
+import registerRouter from "./routes/register.js";
 import cors from 'cors';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -73,6 +74,15 @@ const __dirname = dirname(__filename);
 
 // เพิ่ม API สำหรับ Login
 app.post('/login', loginRouter);
+
+// เพิ่ม API สำหรับ Register
+app.use("/register", registerRouter);
+
+
+
+
+
+
 
 
 app.listen(PORT, () => {

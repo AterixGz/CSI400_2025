@@ -2,22 +2,73 @@
   {
     "id": 1,
     "username": "admin",
+    "lastname": "alice",
     "password": "123",
+    "number": "0812345678",
     "role": "admin",
     "email": "alice@example.com"
   },
   {
     "id": 2,
     "username": "bob",
+    "lastname": "alice",
     "password": "123",
+    "number": "0812345679",
     "role": "user",
     "email": "bob@example.com"
   },
   {
     "id": 3,
     "username": "mo",
+    "lastname": "alice",
     "password": "123",
+    "number": "0812345671",
     "role": "user",
     "email": "charlie@example.com"
+  },
+  {
+    "id": 4,
+    "username": "kkfff",
+    "lastname": "ffff",
+    "password": "123",
+    "number": "0811111111",
+    "role": "user",
+    "email": "kamin@gmail.com"
+  },
+  {
+    "id": 5,
+    "username": "kkfffd",
+    "lastname": "ffff",
+    "password": "123",
+    "number": "0812111111",
+    "role": "user",
+    "email": "kamdin@gmail.com"
+  },
+  {
+    "id": 6,
+    "username": "asdasd",
+    "lastname": "asdasd",
+    "password": "123",
+    "number": "0822334419",
+    "role": "user",
+    "email": "asdasd@gmail.com"
+  },
+  {
+    "id": 7,
+    "username": "ฟไกฟไ",
+    "lastname": "ฟไกฟไก",
+    "password": "123",
+    "number": "0854687349",
+    "role": "user",
+    "email": "awd@gmail.com"
+  },
+  {
+    "id": 8,
+    "username": "Nemo",
+    "lastname": "UwU",
+    "password": "123",
+    "number": "0865894123",
+    "role": "user",
+    "email": "Mo@gmail.com"
   }
 ]
