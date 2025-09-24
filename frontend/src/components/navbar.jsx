@@ -193,6 +193,12 @@ export default function Nav({
               {cartCount}
             </span>
           </Link>
+            <Link
+              to="/admin"
+              className="p-2 hover:text-slate-900 text-sm font-semibold"
+            >
+              Admin
+            </Link>
         </div>
       </div>
     </header>

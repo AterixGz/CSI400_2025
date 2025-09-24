@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import Nav from "./components/navbar";
 import Footer from "./components/footer";
@@ -11,9 +11,15 @@ import SmallPromoNav from "./components/smallPromoNav";
 import Hero from "./pages/mainPage";
 import ProductDetailPage from "./pages/productsDetail";
 import LoginPage from "./pages/login";
+import { setupAuthWatcher } from "./utils/api";
 
 export default function App() {
   const location = useLocation();
+  // start auth watcher to auto-logout when token expires
+  useEffect(() => {
+    const stop = setupAuthWatcher({ intervalSec: 30 });
+    return () => stop && stop();
+  }, []);
   const [activeCat, setActiveCat] = useState("home");
   const [cart, setCart] = useState([]);
   // cart handlers
@@ -120,7 +126,7 @@ export default function App() {
       </Routes>
 
           {/* Footer จะหายไปถ้า path เริ่มต้นด้วย /login */}
-      {!(location.pathname || "").startsWith("/login") && <Footer />}
+      {!(location.pathname || "").startsWith("/login") && !(location.pathname || "").startsWith("/admin") && <Footer />}
     </div>
   );
 }

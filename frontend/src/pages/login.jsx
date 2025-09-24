@@ -79,6 +79,8 @@ export default function LoginPage() {
         setUser(data.user);
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
+        // notify other components (navbar, watcher)
+        window.dispatchEvent(new Event("authChange"));
       } else {
         setMessage("❌ " + (data.message || "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"));
       }
@@ -113,6 +115,7 @@ export default function LoginPage() {
                   setPassword("");
                   localStorage.removeItem("token");
                   localStorage.removeItem("user");
+                  window.dispatchEvent(new Event("authChange"));
                 }}
               >
                 Logout
