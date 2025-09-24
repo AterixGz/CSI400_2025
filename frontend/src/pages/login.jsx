@@ -2,6 +2,40 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
+  const [registerData, setRegisterData] = useState({
+    username: "",
+    lastname: "",
+    password: "",
+    confirmPassword: "",
+    number: "",
+    email: "",
+  });
+  const [registerSuccess, setRegisterSuccess] = useState(false);
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setMessage("");
+    setRegisterSuccess(false);
+    if (registerData.password !== registerData.confirmPassword) {
+      setMessage("❌ รหัสผ่านไม่ตรงกัน");
+      return;
+    }
+    try {
+      const res = await fetch("http://localhost:3000/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(registerData),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setRegisterSuccess(true);
+        setMessage("✅ สมัครสมาชิกสำเร็จ");
+      } else {
+        setMessage("❌ " + (data.message || "สมัครสมาชิกไม่สำเร็จ"));
+      }
+    } catch (err) {
+      setMessage("⚠️ " + err.message);
+    }
+  };
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userData = localStorage.getItem("user");
@@ -95,19 +129,15 @@ export default function LoginPage() {
                   : "สร้างบัญชีใหม่เพื่อเริ่มช้อปปิ้งกับเรา"}
               </p>
               {mode === "register" ? (
-                <form
-                  className="mt-6 space-y-4"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    navigate("/");
-                  }}
-                >
+                <form className="mt-6 space-y-4" onSubmit={handleRegister}>
                   <div className="grid grid-cols-2 gap-3">
                     <label className="block">
                       <div className="text-sm text-slate-700 mb-1">ชื่อ</div>
                       <input
                         className="w-full rounded-lg border px-3 py-3 bg-white/80"
                         placeholder="ชื่อ"
+                        value={registerData.username}
+                        onChange={e => setRegisterData({ ...registerData, username: e.target.value })}
                       />
                     </label>
                     <label className="block">
@@ -115,6 +145,8 @@ export default function LoginPage() {
                       <input
                         className="w-full rounded-lg border px-3 py-3 bg-white/80"
                         placeholder="นามสกุล"
+                        value={registerData.lastname}
+                        onChange={e => setRegisterData({ ...registerData, lastname: e.target.value })}
                       />
                     </label>
                   </div>
@@ -123,15 +155,23 @@ export default function LoginPage() {
                     <input
                       className="w-full rounded-lg border px-3 py-3 bg-white/80"
                       placeholder="กรอกอีเมลของคุณ"
+                      value={registerData.email}
+                      onChange={e => setRegisterData({ ...registerData, email: e.target.value })}
                     />
                   </label>
                   <label className="block">
-                    <div className="text-sm text-slate-700 mb-1">
-                      เบอร์โทรศัพท์
-                    </div>
+                    <div className="text-sm text-slate-700 mb-1">เบอร์โทรศัพท์</div>
                     <input
+                      type="tel"
                       className="w-full rounded-lg border px-3 py-3 bg-white/80"
                       placeholder="0XX-XXX-XXXX"
+                      value={registerData.number}
+                      maxLength={10}
+                      pattern="\d{10}"
+                      onChange={e => {
+                        const value = e.target.value.replace(/\D/g, "");
+                        setRegisterData({ ...registerData, number: value });
+                      }}
                     />
                   </label>
                   <label className="block">
@@ -140,53 +180,42 @@ export default function LoginPage() {
                       type="password"
                       className="w-full rounded-lg border px-3 py-3 bg-white/80"
                       placeholder="สร้างรหัสผ่าน"
+                      value={registerData.password}
+                      onChange={e => setRegisterData({ ...registerData, password: e.target.value })}
                     />
                   </label>
                   <label className="block">
-                    <div className="text-sm text-slate-700 mb-1">
-                      ยืนยันรหัสผ่าน
-                    </div>
+                    <div className="text-sm text-slate-700 mb-1">ยืนยันรหัสผ่าน</div>
                     <input
                       type="password"
                       className="w-full rounded-lg border px-3 py-3 bg-white/80"
                       placeholder="ยืนยันรหัสผ่าน"
+                      value={registerData.confirmPassword}
+                      onChange={e => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
                     />
                   </label>
                   <label className="inline-flex items-center gap-2 text-sm">
                     <input type="checkbox" />
-                    <span className="text-slate-600">
-                      ฉันยอมรับ{" "}
-                      <a className="text-teal-700 underline">
-                        ข้อกำหนดและเงื่อนไข
-                      </a>{" "}
-                      และ{" "}
-                      <a className="text-teal-700 underline">
-                        นโยบายความเป็นส่วนตัว
-                      </a>
-                    </span>
+                    <span className="text-slate-600">ฉันยอมรับ <a className="text-teal-700 underline">ข้อกำหนดและเงื่อนไข</a> และ <a className="text-teal-700 underline">นโยบายความเป็นส่วนตัว</a></span>
                   </label>
                   <label className="inline-flex items-center gap-2 text-sm">
                     <input type="checkbox" />
-                    <span className="text-slate-600">
-                      รับข่าวสารและโปรโมชั่นพิเศษทางอีเมล
-                    </span>
+                    <span className="text-slate-600">รับข่าวสารและโปรโมชั่นพิเศษทางอีเมล</span>
                   </label>
-                  <button
-                    type="submit"
-                    className="w-full bg-black text-white rounded-lg py-3 font-bold"
-                  >
-                    สมัครสมาชิก
-                  </button>
-                  <div className="text-center text-sm text-slate-600">
-                    มีบัญชีอยู่แล้ว?{" "}
-                    <button
-                      type="button"
-                      onClick={() => setMode("login")}
-                      className="text-teal-700 underline"
-                    >
-                      เข้าสู่ระบบ
-                    </button>
-                  </div>
+                  {message && (
+                    <div className="text-center text-red-600 text-sm mb-2">{message}</div>
+                  )}
+                  {!registerSuccess && (
+                    <>
+                      <button type="submit" className="w-full bg-black text-white rounded-lg py-3 font-bold">สมัครสมาชิก</button>
+                      <div className="text-center text-sm text-slate-600">มีบัญชีอยู่แล้ว? <button type="button" onClick={()=>{ setMode("login"); setMessage(""); }} className="text-teal-700 underline">เข้าสู่ระบบ</button></div>
+                    </>
+                  )}
+                  {registerSuccess && (
+                    <div className="text-center mt-4">
+                      <button type="button" className="bg-green-600 text-white rounded-lg px-6 py-2 font-bold" onClick={() => { setMode("login"); setMessage(""); setRegisterSuccess(false); }}>ไปหน้าเข้าสู่ระบบ</button>
+                    </div>
+                  )}
                 </form>
               ) : (
                 <form
@@ -267,7 +296,18 @@ export default function LoginPage() {
                     ยังไม่มีบัญชี?{" "}
                     <button
                       type="button"
-                      onClick={() => setMode("register")}
+                      onClick={() => {
+                        setMode("register");
+                        setRegisterData({
+                          username: "",
+                          lastname: "",
+                          password: "",
+                          confirmPassword: "",
+                          number: "",
+                          email: "",
+                        });
+                        setMessage("");
+                      }}
                       className="text-teal-700 underline"
                     >
                       สมัครสมาชิก
