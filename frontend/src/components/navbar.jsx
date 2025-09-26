@@ -194,7 +194,7 @@ export default function Nav({
             </span>
           </Link>
             <Link
-              to="/admin"
+              to="/admin/dashboard"
               className="p-2 hover:text-slate-900 text-sm font-semibold"
             >
               Admin

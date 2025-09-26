@@ -12,7 +12,7 @@ import Hero from "./pages/mainPage";
 import ProductDetailPage from "./pages/productsDetail";
 import LoginPage from "./pages/login";
 import { setupAuthWatcher } from "./utils/api";
-import AdminDashboard from "./pages/admin/admin";
+import AdminDashboard from "./pages/admin/main";
 
 export default function App() {
   const location = useLocation();
@@ -95,8 +95,8 @@ export default function App() {
           }
         />
         <Route path="/profile" element={<ProfilePage />} />
-  <Route path="/login" element={<LoginPage />} />
-    <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/login" element={<LoginPage />} />
+  <Route path="/admin/*" element={<AdminDashboard />} />
         <Route
           path="/cart"
           element={
@@ -127,7 +127,7 @@ export default function App() {
         />
       </Routes>
 
-          {/* Footer จะหายไปถ้า path เริ่มต้นด้วย /login */}
+      {/* Footer จะหายไปถ้า path เริ่มต้นด้วย /login */}
       {!(location.pathname || "").startsWith("/login") && !(location.pathname || "").startsWith("/admin") && <Footer />}
     </div>
   );
