@@ -77,21 +77,11 @@ const Dashboard = () => {
     { icon: DollarSign, label: 'Transactions' },
     { icon: FileText, label: 'Invoices', count: '2' },
     { icon: CreditCard, label: 'Payments' },
-    { icon: BookOpen, label: 'Pages' },
-    { icon: Image, label: 'Media' },
-    { icon: Eye, label: 'SEO', badge: 'New' },
     { icon: Users, label: 'Members' },
-    { icon: MessageCircle, label: 'Chat', count: '12' },
-    { icon: Video, label: 'Meetings' },
-    { icon: Puzzle, label: 'Plugins', count: '8' },
-    { icon: Code2, label: 'API' },
-    { icon: Layers, label: 'Integrations' },
-    { icon: Archive, label: 'Backup & Restore' },
-    { icon: Settings, label: 'Settings' },
-    { icon: HelpCircle, label: 'Help' }
+    { icon: Archive, label: 'Backup & Restore' }
   ];
 
-  const categories = ['OVERVIEW', 'E-COMMERCE', 'FINANCE', 'CONTENT MANAGEMENT', 'TEAM & COMMUNICATION', 'TOOLS & UTILITIES'];
+  const categories = ['OVERVIEW', 'E-COMMERCE', 'FINANCE', 'TEAM & COMMUNICATION', 'UTILITY'];
   let currentCategory = 0;
 
   return (
@@ -110,7 +100,7 @@ const Dashboard = () => {
         <div className="flex-1 overflow-y-auto py-4">
           {sidebarItems.map((item, index) => {
             // Check if we need to show category header
-            const categoryIndex = [0, 4, 7, 10, 13, 16].indexOf(index);
+            const categoryIndex = [0, 4, 7, 10,11,12].indexOf(index);
             if (categoryIndex !== -1) {
               currentCategory = categoryIndex;
             }
@@ -118,7 +108,7 @@ const Dashboard = () => {
             return (
               <div key={index}>
                 {/* Category Header */}
-                {[0, 4, 7, 10, 13, 16].includes(index) && (
+                {[0, 4, 7, 10,11,12].includes(index) && (
                   <div className="px-6 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wide">
                     {categories[categoryIndex]}
                   </div>
