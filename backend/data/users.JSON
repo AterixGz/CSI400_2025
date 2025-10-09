@@ -79,5 +79,14 @@
     "number": "0230492093",
     "role": "user",
     "email": "test"
+  },
+  {
+    "id": 10,
+    "username": "ทองดี",
+    "lastname": "เหม็นจุง",
+    "password": "123",
+    "number": "0812367123",
+    "role": "user",
+    "email": "gold@mail.com"
   }
 ]

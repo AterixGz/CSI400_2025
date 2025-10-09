@@ -55,6 +55,7 @@ export default function LoginPage() {
       localStorage.setItem("user", JSON.stringify({ username: userObj.displayName || userObj.email, role: "google" }));
       localStorage.setItem("token", "google-oauth");
       window.history.replaceState({}, document.title, window.location.pathname); // ลบ query string
+      navigate("/profile");
     }
   }, []);
   const [mode, setMode] = useState("login"); // 'login' | 'register'
@@ -80,8 +81,8 @@ export default function LoginPage() {
         setUser(data.user);
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
-        // notify other components (navbar, watcher)
         window.dispatchEvent(new Event("authChange"));
+        navigate("/profile");
       } else {
         setMessage("❌ " + (data.message || "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"));
       }

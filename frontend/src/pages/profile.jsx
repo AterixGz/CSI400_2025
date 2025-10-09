@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 function IconCamera({ className = "w-5 h-5" }) {
   return (
@@ -22,12 +23,49 @@ export default function ProfilePage() {
   const [tab, setTab] = useState("profile");
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState({
-    name: "สมชาย ใจดี",
-    email: "somchai@example.com",
-    phone: "081-234-5678",
-    address: "123 ถนนสุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพฯ 10110",
+    name: "",
+    email: "",
+    phone: "",
+    address: ""
   });
   const [saved, setSaved] = useState(form);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // clear auth info and go to login
+    try {
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+    } catch (e) {
+      // ignore
+    }
+    navigate("/login");
+  };
+
+  // base URL for API (use Vite env if provided)
+  const API_BASE = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE
+    ? import.meta.env.VITE_API_BASE
+    : 'http://localhost:3000';
+
+  useEffect(() => {
+    // ดึงข้อมูล user จาก localStorage
+    const user = localStorage.getItem("user");
+    if (user) {
+      const u = JSON.parse(user);
+      setForm({
+        name: (u.first_name || "") + (u.last_name ? " " + u.last_name : ""),
+        email: u.email || "",
+        phone: u.phone_number || "",
+        address: u.address || ""
+      });
+      setSaved({
+        name: (u.first_name || "") + (u.last_name ? " " + u.last_name : ""),
+        email: u.email || "",
+        phone: u.phone_number || "",
+        address: u.address || ""
+      });
+    }
+  }, []);
   const orders = [
     {
       id: "ORD-001",
@@ -78,23 +116,101 @@ export default function ProfilePage() {
             </button>
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold">สมชาย ใจดี</h1>
+            <h1 className="text-2xl font-extrabold">{form.name || "-"}</h1>
             <div className="mt-2 flex items-center text-slate-600 gap-2">
               <IconMail className="w-4 h-4 text-slate-500" />
-              <span>somchai@example.com</span>
+              <span>{form.email || "-"}</span>
             </div>
           </div>
         </div>
 
         <div>
           {!isEditing ? (
-            <button onClick={() => setIsEditing(true)} className="bg-teal-600 text-white px-4 py-2 rounded-md">แก้ไขข้อมูล</button>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setIsEditing(true)} className="bg-teal-600 text-white px-4 py-2 rounded-md">แก้ไขข้อมูล</button>
+              <button onClick={handleLogout} className="bg-red-600 text-white px-4 py-2 rounded-md">ออกจากระบบ</button>
+            </div>
           ) : (
             <div className="flex gap-2">
               <button
-                onClick={() => {
-                  setSaved(form);
-                  setIsEditing(false);
+                onClick={async () => {
+                  // prepare payload: split name into first/last
+                  const names = (form.name || "").trim().split(" ");
+                  const first_name = names[0] || null;
+                  const last_name = names.length > 1 ? names.slice(1).join(" ") : null;
+
+                  // get current user id and token from localStorage
+                  const userRaw = localStorage.getItem("user");
+                  if (!userRaw) {
+                    alert("ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบอีกครั้ง");
+                    navigate("/login");
+                    return;
+                  }
+                  const currentUser = JSON.parse(userRaw);
+                  const userId = currentUser.user_id || currentUser.id || currentUser.userId;
+
+                  const payload = {
+                    email: form.email,
+                    phone_number: form.phone,
+                    first_name,
+                    last_name,
+                    // keep other fields as null/defaults for now
+                  };
+
+                  try {
+                    const token = localStorage.getItem("token");
+                    const res = await fetch(`${API_BASE}/api/users/${userId}`, {
+                      method: "PUT",
+                      headers: {
+                        "Content-Type": "application/json",
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                      },
+                      body: JSON.stringify(payload),
+                    });
+
+                    // safe JSON parse: server might return empty body
+                    const text = await res.text();
+                    let body = null;
+                    if (text) {
+                      try {
+                        body = JSON.parse(text);
+                      } catch (parseErr) {
+                        console.warn("Response is not valid JSON:", text);
+                      }
+                    }
+
+                    if (!res.ok) {
+                      const serverMsg = (body && (body.error || body.message)) || text || res.statusText;
+                      throw new Error(serverMsg || "ไม่สามารถบันทึกได้");
+                    }
+
+                    const updated = body || null;
+                    if (updated) {
+                      // map updated DB row -> form fields
+                      const newForm = {
+                        name: (updated.first_name || "") + (updated.last_name ? " " + updated.last_name : ""),
+                        email: updated.email || "",
+                        phone: updated.phone_number || "",
+                        address: updated.address || "",
+                      };
+                      // update localStorage user
+                      localStorage.setItem("user", JSON.stringify(updated));
+                      setForm(newForm);
+                      setSaved(newForm);
+                    } else {
+                      // fallback: keep current form
+                      setSaved(form);
+                    }
+                    setIsEditing(false);
+                    // notify other components (navbar) that user changed
+                    try {
+                      window.dispatchEvent(new Event('user:updated'));
+                    } catch (e) {}
+                    alert("บันทึกข้อมูลเรียบร้อยแล้ว");
+                  } catch (e) {
+                    console.error(e);
+                    alert("เกิดข้อผิดพลาดขณะบันทึก: " + (e.message || e));
+                  }
                 }}
                 className="bg-emerald-600 text-white px-4 py-2 rounded-md"
               >
@@ -109,6 +225,7 @@ export default function ProfilePage() {
               >
                 ยกเลิก
               </button>
+              <button onClick={handleLogout} className="bg-red-600 text-white px-4 py-2 rounded-md">ออกจากระบบ</button>
             </div>
           )}
         </div>

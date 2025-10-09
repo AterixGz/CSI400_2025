@@ -2,42 +2,44 @@ import dotenv from "dotenv";
 dotenv.config();
 import jwt from "jsonwebtoken";
 import express from "express";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import pool from "../db.js";
 
 const router = express.Router();
 
-// กำหนด __dirname เอง (เพราะ ESM ไม่มี __dirname ให้)
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 // POST /login
-router.post("/login", (req, res) => {
+router.post("/", async (req, res) => {
   const { email, password } = req.body;
-
-  // อ่านข้อมูล users จากไฟล์ JSON
-  const usersPath = path.join(__dirname, "../data/users.JSON");
-  const usersData = fs.readFileSync(usersPath, "utf-8");
-  const users = JSON.parse(usersData);
-
-  // ตรวจสอบ user
-  const user = users.find(
-    (u) => u.email === email && u.password === password
-  );
-
-  if (user) {
+  try {
+    // ค้นหา user จาก Supabase
+    const query = "SELECT * FROM users WHERE email = $1 LIMIT 1";
+    const result = await pool.query(query, [email]);
+    if (result.rows.length === 0) {
+      return res.status(401).json({ success: false, message: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" });
+    }
+    const user = result.rows[0];
+    // เปรียบเทียบรหัสผ่าน (ยังไม่ใช้ hash)
+    if (user.password_hash !== password) {
+      return res.status(401).json({ success: false, message: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" });
+    }
     // สร้าง JWT token
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
+      { id: user.user_id, email: user.email, role: user.role },
       process.env.JWT_SECRET || "changeme",
       { expiresIn: "24h" }
     );
-    return res.json({ success: true, message: "Login สำเร็จ", user, token });
-  } else {
-    return res
-      .status(401)
-      .json({ success: false, message: "อีเมลใช้หรือรหัสผ่านไม่ถูกต้อง" });
+    // ส่งข้อมูล user เฉพาะ field ที่จำเป็น
+    const userData = {
+      user_id: user.user_id,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      email: user.email,
+      role: user.role,
+      phone_number: user.phone_number
+    };
+    return res.json({ success: true, message: "Login สำเร็จ", user: userData, token });
+  } catch (err) {
+    console.error("Login error:", err);
+    return res.status(500).json({ success: false, message: "เกิดข้อผิดพลาดในการเข้าสู่ระบบ" });
   }
 });
 

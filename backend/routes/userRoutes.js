@@ -92,12 +92,12 @@ router.put("/:id", async (req, res) => {
       is_verified,
     } = req.body;
 
-   const result = await pool.query(
+  const result = await pool.query(
   `UPDATE users SET 
-      email=$1, phone_number=$2, first_name=$3, last_name=$4,
-      date_of_birth=$5, profile_image_url=$6, role=$7, gender=$8,
-      is_verified=$9, updated_at=NOW()
-   WHERE user_id=$11 RETURNING *`,
+    email=$1, phone_number=$2, first_name=$3, last_name=$4,
+    date_of_birth=$5, profile_image_url=$6, role=$7, gender=$8,
+    is_verified=$9, updated_at=NOW()
+  WHERE user_id=$10 RETURNING *`,
   [email, phone_number, first_name, last_name, date_of_birth, profile_image_url, role, gender, is_verified, id]
 );
 

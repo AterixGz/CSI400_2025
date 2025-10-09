@@ -12,6 +12,10 @@ export default function Nav({
   const [query, setQuery] = useState("");
   const inputRef = useRef(null);
 
+  // read user from localStorage (safe for SSR/envs without window)
+  const _userRaw = typeof window !== "undefined" ? localStorage.getItem("user") : null;
+  const user = _userRaw ? JSON.parse(_userRaw) : null;
+
   useEffect(() => {
     if (showSearch && inputRef.current) inputRef.current.focus();
   }, [showSearch]);
@@ -166,15 +170,26 @@ export default function Nav({
             )}
           </div>
 
-          {/* changed: use Link for client-side routing to /profile */}
-          <Link
-            to="/login"
-            className="p-2 hover:text-slate-900"
-            title="บัญชีผู้ใช้"
-            aria-label="บัญชีผู้ใช้"
-          >
-            <Icon.User className="w-5 h-5" />
-          </Link>
+          {/* account: ถ้ามี user ใน localStorage ให้ไป /profile, ถ้าไม่มีไป /login */}
+          {user ? (
+            <Link
+              to="/profile"
+              className="p-2 hover:text-slate-900"
+              title="บัญชีผู้ใช้"
+              aria-label="บัญชีผู้ใช้"
+            >
+              <Icon.User className="w-5 h-5" />
+            </Link>
+          ) : (
+            <Link
+              to="/login"
+              className="p-2 hover:text-slate-900"
+              title="บัญชีผู้ใช้"
+              aria-label="บัญชีผู้ใช้"
+            >
+              <Icon.User className="w-5 h-5" />
+            </Link>
+          )}
 
           <Link
             to="/favorites"
