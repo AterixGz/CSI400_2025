@@ -9,6 +9,7 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import loginRouter from './routes/login.js';
 import registerRouter from "./routes/register.js";
 import userRoutes from "./routes/userRoutes.js";
+import productsRouter from "./routes/products.js";
 import cors from 'cors';
 import dotenv from 'dotenv';
 
@@ -22,7 +23,7 @@ const PORT = process.env.PORT || 3000;
 
 // Session middleware (จำเป็นสำหรับ Passport)
 app.use(session({
-  secret: process.env.SESSION_SECRET,
+  secret: process.env.SESSION_SECRET || "your_secret_key",
   resave: false,
   saveUninitialized: true
 }));
@@ -88,6 +89,8 @@ app.use("/register", registerRouter);
 // เพิ่ม API สำหรับ User routes
 app.use("/api/users", userRoutes);
 
+// ใช้งาน route /api/products
+app.use("/api/products", productsRouter);
 // ตัวอย่าง test query จาก DB
 app.get('/test-db', async (req, res) => {
   try {
