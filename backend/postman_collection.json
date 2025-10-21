@@ -1,0 +1,136 @@
+{
+  "info": {
+    "name": "CSI400_2025 Backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0",
+    "description": "Postman collection for local backend (http://localhost:3000)"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "product_id",
+      "value": "p1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth - Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"alice@example.com\",\n  \"password\": \"123\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/login",
+          "host": ["{{base_url}}"],
+          "path": ["login"]
+        },
+        "description": "POST /login - returns token + user (example). Set {{token}} from response for protected requests."
+      },
+      "response": []
+    },
+    {
+      "name": "Auth - Register",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"newuser\",\n  \"lastname\": \"lastname\",\n  \"email\": \"newuser@example.com\",\n  \"number\": \"0812345670\",\n  \"password\": \"secret123\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/register",
+          "host": ["{{base_url}}"],
+          "path": ["register"]
+        },
+        "description": "POST /register - create user. After success you may login to receive token."
+      },
+      "response": []
+    },
+    {
+      "name": "Test DB",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/test-db",
+          "host": ["{{base_url}}"],
+          "path": ["test-db"]
+        },
+        "description": "GET /test-db - simple DB connectivity check (returns 503 if DB not available)."
+      },
+      "response": []
+    },
+    {
+      "name": "Products - List",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/products",
+          "host": ["{{base_url}}"],
+          "path": ["api","products"]
+        },
+        "description": "GET /api/products - list products"
+      },
+      "response": []
+    },
+    {
+      "name": "Products - Detail",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/products/{{product_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api","products","{{product_id}}"]
+        },
+        "description": "GET /api/products/:id - product detail (set {{product_id}} variable)"
+      },
+      "response": []
+    },
+    {
+      "name": "Users - List (protected)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/users",
+          "host": ["{{base_url}}"],
+          "path": ["api","users"]
+        },
+        "description": "GET /api/users - protected route, include Authorization header with token"
+      },
+      "response": []
+    },
+    {
+      "name": "Auth - Google OAuth Start",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/auth/google",
+          "host": ["{{base_url}}"],
+          "path": ["auth","google"]
+        },
+        "description": "GET /auth/google - opens Google OAuth (redirects to Google). Useful to test OAuth flow in browser."
+      },
+      "response": []
+    }
+  ]
+}

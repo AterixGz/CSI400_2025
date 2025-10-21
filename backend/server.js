@@ -16,7 +16,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // **import DB pool**
-import pool from './db.js';
+import db from './db.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -94,11 +94,12 @@ app.use("/api/products", productsRouter);
 // ตัวอย่าง test query จาก DB
 app.get('/test-db', async (req, res) => {
   try {
-    const result = await pool.query('SELECT NOW()');
+    // use wrapper's query (will throw if pool not available)
+    const result = await db.query('SELECT NOW()');
     res.json({ time: result.rows[0] });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'DB error' });
+    console.error('test-db error:', err.message || err);
+    res.status(503).json({ error: 'DB not available', message: err.message });
   }
 });
 
