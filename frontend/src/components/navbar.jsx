@@ -11,10 +11,26 @@ export default function Nav({
   const [showSearch, setShowSearch] = useState(false);
   const [query, setQuery] = useState("");
   const inputRef = useRef(null);
+  const [user, setUser] = useState(null);
 
-  // read user from localStorage (safe for SSR/envs without window)
-  const _userRaw = typeof window !== "undefined" ? localStorage.getItem("user") : null;
-  const user = _userRaw ? JSON.parse(_userRaw) : null;
+  useEffect(() => {
+    const readUser = () => {
+      const raw = typeof window !== "undefined" ? localStorage.getItem("user") : null;
+      try {
+        setUser(raw ? JSON.parse(raw) : null);
+      } catch (e) {
+        setUser(null);
+      }
+    };
+
+    readUser();
+    window.addEventListener("user:updated", readUser);
+    window.addEventListener("storage", readUser);
+    return () => {
+      window.removeEventListener("user:updated", readUser);
+      window.removeEventListener("storage", readUser);
+    };
+  }, []);
 
   useEffect(() => {
     if (showSearch && inputRef.current) inputRef.current.focus();

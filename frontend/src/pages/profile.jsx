@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 function IconCamera({ className = "w-5 h-5" }) {
@@ -30,6 +30,9 @@ export default function ProfilePage() {
   });
   const [saved, setSaved] = useState(form);
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
+  const [profileImagePreview, setProfileImagePreview] = useState(null);
+  const [imageChanged, setImageChanged] = useState(false);
 
   const handleLogout = () => {
     // clear auth info and go to login
@@ -64,6 +67,7 @@ export default function ProfilePage() {
         phone: u.phone_number || "",
         address: u.address || ""
       });
+      if (u.profile_image_url) setProfileImagePreview(u.profile_image_url);
     }
   }, []);
   const orders = [
@@ -105,13 +109,38 @@ export default function ProfilePage() {
         <div className="flex items-center gap-6">
           <div className="relative">
             <div className="w-28 h-28 rounded-full bg-slate-200 flex items-center justify-center">
-              {/* placeholder avatar */}
-              <svg className="w-16 h-16 text-slate-300" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="12" cy="8" r="3.2" stroke="currentColor" strokeWidth="1.2" />
-                <path d="M4 20c1.5-4 6-6 8-6s6.5 2 8 6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-              </svg>
+              {/* avatar: preview or placeholder */}
+              {profileImagePreview ? (
+                <img src={profileImagePreview} alt="avatar" className="w-full h-full object-cover rounded-full" />
+              ) : (
+                <svg className="w-16 h-16 text-slate-300" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="12" cy="8" r="3.2" stroke="currentColor" strokeWidth="1.2" />
+                  <path d="M4 20c1.5-4 6-6 8-6s6.5 2 8 6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                </svg>
+              )}
             </div>
-            <button aria-label="อัพโหลดรูป" className="absolute -bottom-1 left-6 bg-rose-400 rounded-full p-2 text-white shadow-md">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={async (e) => {
+                const f = e.target.files && e.target.files[0];
+                if (!f) return;
+                // read as data URL
+                const reader = new FileReader();
+                reader.onload = () => {
+                  setProfileImagePreview(reader.result);
+                  setImageChanged(true);
+                };
+                reader.readAsDataURL(f);
+              }}
+            />
+            <button
+              aria-label="อัพโหลดรูป"
+              className="absolute -bottom-1 left-6 bg-rose-400 rounded-full p-2 text-white shadow-md"
+              onClick={() => fileInputRef.current && fileInputRef.current.click()}
+            >
               <IconCamera className="w-4 h-4 text-white" />
             </button>
           </div>
@@ -154,8 +183,14 @@ export default function ProfilePage() {
                     phone_number: form.phone,
                     first_name,
                     last_name,
-                    // keep other fields as null/defaults for now
+                    profile_image_url: profileImagePreview || null,
                   };
+
+                  // Validate phone: if provided must be exactly 10 digits
+                  if (form.phone && form.phone.length !== 10) {
+                    alert('กรุณากรอกเบอร์โทรศัพท์ให้ครบ 10 หลัก (ตัวเลขเท่านั้น)');
+                    return;
+                  }
 
                   try {
                     const token = localStorage.getItem("token");
@@ -294,32 +329,25 @@ export default function ProfilePage() {
                 ) : (
                   <input
                     value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    onChange={(e) => {
+                      // allow only digits and limit to 10 characters
+                      const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
+                      setForm({ ...form, phone: digits });
+                    }}
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={10}
+                    placeholder="0812345678"
                     className="w-full bg-slate-50 rounded-md p-3 border border-slate-200"
                   />
                 )}
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm text-slate-600 mb-2">ที่อยู่</label>
-                {!isEditing ? (
-                  <div className="flex items-center gap-3 bg-slate-50 rounded-md p-3">
-                    <svg className="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none"><path d="M21 10c0 6-9 12-9 12S3 16 3 10a9 9 0 1 1 18 0z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    <span className="text-slate-600">{form.address}</span>
-                  </div>
-                ) : (
-                  <textarea
-                    value={form.address}
-                    onChange={(e) => setForm({ ...form, address: e.target.value })}
-                    className="w-full bg-slate-50 rounded-md p-3 border border-slate-200"
-                    rows={2}
-                  />
-                )}
               </div>
             </div>
           </div>
         )}
-
         {tab === "orders" && (
           <div className="space-y-4">
             <div className="bg-white rounded-lg p-6 shadow-sm">
