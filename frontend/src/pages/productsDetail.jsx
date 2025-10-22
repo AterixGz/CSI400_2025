@@ -1,13 +1,59 @@
-import { useEffect, useState } from "react";
+// src/pages/ProductDetailPage.jsx
+import { useEffect, useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
-import { PRODUCTS } from "../data/seed-list";
 import ProductCard from "../components/ProductCard";
 
-const baht = (n) => `฿${n.toLocaleString("th-TH")}`;
-const stars = (value = 0) => `${value.toFixed(1)}`;
+// ---------- utils ----------
+const baht = (n) => `฿${Number(n ?? 0).toLocaleString("th-TH")}`;
+const stars = (value = 0) => `${Number(value ?? 0).toFixed(1)}`;
 
-export default function ProductDetailPage({ onAdd = () => {}, onFavorite = () => {}, favorites = [] }) {
-  const { id } = useParams();
+// ---------- adapter ----------
+// แปลง row จาก API → โครงสร้างที่ UI เดิมใช้
+function adaptProduct(row) {
+  if (!row) return null;
+  // เผื่ออนาคตฐานข้อมูลมี images, colors, sizes ในตารางย่อย
+  const images = row.images?.length ? row.images : [row.image_url].filter(Boolean);
+  const isSale = row.compare_at && Number(row.compare_at) > Number(row.price);
+  // isNew: ภายใน 14 วันล่าสุด (ปรับได้)
+  const isNew =
+    row.created_at
+      ? (Date.now() - new Date(row.created_at).getTime()) / (1000 * 60 * 60 * 24) <= 14
+      : false;
+
+  return {
+    id: row.product_id,
+    name: row.product_name ?? row.name,
+    description: row.description ?? "",
+    price: Number(row.price ?? 0),
+    compareAt: row.compare_at ? Number(row.compare_at) : null,
+    stock: row.stock ?? 0,
+    image: images?.[0] ?? null,
+    images,
+    createdAt: row.created_at,
+    category: { id: row.category_id, name: row.category_name },
+    audience: { id: row.audience_id, name: row.audience_name },
+
+    // ค่าเสริมให้ UI เดิม
+    rating: Number(row.rating ?? 0),
+    reviews: Number(row.reviews ?? 0),
+    colors: row.colors ?? [],  // ถ้ามีเก็บเป็น array ใน DB ก็ map มาใส่ตรงนี้
+    sizes: row.sizes ?? null,  // ถ้าไม่มี ให้เป็น null
+    features: row.features ?? null,
+
+    // badge
+    isSale,
+    isNew,
+  };
+}
+
+export default function ProductDetailPage({
+  onAdd = () => {},
+  onFavorite = () => {},
+  favorites = [],
+}) {
+  const { id } = useParams();              // "id" จาก URL (string)
+  const numericId = useMemo(() => Number(id), [id]);
+
   const [product, setProduct] = useState(null);
   const [mainImage, setMainImage] = useState(null);
   const [qty, setQty] = useState(1);
@@ -15,18 +61,77 @@ export default function ProductDetailPage({ onAdd = () => {}, onFavorite = () =>
   const [activeTab, setActiveTab] = useState("detail");
   const [isFav, setIsFav] = useState(false);
 
-  useEffect(() => {
-    const p = PRODUCTS.find((x) => x.id === id) || PRODUCTS[0];
-    setProduct(p);
-    setMainImage(p?.image ?? null);
-    setSize(p?.sizes?.[0] ?? null);
-    setIsFav((favorites || []).some((f) => f.id === p?.id));
-  }, [id, favorites]);
+  const [related, setRelated] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
 
-  if (!product) {
+  // ✅ ดึงรายละเอียดสินค้า
+  useEffect(() => {
+    let alive = true;
+    async function load() {
+      setLoading(true);
+      setErr("");
+
+      try {
+        // เรียกแบบ relative path ได้เลย ถ้าตั้ง proxy ใน vite.config.js
+        const res = await fetch(`/api/products/${numericId}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const row = await res.json();
+
+        const p = adaptProduct(row);
+        if (!p) throw new Error("ไม่พบสินค้า");
+
+        if (alive) {
+          setProduct(p);
+          setMainImage(p.image ?? null);
+          setSize(p.sizes?.[0] ?? null);
+          setIsFav((favorites || []).some((f) => f.id === p.id));
+        }
+
+        // โหลด related ตาม category เดียวกัน (ยกเว้นตัวเอง)
+        if (p?.category?.id) {
+          const r = await fetch(`/api/products?category_id=${p.category.id}`);
+          if (r.ok) {
+            const rows = await r.json();
+            const rel = (rows || [])
+              .map(adaptProduct)
+              .filter(Boolean)
+              .filter((x) => x.id !== p.id)
+              .slice(0, 4);
+            if (alive) setRelated(rel);
+          }
+        }
+      } catch (e) {
+        console.error(e);
+        if (alive) setErr("โหลดรายละเอียดสินค้าล้มเหลว");
+      } finally {
+        if (alive) setLoading(false);
+      }
+    }
+
+    if (!Number.isFinite(numericId)) {
+      setErr("รหัสสินค้าไม่ถูกต้อง");
+      setLoading(false);
+      return;
+    }
+    load();
+
+    return () => { alive = false; };
+  }, [numericId, favorites]);
+
+  // ---------- loading / error ----------
+  if (loading) {
     return (
       <section className="max-w-6xl mx-auto px-6 py-12">
-        <p className="text-center text-slate-600">ไม่พบสินค้านี้</p>
+        <p className="text-center text-slate-600">กำลังโหลดสินค้า…</p>
+      </section>
+    );
+  }
+
+  if (err || !product) {
+    return (
+      <section className="max-w-6xl mx-auto px-6 py-12">
+        <p className="text-center text-rose-600">{err || "ไม่พบสินค้านี้"}</p>
         <div className="mt-6 text-center">
           <Link to="/products" className="px-4 py-2 rounded-xl border bg-white">กลับไปหน้าสินค้า</Link>
         </div>
@@ -34,8 +139,7 @@ export default function ProductDetailPage({ onAdd = () => {}, onFavorite = () =>
     );
   }
 
-  const related = PRODUCTS.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4);
-
+  // ---------- UI ----------
   return (
     <section className="max-w-6xl mx-auto px-6 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -54,7 +158,7 @@ export default function ProductDetailPage({ onAdd = () => {}, onFavorite = () =>
               <button
                 key={i}
                 onClick={() => setMainImage(img)}
-                className={`rounded-lg overflow-hidden border ${mainImage === img ? "border-red-400" : "border-slate-200"} bg-white`}
+                className={`rounded-lg overflow-hidden border ${mainImage === img ? "border-rose-400" : "border-slate-200"} bg-white`}
                 aria-label={`เลือกรูปที่ ${i + 1}`}
               >
                 <img src={img} alt={`${product.name} ${i + 1}`} className="w-full h-24 object-cover" />
@@ -69,7 +173,14 @@ export default function ProductDetailPage({ onAdd = () => {}, onFavorite = () =>
           <div className="mt-2 flex items-center gap-3">
             <div className="text-yellow-500 font-semibold">⭐ {stars(product.rating ?? 0)}</div>
             <div className="text-sm text-slate-500">({product.reviews ?? 0} รีวิว)</div>
-            {product.isSale && <span className="ml-2 text-xs bg-red-500 text-white px-2 py-1 rounded">ลด {Math.round(((product.compareAt ?? product.price) - product.price) / (product.compareAt ?? product.price) * 100)}%</span>}
+            {product.isSale && (
+              <span className="ml-2 text-xs bg-red-500 text-white px-2 py-1 rounded">
+                ลด {Math.round(((product.compareAt ?? product.price) - product.price) / (product.compareAt ?? product.price) * 100)}%
+              </span>
+            )}
+            {product.isNew && (
+              <span className="ml-2 text-xs bg-yellow-400 text-white px-2 py-1 rounded">ใหม่</span>
+            )}
           </div>
 
           <div className="mt-4 flex items-baseline gap-3">
@@ -77,12 +188,12 @@ export default function ProductDetailPage({ onAdd = () => {}, onFavorite = () =>
             {product.compareAt && <del className="text-slate-400">{baht(product.compareAt)}</del>}
           </div>
 
-          <p className="mt-4 text-slate-700">{product.description ?? "รายละเอียดสินค้าแบบย่อ..."}</p>
+          <p className="mt-4 text-slate-700">{product.description || "รายละเอียดสินค้าแบบย่อ..."}</p>
 
           <div className="mt-4">
             <div className="text-sm text-slate-600 mb-2">สี:</div>
             <div className="flex items-center gap-2">
-              {(product.colors ?? ["#fff"]).map((c, i) => (
+              {(product.colors ?? ["#ffffff"]).map((c, i) => (
                 <button
                   key={i}
                   title={c}
@@ -102,7 +213,7 @@ export default function ProductDetailPage({ onAdd = () => {}, onFavorite = () =>
                   <button
                     key={s}
                     onClick={() => setSize(s)}
-                    className={`px-3 py-2 rounded-lg border ${size === s ? "bg-red-600 text-white" : "bg-white text-slate-700"}`}
+                    className={`px-3 py-2 rounded-lg border ${size === s ? "bg-rose-600 text-white" : "bg-white text-slate-700"}`}
                   >
                     {s}
                   </button>
@@ -120,15 +231,15 @@ export default function ProductDetailPage({ onAdd = () => {}, onFavorite = () =>
 
             <div className="flex-1 flex gap-3">
               <button
-                onClick={() => onAdd({ ...product, qty })}
-                className="flex-1 px-4 py-3 rounded-xl bg-red-600 text-white font-bold flex items-center justify-center gap-2"
+                onClick={() => onAdd({ ...product, qty, size })}
+                className="flex-1 px-4 py-3 rounded-xl bg-rose-600 text-white font-bold flex items-center justify-center gap-2"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 เพิ่มลงตะกร้า
               </button>
 
               <button
-                onClick={() => { /* buy now placeholder */ }}
+                onClick={() => { /* buy now */ }}
                 className="px-4 py-3 rounded-xl bg-amber-500 text-white font-bold"
               >
                 ซื้อทันที
@@ -196,8 +307,17 @@ export default function ProductDetailPage({ onAdd = () => {}, onFavorite = () =>
         <h3 className="text-lg font-semibold mb-4">สินค้าที่เกี่ยวข้อง</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {related.map((r) => (
-            <ProductCard key={r.id} p={r} onAdd={() => onAdd(r)} onFavorite={() => onFavorite(r)} isFavorite={(favorites || []).some(f=>f.id===r.id)} />
+            <ProductCard
+              key={r.id}
+              p={r}
+              onAdd={() => onAdd(r)}
+              onFavorite={() => onFavorite(r)}
+              isFavorite={(favorites || []).some((f) => f.id === r.id)}
+            />
           ))}
+          {related.length === 0 && (
+            <div className="text-slate-500 col-span-full">ไม่มีสินค้าที่เกี่ยวข้อง</div>
+          )}
         </div>
       </div>
     </section>

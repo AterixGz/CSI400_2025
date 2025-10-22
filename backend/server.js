@@ -32,6 +32,7 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+app.use(cors({ origin: true }));
 // Middleware สำหรับแปลง body เป็น JSON
 app.use(express.json());
 app.use(cors({

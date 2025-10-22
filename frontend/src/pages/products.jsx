@@ -1,11 +1,11 @@
 // ...existing code...
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import SidebarFilters from "../components/sidebarFilter";
 import ProductCard from "../components/ProductCard";
-import { PRODUCTS } from "../data/seed-list";
 
-const baht = (n) => `฿${n.toLocaleString("th-TH")}`;
-const stars = (value = 0) => `${value.toFixed(1)}`;
+
+const baht = (n) => `฿${Number(n ?? 0).toLocaleString("th-TH")}`;
+const stars = (value = 0) => `${Number(value ?? 0).toFixed(1)}`;
 
 const Icon = {
   ChevronDown: ({ className = "" }) => (
@@ -33,7 +33,7 @@ const Icon = {
   ),
 };
 
-function ProductsHeader({ count, view, setView }) {
+function ProductsHeader({ count, view, setView, sort, setSort }) {
   return (
     <div className="flex items-center justify-between">
       <div>
@@ -42,11 +42,15 @@ function ProductsHeader({ count, view, setView }) {
       </div>
       <div className="flex items-center gap-3">
         <div className="relative">
-          <select className="appearance-none bg-white border border-slate-200 rounded-lg pl-3 pr-8 py-2 text-sm">
-            <option>สินค้าใหม่ล่าสุด</option>
-            <option>ราคาต่ำไปสูง</option>
-            <option>ราคาสูงไปต่ำ</option>
-            <option>เรตติ้งสูงสุด</option>
+          <select
+            value={sort}
+            onChange={(e)=>setSort(e.target.value)}
+            className="appearance-none bg-white border border-slate-200 rounded-lg pl-3 pr-8 py-2 text-sm"
+          >
+            <option value="newest">สินค้าใหม่ล่าสุด</option>
+            <option value="price_asc">ราคาต่ำไปสูง</option>
+            <option value="price_desc">ราคาสูงไปต่ำ</option>
+            {/* <option value="rating">เรตติ้งสูงสุด</option>  // ใช้ได้ถ้ามีคอลัมน์ rating */}
           </select>
           <Icon.ChevronDown className="w-4 h-4 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500" />
         </div>
@@ -63,51 +67,108 @@ function ProductsHeader({ count, view, setView }) {
   );
 }
 
+// ✅ แปลง row จาก API → รูปแบบที่ UI เดิมใช้อยู่
+function adaptProduct(row) {
+  return {
+    id: row.product_id,
+    name: row.product_name,
+    description: row.description,
+    price: Number(row.price),
+    stock: row.stock,
+    image: row.image_url,
+    createdAt: row.created_at,
+    category: { id: row.category_id, name: row.category_name },
+    audience: { id: row.audience_id, name: row.audience_name },
+    rating: 0,
+    reviews: 0,
+    colors: [],
+    compareAt: null,
+  };
+}
+
 export default function ProductsPage({ onAdd }) {
+  // ✅ hooks ทั้งหมดต้องอยู่ "ใน" component
   const [view, setView] = useState("grid");
-  const items = PRODUCTS; // สามารถต่อยอดกรอง/เรียงจริงได้ภายหลัง
+  const [sort, setSort] = useState("newest");
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
+
+  // ✅ useEffect เวอร์ชันเดียวพอ และเรียก /api ตรง ๆ
+  useEffect(() => {
+    let alive = true;
+
+    async function load() {
+      setLoading(true);
+      setErr("");
+      try {
+        const params = new URLSearchParams();
+        if (sort) params.set("sort", sort);
+
+        // ✅ เรียกแบบนี้ได้เลย เพราะเราตั้ง proxy ไว้ใน vite.config.js
+        const res = await fetch(`/api/products?${params.toString()}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const rows = await res.json();
+        const data = Array.isArray(rows) ? rows.map(adaptProduct) : [];
+        if (alive) setItems(data);
+      } catch (e) {
+        console.error(e);
+        if (alive) setErr("โหลดสินค้าล้มเหลว กรุณาลองใหม่");
+      } finally {
+        if (alive) setLoading(false);
+      }
+    }
+
+    load();
+    return () => { alive = false; };
+  }, [sort]);
 
   return (
     <section className="max-w-6xl mx-auto px-6 py-6">
-      <ProductsHeader count={items.length} view={view} setView={setView} />
+      <ProductsHeader count={items.length} view={view} setView={setView} sort={sort} setSort={setSort} />
 
       <div className="mt-6 flex gap-6">
         <SidebarFilters />
 
         <div className="flex-1">
-          {view === 'grid' ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-              {items.map((p) => (
-                <ProductCard key={p.id} p={p} onAdd={onAdd} />
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {items.map((p)=> (
-                <div key={p.id} className="flex gap-4 border rounded-2xl overflow-hidden">
-                  <img src={p.image} alt={p.name} className="w-60 h-44 object-cover" />
-                  <div className="flex-1 p-4 bg-[#e8fbfb]">
-                    <div className="font-bold text-lg">{p.name}</div>
-                    <div className="mt-1 text-sm text-slate-600">⭐ {stars(p.rating)} ({p.reviews})</div>
-                    <div className="mt-1 flex items-baseline gap-2">
-                      <div className="text-2xl font-extrabold">{baht(p.price)}</div>
-                      {p.compareAt && <del className="text-slate-500">{baht(p.compareAt)}</del>}
+          {loading && <div className="p-6">กำลังโหลดสินค้า…</div>}
+          {!loading && err && <div className="p-6 text-red-600">{err}</div>}
+
+          {!loading && !err && (
+            view === "grid" ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+                {items.map((p) => (
+                  <ProductCard key={p.id} p={p} onAdd={onAdd} />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {items.map((p)=> (
+                  <div key={p.id} className="flex gap-4 border rounded-2xl overflow-hidden">
+                    <img src={p.image} alt={p.name} className="w-60 h-44 object-cover" />
+                    <div className="flex-1 p-4 bg-[#e8fbfb]">
+                      <div className="font-bold text-lg">{p.name}</div>
+                      <div className="mt-1 text-sm text-slate-600">⭐ {stars(p.rating)} ({p.reviews})</div>
+                      <div className="mt-1 flex items-baseline gap-2">
+                        <div className="text-2xl font-extrabold">{baht(p.price)}</div>
+                        {p.compareAt && <del className="text-slate-500">{baht(p.compareAt)}</del>}
+                      </div>
+                      <div className="mt-2 flex items-center gap-2">
+                        <span className="text-slate-600 text-sm">สี:</span>
+                        {(p.colors || []).map((c, i) => (
+                          <span key={i} className="w-3.5 h-3.5 rounded-full border border-slate-300 inline-block" style={{ background: c }} />
+                        ))}
+                      </div>
+                      <button onClick={()=>onAdd(p)} className="mt-3 px-4 py-2 rounded-xl border border-slate-200 bg-white font-bold hover:bg-slate-50">เพิ่มลงตะกร้า</button>
                     </div>
-                    <div className="mt-2 flex items-center gap-2">
-                      <span className="text-slate-600 text-sm">สี:</span>
-                      {p.colors?.map((c, i) => (
-                        <span key={i} className="w-3.5 h-3.5 rounded-full border border-slate-300 inline-block" style={{ background: c }} />
-                      ))}
-                    </div>
-                    <button onClick={()=>onAdd(p)} className="mt-3 px-4 py-2 rounded-xl border border-slate-200 bg-white font-bold hover:bg-slate-50">เพิ่มลงตะกร้า</button>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )
           )}
         </div>
       </div>
     </section>
   );
 }
-// ...existing code...
