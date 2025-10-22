@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import bcrypt from "bcrypt";
 dotenv.config();
 import jwt from "jsonwebtoken";
 import express from "express";
@@ -17,8 +18,9 @@ router.post("/", async (req, res) => {
       return res.status(401).json({ success: false, message: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" });
     }
     const user = result.rows[0];
-    // เปรียบเทียบรหัสผ่าน (ยังไม่ใช้ hash)
-    if (user.password_hash !== password) {
+    // เปรียบเทียบรหัสผ่านด้วย bcrypt
+    const passwordMatch = await bcrypt.compare(password, user.password_hash);
+    if (!passwordMatch) {
       return res.status(401).json({ success: false, message: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" });
     }
     // สร้าง JWT token

@@ -12,6 +12,7 @@ import userRoutes from "./routes/userRoutes.js";
 import productsRouter from "./routes/products.js";
 import cors from 'cors';
 import dotenv from 'dotenv';
+import googleAuthRouter from './routes/googleAuth.js';
 
 dotenv.config();
 
@@ -40,17 +41,6 @@ app.use(cors({
 }));
 
 
-// Passport Google OAuth2 Strategy
-passport.use(new GoogleStrategy({
-  clientID: process.env.GOOGLE_CLIENT_ID,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: '/auth/google/callback'
-}, (accessToken, refreshToken, profile, done) => {
-  // สามารถบันทึก profile ลง database ได้ที่นี่
-  // ตัวอย่างการใช้ pool query:
-  // pool.query('INSERT INTO users(name, email) VALUES($1, $2) ON CONFLICT DO NOTHING', [profile.displayName, profile.emails[0].value]);
-  return done(null, profile);
-}));
 
 passport.serializeUser((user, done) => {
   done(null, user);
@@ -59,26 +49,6 @@ passport.deserializeUser((user, done) => {
   done(null, user);
 });
 
-// Route สำหรับเริ่ม Login ด้วย Google
-app.get('/auth/google',
-  passport.authenticate('google', { scope: ['profile', 'email'] })
-);
-
-// Callback route หลังจาก Google Auth
-app.get('/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: '/' }),
-  (req, res) => {
-    const googleUser = encodeURIComponent(JSON.stringify({
-      displayName: req.user.displayName,
-      email: req.user.emails?.[0]?.value
-    }));
-    res.redirect(`http://localhost:5173/login?googleUser=${googleUser}`);
-  }
-);
-
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 // เพิ่ม API สำหรับ Login
 app.use("/login", loginRouter);
@@ -91,6 +61,10 @@ app.use("/api/users", userRoutes);
 
 // ใช้งาน route /api/products
 app.use("/api/products", productsRouter);
+
+// ใช้งาน Google Auth routes
+app.use(googleAuthRouter);
+
 // ตัวอย่าง test query จาก DB
 app.get('/test-db', async (req, res) => {
   try {
@@ -102,7 +76,6 @@ app.get('/test-db', async (req, res) => {
     res.status(503).json({ error: 'DB not available', message: err.message });
   }
 });
-
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

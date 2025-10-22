@@ -2,6 +2,58 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
+  // Popup notification state
+  const [popup, setPopup] = useState("");
+  const [showingPopup, setShowingPopup] = useState(false);
+  const [popupProgress, setPopupProgress] = useState(100);
+  const popupDuration = 2000; // ms
+  // Show popup and persist to localStorage
+  const showPopup = (msg) => {
+    setPopup(msg);
+    setShowingPopup(true);
+    setPopupProgress(100);
+    localStorage.setItem("globalPopup", msg);
+    window.dispatchEvent(new Event("globalPopup"));
+    const interval = 20;
+    let elapsed = 0;
+    const timer = setInterval(() => {
+      elapsed += interval;
+      setPopupProgress(Math.max(0, 100 - (elapsed / popupDuration) * 100));
+      if (elapsed >= popupDuration) {
+        clearInterval(timer);
+        setShowingPopup(false);
+        localStorage.removeItem("globalPopup");
+      }
+    }, interval);
+  };
+
+  // Listen for global popup event (for route changes)
+  useEffect(() => {
+    const handler = () => {
+      const msg = localStorage.getItem("globalPopup");
+      if (msg) {
+        setPopup(msg);
+        setShowingPopup(true);
+        setPopupProgress(100);
+        const interval = 20;
+        let elapsed = 0;
+        const timer = setInterval(() => {
+          elapsed += interval;
+          setPopupProgress(Math.max(0, 100 - (elapsed / popupDuration) * 100));
+          if (elapsed >= popupDuration) {
+            clearInterval(timer);
+            setShowingPopup(false);
+            localStorage.removeItem("globalPopup");
+          }
+        }, interval);
+      }
+    };
+    window.addEventListener("globalPopup", handler);
+    // On mount, check if popup exists
+    const msg = localStorage.getItem("globalPopup");
+    if (msg) handler();
+    return () => window.removeEventListener("globalPopup", handler);
+  }, []);
   const [registerData, setRegisterData] = useState({
     username: "",
     lastname: "",
@@ -26,6 +78,17 @@ export default function LoginPage() {
       setMessage("❌ อีเมลไม่ถูกต้อง");
       return;
     }
+    if (!/^0\d{9}$/.test(registerData.number)) {
+      setMessage("❌ เบอร์โทรศัพท์ต้องขึ้นต้นด้วย 0 และมี 10 หลัก");
+      return;
+    }
+    // Prevent future birthdate
+    const today = new Date();
+    const birthdate = new Date(registerData.birthdate);
+    if (registerData.birthdate && birthdate > today) {
+      setMessage("❌ วันเกิดต้องเป็นวันในอดีต");
+      return;
+    }
     if (registerData.password !== registerData.confirmPassword) {
       setMessage("❌ รหัสผ่านไม่ตรงกัน");
       return;
@@ -39,8 +102,18 @@ export default function LoginPage() {
       const data = await res.json();
       if (res.ok && data.success) {
         setRegisterSuccess(true);
-        setMessage("✅ สมัครสมาชิกสำเร็จ");
-        setTimeout(() => navigate("/"), 800);
+        showPopup("✅ สมัครสมาชิกสำเร็จ");
+        // Save user info to localStorage and redirect to profile page
+        if (data.user) {
+          localStorage.setItem("user", JSON.stringify(data.user));
+          localStorage.setItem("token", data.token || "");
+          window.dispatchEvent(new Event("authChange"));
+          setTimeout(() => {
+            navigate("/profile");
+          }, 800);
+        } else {
+          setTimeout(() => navigate("/"), 800);
+        }
       } else {
         setMessage("❌ " + (data.message || "สมัครสมาชิกไม่สำเร็จ"));
       }
@@ -61,12 +134,9 @@ export default function LoginPage() {
     const googleUser = params.get("googleUser");
     if (googleUser) {
       const userObj = JSON.parse(decodeURIComponent(googleUser));
-      setLoggedIn(true);
-      setUser({ username: userObj.displayName || userObj.email, role: "google" });
-      localStorage.setItem("user", JSON.stringify({ username: userObj.displayName || userObj.email, role: "google" }));
-      localStorage.setItem("token", "google-oauth");
-      window.history.replaceState({}, document.title, window.location.pathname); // ลบ query string
-      navigate("/profile");
+      localStorage.setItem("user", JSON.stringify(userObj));
+      // redirect ไปหน้าโปรไฟล์หรือรีโหลด
+      window.location.href = "/profile";
     }
   }, []);
   const [mode, setMode] = useState("login"); // 'login' | 'register'
@@ -113,260 +183,269 @@ export default function LoginPage() {
 
   
   return (
-    <section className="min-h-[80vh] flex items-center justify-center py-12 px-4">
-      <div className="w-full max-w-xl">
-        <div
-          className="bg-white/80 rounded-2xl shadow-xl p-8"
-          style={{ background: "rgba(255, 255, 255)" }}
-        >
-          {loggedIn ? (
-            <div className="text-center">
-              <h2 className="text-2xl font-extrabold text-green-700 mb-4">
-                เข้าสู่ระบบแล้วจ้า
-              </h2>
-              <div className="mb-4">
-                สวัสดีคุณ <span className="font-bold">{user?.username}</span> (
-                {user?.role})
-              </div>
-              <button
-                className="bg-red-600 text-white rounded-lg py-2 px-6 font-bold"
-                onClick={() => {
-                  setLoggedIn(false);
-                  setUser(null);
-                  setEmail("");
-                  setPassword("");
-                  localStorage.removeItem("token");
-                  localStorage.removeItem("user");
-                  window.dispatchEvent(new Event("authChange"));
-                }}
-              >
-                Logout
-              </button>
-            </div>
-          ) : (
-            <>
-              <h2 className="text-2xl text-center font-extrabold text-slate-800">
-                {mode === "login" ? "เข้าสู่ระบบ" : "สมัครสมาชิก"}
-              </h2>
-              <p className="text-center text-slate-600 mt-2">
-                {mode === "login"
-                  ? "เข้าสู่บัญชีของคุณเพื่อเริ่มช้อปปิ้ง"
-                  : "สร้างบัญชีใหม่เพื่อเริ่มช้อปปิ้งกับเรา"}
-              </p>
-              {mode === "register" ? (
-                <form className="mt-6 space-y-4" onSubmit={handleRegister}>
-                  <div className="grid grid-cols-2 gap-3">
-                    <label className="block">
-                      <div className="text-sm text-slate-700 mb-1">ชื่อ</div>
-                      <input
-                        className="w-full rounded-lg border px-3 py-3 bg-white/80"
-                        placeholder="ชื่อ"
-                        value={registerData.username}
-                        onChange={e => setRegisterData({ ...registerData, username: e.target.value })}
-                      />
-                    </label>
-                    <label className="block">
-                      <div className="text-sm text-slate-700 mb-1">นามสกุล</div>
-                      <input
-                        className="w-full rounded-lg border px-3 py-3 bg-white/80"
-                        placeholder="นามสกุล"
-                        value={registerData.lastname}
-                        onChange={e => setRegisterData({ ...registerData, lastname: e.target.value })}
-                      />
-                    </label>
-                  </div>
-                  <label className="block">
-                    <div className="text-sm text-slate-700 mb-1">วันเกิด</div>
-                    <input
-                      type="date"
-                      className="w-full rounded-lg border px-3 py-3 bg-white/80"
-                      value={registerData.birthdate}
-                      onChange={e => setRegisterData({ ...registerData, birthdate: e.target.value })}
-                    />
-                  </label>
-                  <label className="block">
-                    <div className="text-sm text-slate-700 mb-1">เพศ</div>
-                    <select
-                      className="w-full rounded-lg border px-3 py-3 bg-white/80"
-                      value={registerData.gender}
-                      onChange={e => setRegisterData({ ...registerData, gender: e.target.value })}
-                    >
-                      <option value="">เลือกเพศ</option>
-                      <option value="male">ชาย</option>
-                      <option value="female">หญิง</option>
-                      <option value="other">อื่นๆ</option>
-                    </select>
-                  </label>
-                  <label className="block">
-                    <div className="text-sm text-slate-700 mb-1">อีเมล</div>
-                    <input
-                      className="w-full rounded-lg border px-3 py-3 bg-white/80"
-                      placeholder="กรอกอีเมลของคุณ"
-                      value={registerData.email}
-                      onChange={e => setRegisterData({ ...registerData, email: e.target.value })}
-                    />
-                  </label>
-                  <label className="block">
-                    <div className="text-sm text-slate-700 mb-1">เบอร์โทรศัพท์</div>
-                    <input
-                      type="tel"
-                      className="w-full rounded-lg border px-3 py-3 bg-white/80"
-                      placeholder="0XX-XXX-XXXX"
-                      value={registerData.number}
-                      maxLength={10}
-                      pattern="\d{10}"
-                      onChange={e => {
-                        const value = e.target.value.replace(/\D/g, "");
-                        setRegisterData({ ...registerData, number: value });
-                      }}
-                    />
-                  </label>
-                  <label className="block">
-                    <div className="text-sm text-slate-700 mb-1">รหัสผ่าน</div>
-                    <input
-                      type="password"
-                      className="w-full rounded-lg border px-3 py-3 bg-white/80"
-                      placeholder="สร้างรหัสผ่าน"
-                      value={registerData.password}
-                      onChange={e => setRegisterData({ ...registerData, password: e.target.value })}
-                    />
-                  </label>
-                  <label className="block">
-                    <div className="text-sm text-slate-700 mb-1">ยืนยันรหัสผ่าน</div>
-                    <input
-                      type="password"
-                      className="w-full rounded-lg border px-3 py-3 bg-white/80"
-                      placeholder="ยืนยันรหัสผ่าน"
-                      value={registerData.confirmPassword}
-                      onChange={e => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
-                    />
-                  </label>
-                  <label className="inline-flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={acceptedTerms} onChange={(e) => setAcceptedTerms(e.target.checked)} />
-                    <span className="text-slate-600">ฉันยอมรับ <a className="text-teal-700 underline">ข้อกำหนดและเงื่อนไข</a> และ <a className="text-teal-700 underline">นโยบายความเป็นส่วนตัว</a></span>
-                  </label>
-                  <label className="inline-flex items-center gap-2 text-sm">
-                    <input type="checkbox" />
-                    <span className="text-slate-600">รับข่าวสารและโปรโมชั่นพิเศษทางอีเมล</span>
-                  </label>
-                  {message && (
-                    <div className="text-center text-red-600 text-sm mb-2">{message}</div>
-                  )}
-                  {!registerSuccess && (
-                    <>
-                      <button type="submit" disabled={!acceptedTerms} className={`w-full rounded-lg py-3 font-bold ${acceptedTerms ? 'bg-black text-white' : 'bg-slate-200 text-slate-500 cursor-not-allowed'}`}>สมัครสมาชิก</button>
-                      <div className="text-center text-sm text-slate-600">มีบัญชีอยู่แล้ว? <button type="button" onClick={()=>{ setMode("login"); setMessage(""); }} className="text-teal-700 underline">เข้าสู่ระบบ</button></div>
-                    </>
-                  )}
-                  {registerSuccess && (
-                    <div className="text-center mt-4">
-                      <button type="button" className="bg-green-600 text-white rounded-lg px-6 py-2 font-bold" onClick={() => { setMode("login"); setMessage(""); setRegisterSuccess(false); }}>ไปหน้าเข้าสู่ระบบ</button>
-                    </div>
-                  )}
-                </form>
-              ) : (
-                <form
-                  className="mt-6 space-y-4"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleLogin();
+    <>
+      <section className="min-h-[80vh] flex items-center justify-center py-12 px-4">
+        <div className="w-full max-w-xl">
+          <div
+            className="bg-white/80 rounded-2xl shadow-xl p-8"
+            style={{ background: "rgba(255, 255, 255)" }}
+          >
+            {loggedIn ? (
+              <div className="text-center">
+                <h2 className="text-2xl font-extrabold text-green-700 mb-4">
+                  เข้าสู่ระบบแล้วจ้า
+                </h2>
+                <div className="mb-4">
+                  สวัสดีคุณ <span className="font-bold">{user?.username}</span> (
+                  {user?.role})
+                </div>
+                <button
+                  className="bg-red-600 text-white rounded-lg py-2 px-6 font-bold"
+                  onClick={() => {
+                    setLoggedIn(false);
+                    setUser(null);
+                    setEmail("");
+                    setPassword("");
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("user");
+                    window.dispatchEvent(new Event("authChange"));
                   }}
                 >
-                  <label className="block">
-                    <div className="text-sm text-slate-700 mb-1">
-                      อีเมล
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <>
+                <h2 className="text-2xl text-center font-extrabold text-slate-800">
+                  {mode === "login" ? "เข้าสู่ระบบ" : "สมัครสมาชิก"}
+                </h2>
+                <p className="text-center text-slate-600 mt-2">
+                  {mode === "login"
+                    ? "เข้าสู่บัญชีของคุณเพื่อเริ่มช้อปปิ้ง"
+                    : "สร้างบัญชีใหม่เพื่อเริ่มช้อปปิ้งกับเรา"}
+                </p>
+                {mode === "register" ? (
+                  <form className="mt-6 space-y-4" onSubmit={handleRegister}>
+                    <div className="grid grid-cols-2 gap-3">
+                      <label className="block">
+                        <div className="text-sm text-slate-700 mb-1">ชื่อ</div>
+                        <input
+                          className="w-full rounded-lg border px-3 py-3 bg-white/80"
+                          placeholder="ชื่อ"
+                          value={registerData.username}
+                          onChange={e => setRegisterData({ ...registerData, username: e.target.value })}
+                        />
+                      </label>
+                      <label className="block">
+                        <div className="text-sm text-slate-700 mb-1">นามสกุล</div>
+                        <input
+                          className="w-full rounded-lg border px-3 py-3 bg-white/80"
+                          placeholder="นามสกุล"
+                          value={registerData.lastname}
+                          onChange={e => setRegisterData({ ...registerData, lastname: e.target.value })}
+                        />
+                      </label>
                     </div>
-                    <input
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full rounded-lg border px-3 py-3 bg-white/80"
-                      placeholder="กรอกอีเมลของคุณ"
-                      type="email"
-                    />
-                  </label>
-                  <label className="block">
-                    <div className="text-sm text-slate-700 mb-1">รหัสผ่าน</div>
-                    <input
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      type="password"
-                      className="w-full rounded-lg border px-3 py-3 bg-white/80"
-                      placeholder="กรอกรหัสผ่านของคุณ"
-                    />
-                  </label>
-                  {message && (
-                    <div className="text-center text-red-600 text-sm mb-2">
-                      {message}
-                    </div>
-                  )}
-                  <div className="flex items-center justify-between text-sm">
-                    <label className="inline-flex items-center gap-2 text-slate-600">
-                      <input type="checkbox" /> จดจำการเข้าสู่ระบบ
+                    <label className="block">
+                      <div className="text-sm text-slate-700 mb-1">วันเกิด</div>
+                      <input
+                        type="date"
+                        className="w-full rounded-lg border px-3 py-3 bg-white/80"
+                        value={registerData.birthdate}
+                        max={new Date().toISOString().split('T')[0]}
+                        onChange={e => setRegisterData({ ...registerData, birthdate: e.target.value })}
+                      />
                     </label>
-                    <Link to="#" className="text-teal-700 underline">
-                      ลืมรหัสผ่าน?
-                    </Link>
-                  </div>
-                  <button
-                    type="submit"
-                    className="w-full bg-black text-white rounded-lg py-3 font-bold"
-                  >
-                    เข้าสู่ระบบ
-                  </button>
-                  <div className="flex items-center gap-3 my-4">
-                    <div className="flex-1 h-px bg-slate-200" />
-                    <div className="text-sm text-slate-500">หรือ</div>
-                    <div className="flex-1 h-px bg-slate-200" />
-                  </div>
-                  <button
-                    type="button"
-                    className="w-full border rounded-lg py-3 flex items-center justify-center gap-3"
-                    onClick={() => {
-                      window.location.href =
-                        "http://localhost:3000/auth/google";
+                    <label className="block">
+                      <div className="text-sm text-slate-700 mb-1">เพศ</div>
+                      <select
+                        className="w-full rounded-lg border px-3 py-3 bg-white/80"
+                        value={registerData.gender}
+                        onChange={e => setRegisterData({ ...registerData, gender: e.target.value })}
+                      >
+                        <option value="">เลือกเพศ</option>
+                        <option value="male">ชาย</option>
+                        <option value="female">หญิง</option>
+                        <option value="other">อื่นๆ</option>
+                      </select>
+                    </label>
+                    <label className="block">
+                      <div className="text-sm text-slate-700 mb-1">อีเมล</div>
+                      <input
+                        className="w-full rounded-lg border px-3 py-3 bg-white/80"
+                        placeholder="กรอกอีเมลของคุณ"
+                        value={registerData.email}
+                        onChange={e => setRegisterData({ ...registerData, email: e.target.value })}
+                      />
+                    </label>
+                    <label className="block">
+                      <div className="text-sm text-slate-700 mb-1">เบอร์โทรศัพท์</div>
+                      <input
+                        type="tel"
+                        className="w-full rounded-lg border px-3 py-3 bg-white/80"
+                        placeholder="0XX-XXX-XXXX"
+                        value={registerData.number}
+                        maxLength={10}
+                        pattern="\d{10}"
+                        onChange={e => {
+                          const value = e.target.value.replace(/\D/g, "");
+                          setRegisterData({ ...registerData, number: value });
+                        }}
+                      />
+                    </label>
+                    <label className="block">
+                      <div className="text-sm text-slate-700 mb-1">รหัสผ่าน</div>
+                      <input
+                        type="password"
+                        className="w-full rounded-lg border px-3 py-3 bg-white/80"
+                        placeholder="สร้างรหัสผ่าน"
+                        value={registerData.password}
+                        onChange={e => setRegisterData({ ...registerData, password: e.target.value })}
+                      />
+                    </label>
+                    <label className="block">
+                      <div className="text-sm text-slate-700 mb-1">ยืนยันรหัสผ่าน</div>
+                      <input
+                        type="password"
+                        className="w-full rounded-lg border px-3 py-3 bg-white/80"
+                        placeholder="ยืนยันรหัสผ่าน"
+                        value={registerData.confirmPassword}
+                        onChange={e => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
+                      />
+                    </label>
+                    <label className="inline-flex items-center gap-2 text-sm">
+                      <input type="checkbox" checked={acceptedTerms} onChange={(e) => setAcceptedTerms(e.target.checked)} />
+                      <span className="text-slate-600">ฉันยอมรับ <a className="text-teal-700 underline">ข้อกำหนดและเงื่อนไข</a> และ <a className="text-teal-700 underline">นโยบายความเป็นส่วนตัว</a></span>
+                    </label>
+                    <label className="inline-flex items-center gap-2 text-sm">
+                      <input type="checkbox" />
+                      <span className="text-slate-600">รับข่าวสารและโปรโมชั่นพิเศษทางอีเมล</span>
+                    </label>
+                    {message && (
+                      <div className="text-center text-red-600 text-sm mb-2">{message}</div>
+                    )}
+                    {!registerSuccess && (
+                      <>
+                        <button type="submit" disabled={!acceptedTerms} className={`w-full rounded-lg py-3 font-bold ${acceptedTerms ? 'bg-black text-white' : 'bg-slate-200 text-slate-500 cursor-not-allowed'}`}>สมัครสมาชิก</button>
+                        <div className="text-center text-sm text-slate-600">มีบัญชีอยู่แล้ว? <button type="button" onClick={()=>{ setMode("login"); setMessage(""); }} className="text-teal-700 underline">เข้าสู่ระบบ</button></div>
+                      </>
+                    )}
+                  </form>
+                ) : (
+                  <form
+                    className="mt-6 space-y-4"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleLogin();
                     }}
                   >
-                    <span className="w-5 h-5 bg-white rounded-full grid place-items-center">
-                      G
-                    </span>{" "}
-                    เข้าสู่ระบบด้วย Google
-                  </button>
-                  <button
-                    type="button"
-                    className="w-full border rounded-lg py-3 flex items-center justify-center gap-3"
-                  >
-                    <span className="w-5 h-5 bg-white rounded-full grid place-items-center">
-                      f
-                    </span>{" "}
-                    เข้าสู่ระบบด้วย Facebook
-                  </button>
-                  <div className="text-center text-sm text-slate-600">
-                    ยังไม่มีบัญชี?{" "}
+                    <label className="block">
+                      <div className="text-sm text-slate-700 mb-1">
+                        อีเมล
+                      </div>
+                      <input
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full rounded-lg border px-3 py-3 bg-white/80"
+                        placeholder="กรอกอีเมลของคุณ"
+                        type="email"
+                      />
+                    </label>
+                    <label className="block">
+                      <div className="text-sm text-slate-700 mb-1">รหัสผ่าน</div>
+                      <input
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        type="password"
+                        className="w-full rounded-lg border px-3 py-3 bg-white/80"
+                        placeholder="กรอกรหัสผ่านของคุณ"
+                      />
+                    </label>
+                    {message && (
+                      <div className="text-center text-red-600 text-sm mb-2">
+                        {message}
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between text-sm">
+                      <label className="inline-flex items-center gap-2 text-slate-600">
+                        <input type="checkbox" /> จดจำการเข้าสู่ระบบ
+                      </label>
+                      <Link to="#" className="text-teal-700 underline">
+                        ลืมรหัสผ่าน?
+                      </Link>
+                    </div>
+                    <button
+                      type="submit"
+                      className="w-full bg-black text-white rounded-lg py-3 font-bold"
+                    >
+                      เข้าสู่ระบบ
+                    </button>
+                    <div className="flex items-center gap-3 my-4">
+                      <div className="flex-1 h-px bg-slate-200" />
+                      <div className="text-sm text-slate-500">หรือ</div>
+                      <div className="flex-1 h-px bg-slate-200" />
+                    </div>
                     <button
                       type="button"
+                      className="w-full border rounded-lg py-3 flex items-center justify-center gap-3"
                       onClick={() => {
-                        setMode("register");
-                        setRegisterData({
-                          username: "",
-                          lastname: "",
-                          password: "",
-                          confirmPassword: "",
-                          number: "",
-                          email: "",
-                        });
-                        setMessage("");
+                        window.location.href =
+                          "http://localhost:3000/auth/google";
                       }}
-                      className="text-teal-700 underline"
                     >
-                      สมัครสมาชิก
+                      <span className="w-5 h-5 bg-white rounded-full grid place-items-center">
+                        G
+                      </span>{" "}
+                      เข้าสู่ระบบด้วย Google
                     </button>
-                  </div>
-                </form>
-              )}
-            </>
-          )}
+                    <button
+                      type="button"
+                      className="w-full border rounded-lg py-3 flex items-center justify-center gap-3"
+                    >
+                      <span className="w-5 h-5 bg-white rounded-full grid place-items-center">
+                        f
+                      </span>{" "}
+                      เข้าสู่ระบบด้วย Facebook
+                    </button>
+                    <div className="text-center text-sm text-slate-600">
+                      ยังไม่มีบัญชี?{" "}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMode("register");
+                          setRegisterData({
+                            username: "",
+                            lastname: "",
+                            password: "",
+                            confirmPassword: "",
+                            number: "",
+                            email: "",
+                          });
+                          setMessage("");
+                        }}
+                        className="text-teal-700 underline"
+                      >
+                        สมัครสมาชิก
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </>
+            )}
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+      {/* Popup notification */}
+      {showingPopup && (
+        <div style={{position: 'fixed', right: 24, bottom: 24, zIndex: 50, transition: 'opacity 0.3s', opacity: 1, minWidth: 240}}>
+          <div className="bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg relative">
+            {popup}
+            <div style={{position: 'absolute', left: 0, bottom: 0, width: '100%', height: 4, background: 'rgba(255,255,255,0.3)'}}>
+              <div style={{height: '100%', width: `${popupProgress}%`, background: '#fff', transition: 'width 0.02s linear'}} />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

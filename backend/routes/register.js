@@ -1,4 +1,5 @@
 import express from "express";
+import bcrypt from "bcrypt";
 import pool from "../db.js";
 
 const router = express.Router();
@@ -20,12 +21,15 @@ router.post("/", async (req, res) => {
         return res.status(400).json({ success: false, message: "เบอร์โทรนี้ถูกใช้แล้ว" });
       }
     }
-    // เพิ่ม user ใหม่
-    const insertQuery = `INSERT INTO users (first_name, last_name, password_hash, phone_number, role, email, is_verified, created_at, date_of_birth, gender) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`;
-    const values = [username, lastname, password, number, role || "user", email, false, new Date(), birthdate, gender];
-    const result = await pool.query(insertQuery, values);
-    const newUser = result.rows[0];
-    res.json({ success: true, message: "สมัครสมาชิกสำเร็จ", user: newUser });
+  // Hash password with bcrypt
+  const saltRounds = 10;
+  const hashedPassword = await bcrypt.hash(password, saltRounds);
+  // เพิ่ม user ใหม่
+  const insertQuery = `INSERT INTO users (first_name, last_name, password_hash, phone_number, role, email, is_verified, created_at, date_of_birth, gender) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`;
+  const values = [username, lastname, hashedPassword, number, role || "user", email, false, new Date(), birthdate, gender];
+  const result = await pool.query(insertQuery, values);
+  const newUser = result.rows[0];
+  res.json({ success: true, message: "สมัครสมาชิกสำเร็จ", user: newUser });
   } catch (err) {
     console.error("Register error:", err);
     res.status(500).json({ success: false, message: "เกิดข้อผิดพลาดในการสมัครสมาชิก" });

@@ -50,24 +50,34 @@ export default function ProfilePage() {
     ? import.meta.env.VITE_API_BASE
     : 'http://localhost:3000';
 
+  const [isGoogleUser, setIsGoogleUser] = useState(false);
   useEffect(() => {
     // ดึงข้อมูล user จาก localStorage
     const user = localStorage.getItem("user");
     if (user) {
       const u = JSON.parse(user);
+      let name = "";
+      if (u.first_name && u.last_name) {
+        name = `${u.first_name} ${u.last_name}`;
+      } else if (u.first_name) {
+        name = u.first_name;
+      } else {
+        name = "-";
+      }
       setForm({
-        name: (u.first_name || "") + (u.last_name ? " " + u.last_name : ""),
+        name,
         email: u.email || "",
         phone: u.phone_number || "",
         address: u.address || ""
       });
       setSaved({
-        name: (u.first_name || "") + (u.last_name ? " " + u.last_name : ""),
+        name,
         email: u.email || "",
         phone: u.phone_number || "",
         address: u.address || ""
       });
       if (u.profile_image_url) setProfileImagePreview(u.profile_image_url);
+      setIsGoogleUser(u.password_hash === 'google');
     }
   }, []);
   const orders = [
@@ -315,6 +325,7 @@ export default function ProfilePage() {
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
                     className="w-full bg-slate-50 rounded-md p-3 border border-slate-200"
+                    disabled={isGoogleUser}
                   />
                 )}
               </div>
