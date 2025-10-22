@@ -9,12 +9,23 @@ export default function LoginPage() {
     confirmPassword: "",
     number: "",
     email: "",
+    birthdate: "",
+    gender: "",
   });
   const [registerSuccess, setRegisterSuccess] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const handleRegister = async (e) => {
     e.preventDefault();
     setMessage("");
     setRegisterSuccess(false);
+    if (!acceptedTerms) {
+      setMessage('กรุณายอมรับข้อกำหนดและเงื่อนไขก่อนสมัครสมาชิก');
+      return;
+    }
+    if (!validateEmail(registerData.email)) {
+      setMessage("❌ อีเมลไม่ถูกต้อง");
+      return;
+    }
     if (registerData.password !== registerData.confirmPassword) {
       setMessage("❌ รหัสผ่านไม่ตรงกัน");
       return;
@@ -67,7 +78,16 @@ export default function LoginPage() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
 
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s,;<>]+@[a-zA-Z0-9.-]+\.(com|net|co\.th|org|edu|gov|mil)$/;
+    return emailRegex.test(email);
+  };
+
   const handleLogin = async () => {
+    if (!validateEmail(email)) {
+      setMessage("❌ อีเมลไม่ถูกต้อง");
+      return;
+    }
     try {
       const res = await fetch("http://localhost:3000/login", {
         method: "POST",
@@ -156,6 +176,28 @@ export default function LoginPage() {
                     </label>
                   </div>
                   <label className="block">
+                    <div className="text-sm text-slate-700 mb-1">วันเกิด</div>
+                    <input
+                      type="date"
+                      className="w-full rounded-lg border px-3 py-3 bg-white/80"
+                      value={registerData.birthdate}
+                      onChange={e => setRegisterData({ ...registerData, birthdate: e.target.value })}
+                    />
+                  </label>
+                  <label className="block">
+                    <div className="text-sm text-slate-700 mb-1">เพศ</div>
+                    <select
+                      className="w-full rounded-lg border px-3 py-3 bg-white/80"
+                      value={registerData.gender}
+                      onChange={e => setRegisterData({ ...registerData, gender: e.target.value })}
+                    >
+                      <option value="">เลือกเพศ</option>
+                      <option value="male">ชาย</option>
+                      <option value="female">หญิง</option>
+                      <option value="other">อื่นๆ</option>
+                    </select>
+                  </label>
+                  <label className="block">
                     <div className="text-sm text-slate-700 mb-1">อีเมล</div>
                     <input
                       className="w-full rounded-lg border px-3 py-3 bg-white/80"
@@ -200,7 +242,7 @@ export default function LoginPage() {
                     />
                   </label>
                   <label className="inline-flex items-center gap-2 text-sm">
-                    <input type="checkbox" />
+                    <input type="checkbox" checked={acceptedTerms} onChange={(e) => setAcceptedTerms(e.target.checked)} />
                     <span className="text-slate-600">ฉันยอมรับ <a className="text-teal-700 underline">ข้อกำหนดและเงื่อนไข</a> และ <a className="text-teal-700 underline">นโยบายความเป็นส่วนตัว</a></span>
                   </label>
                   <label className="inline-flex items-center gap-2 text-sm">
@@ -212,7 +254,7 @@ export default function LoginPage() {
                   )}
                   {!registerSuccess && (
                     <>
-                      <button type="submit" className="w-full bg-black text-white rounded-lg py-3 font-bold">สมัครสมาชิก</button>
+                      <button type="submit" disabled={!acceptedTerms} className={`w-full rounded-lg py-3 font-bold ${acceptedTerms ? 'bg-black text-white' : 'bg-slate-200 text-slate-500 cursor-not-allowed'}`}>สมัครสมาชิก</button>
                       <div className="text-center text-sm text-slate-600">มีบัญชีอยู่แล้ว? <button type="button" onClick={()=>{ setMode("login"); setMessage(""); }} className="text-teal-700 underline">เข้าสู่ระบบ</button></div>
                     </>
                   )}
