@@ -1,41 +1,39 @@
-// ...existing code...
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getToken } from "../utils/api";
 import SidebarFilters from "../components/sidebarFilter";
 import ProductCard from "../components/ProductCard";
 
-
 const baht = (n) => `฿${Number(n ?? 0).toLocaleString("th-TH")}`;
 const stars = (value = 0) => `${Number(value ?? 0).toFixed(1)}`;
 
-const Icon = {
-  ChevronDown: ({ className = "" }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M6 9l6 6 6-6" />
-    </svg>
-  ),
-  Grid: ({ className = "" }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <rect x="3" y="3" width="8" height="8" />
-      <rect x="13" y="3" width="8" height="8" />
-      <rect x="3" y="13" width="8" height="8" />
-      <rect x="13" y="13" width="8" height="8" />
-    </svg>
-  ),
-  List: ({ className = "" }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M8 6h13" />
-      <path d="M8 12h13" />
-      <path d="M8 18h13" />
-      <circle cx="4" cy="6" r="1.5" />
-      <circle cx="4" cy="12" r="1.5" />
-      <circle cx="4" cy="18" r="1.5" />
-    </svg>
-  ),
-};
-
 function ProductsHeader({ count, view, setView, sort, setSort }) {
+  const Icon = {
+    ChevronDown: ({ className = "" }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M6 9l6 6 6-6" />
+      </svg>
+    ),
+    Grid: ({ className = "" }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="8" height="8" />
+        <rect x="13" y="3" width="8" height="8" />
+        <rect x="3" y="13" width="8" height="8" />
+        <rect x="13" y="13" width="8" height="8" />
+      </svg>
+    ),
+    List: ({ className = "" }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M8 6h13" />
+        <path d="M8 12h13" />
+        <path d="M8 18h13" />
+        <circle cx="4" cy="6" r="1.5" />
+        <circle cx="4" cy="12" r="1.5" />
+        <circle cx="4" cy="18" r="1.5" />
+      </svg>
+    ),
+  };
+
   return (
     <div className="flex items-center justify-between">
       <div>
@@ -52,15 +50,14 @@ function ProductsHeader({ count, view, setView, sort, setSort }) {
             <option value="newest">สินค้าใหม่ล่าสุด</option>
             <option value="price_asc">ราคาต่ำไปสูง</option>
             <option value="price_desc">ราคาสูงไปต่ำ</option>
-            {/* <option value="rating">เรตติ้งสูงสุด</option>  // ใช้ได้ถ้ามีคอลัมน์ rating */}
           </select>
           <Icon.ChevronDown className="w-4 h-4 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500" />
         </div>
         <div className="flex border border-slate-200 rounded-lg overflow-hidden">
-          <button onClick={()=>setView("grid")} className={`p-2 ${view==='grid'? 'bg-teal-700 text-white':'bg-white text-slate-700'}`} title="แบบกริด">
+          <button onClick={()=>setView("grid")} className={`p-2 ${view==='grid'? 'bg-teal-700 text-white':'bg-white text-slate-700'}`}>
             <Icon.Grid className="w-5 h-5" />
           </button>
-          <button onClick={()=>setView("list")} className={`p-2 ${view==='list'? 'bg-teal-700 text-white':'bg-white text-slate-700'}`} title="แบบลิสต์">
+          <button onClick={()=>setView("list")} className={`p-2 ${view==='list'? 'bg-teal-700 text-white':'bg-white text-slate-700'}`}>
             <Icon.List className="w-5 h-5" />
           </button>
         </div>
@@ -69,7 +66,6 @@ function ProductsHeader({ count, view, setView, sort, setSort }) {
   );
 }
 
-// ✅ แปลง row จาก API → รูปแบบที่ UI เดิมใช้อยู่
 function adaptProduct(row) {
   return {
     id: row.product_id,
@@ -83,13 +79,12 @@ function adaptProduct(row) {
     audience: { id: row.audience_id, name: row.audience_name },
     rating: 0,
     reviews: 0,
-    colors: [],
+    colors: row.colors || [],
     compareAt: null,
   };
 }
 
-export default function ProductsPage() {
-  // ✅ hooks ทั้งหมดต้องอยู่ "ใน" component
+export default function ProductsPage({ onAdd }) {
   const [view, setView] = useState("grid");
   const [sort, setSort] = useState("newest");
   const [items, setItems] = useState([]);
@@ -98,36 +93,44 @@ export default function ProductsPage() {
   const navigate = useNavigate();
   const token = getToken();
   const API_BASE = import.meta.env.VITE_API_BASE || window.__API_BASE__ || "http://localhost:3000";
+  const [filters, setFilters] = useState({ categories: [], prices: [], colors: [] });
 
-  // ✅ useEffect เวอร์ชันเดียวพอ และเรียก /api ตรง ๆ
   useEffect(() => {
     let alive = true;
-
     async function load() {
       setLoading(true);
       setErr("");
       try {
         const params = new URLSearchParams();
-        if (sort) params.set("sort", sort);
-
-        // ✅ เรียกแบบนี้ได้เลย เพราะเราตั้ง proxy ไว้ใน vite.config.js
+        if(sort) params.set("sort", sort);
+        if(filters.categories.length > 0) params.set("audience", filters.categories.join(","));
         const res = await fetch(`/api/products?${params.toString()}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
         const rows = await res.json();
-        const data = Array.isArray(rows) ? rows.map(adaptProduct) : [];
-        if (alive) setItems(data);
-      } catch (e) {
+        if(alive) setItems(Array.isArray(rows)? rows.map(adaptProduct):[]);
+      } catch(e) {
         console.error(e);
-        if (alive) setErr("โหลดสินค้าล้มเหลว กรุณาลองใหม่");
+        if(alive) setErr("โหลดสินค้าล้มเหลว กรุณาลองใหม่");
       } finally {
-        if (alive) setLoading(false);
+        if(alive) setLoading(false);
       }
     }
-
     load();
-    return () => { alive = false; };
-  }, [sort]);
+    return ()=>{alive=false;};
+  }, [sort, filters]);
+
+  // Filter products on frontend (ราคากรอง + สี)
+  const filteredItems = items.filter(p => {
+    const catMatch = !filters.categories.length || filters.categories.includes(p.audience.name);
+    const priceMatch = !filters.prices.length || filters.prices.some(pr => {
+      if(pr==="ต่ำกว่า ฿1,000") return p.price<1000;
+      if(pr==="฿1,000 - ฿2,000") return p.price>=1000 && p.price<=2000;
+      if(pr==="฿2,000 - ฿3,000") return p.price>2000 && p.price<=3000;
+      if(pr==="มากกว่า ฿3,000") return p.price>3000;
+      return false;
+    });
+    const colorMatch = !filters.colors.length || p.colors.some(c => filters.colors.includes(c));
+    return catMatch && priceMatch && colorMatch;
+  });
 
   // เพิ่มสินค้าเข้าตะกร้าและไปหน้า cart
   const handleAddToCart = async (product) => {
@@ -171,25 +174,26 @@ export default function ProductsPage() {
 
   return (
     <section className="max-w-6xl mx-auto px-6 py-6">
-      <ProductsHeader count={items.length} view={view} setView={setView} sort={sort} setSort={setSort} />
+      <ProductsHeader count={filteredItems.length} view={view} setView={setView} sort={sort} setSort={setSort} />
 
       <div className="mt-6 flex gap-6">
-        <SidebarFilters />
+        <SidebarFilters filters={filters} setFilters={setFilters} />
 
         <div className="flex-1">
           {loading && <div className="p-6">กำลังโหลดสินค้า…</div>}
           {!loading && err && <div className="p-6 text-red-600">{err}</div>}
 
           {!loading && !err && (
-            view === "grid" ? (
+            view==='grid' ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                 {items.map((p) => (
                   <ProductCard key={p.id} p={p} onAdd={handleAddToCart} />
                 ))}
+                {filteredItems.map(p=><ProductCard key={p.id} p={p} onAdd={onAdd} />)}
               </div>
             ) : (
               <div className="space-y-4">
-                {items.map((p)=> (
+                {filteredItems.map(p=>(
                   <div key={p.id} className="flex gap-4 border rounded-2xl overflow-hidden">
                     <img src={p.image} alt={p.name} className="w-60 h-44 object-cover" />
                     <div className="flex-1 p-4 bg-[#e8fbfb]">
@@ -201,8 +205,8 @@ export default function ProductsPage() {
                       </div>
                       <div className="mt-2 flex items-center gap-2">
                         <span className="text-slate-600 text-sm">สี:</span>
-                        {(p.colors || []).map((c, i) => (
-                          <span key={i} className="w-3.5 h-3.5 rounded-full border border-slate-300 inline-block" style={{ background: c }} />
+                        {(p.colors||[]).map((c,i)=>(
+                          <span key={i} className="w-3.5 h-3.5 rounded-full border border-slate-300 inline-block" style={{background:c}} />
                         ))}
                       </div>
                       <button onClick={()=>handleAddToCart(p)} className="mt-3 px-4 py-2 rounded-xl border border-slate-200 bg-white font-bold hover:bg-slate-50">เพิ่มลงตะกร้า</button>

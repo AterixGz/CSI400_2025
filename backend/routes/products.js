@@ -5,8 +5,9 @@ import pool from "../db.js";
 const router = express.Router();
 
 // ✅ ดึงสินค้าทั้งหมด + ชื่อหมวดหมู่/กลุ่มเป้าหมาย (พร้อมรองรับ sort เบื้องต้น)
+// routes/products.js
 router.get("/", async (req, res) => {
-  const { sort, category_id } = req.query;
+  const { sort, audience } = req.query; // เปลี่ยนจาก category_id เป็น audience
   const orderBy =
     sort === "price_asc" ? "p.price ASC" :
     sort === "price_desc" ? "p.price DESC" :
@@ -15,7 +16,14 @@ router.get("/", async (req, res) => {
   try {
     const values = [];
     const where = [];
-    if (category_id) { values.push(category_id); where.push(`p.category_id = $${values.length}`); }
+
+    // audience filter
+    if (audience) {
+      const list = audience.split(","); // e.g. "ผู้ชาย,ผู้หญิง"
+      const placeholders = list.map((_, i) => `$${i + 1}`).join(", ");
+      where.push(`a.name IN (${placeholders})`);
+      values.push(...list);
+    }
 
     const sql = `
       SELECT 
@@ -30,6 +38,7 @@ router.get("/", async (req, res) => {
       ORDER BY ${orderBy}
       LIMIT 50
     `;
+
     const { rows } = await pool.query(sql, values);
     res.json(rows);
   } catch (e) {
@@ -39,7 +48,7 @@ router.get("/", async (req, res) => {
 });
 
 
-// routes/products.js
+
 // routes/products.js
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
