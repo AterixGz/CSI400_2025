@@ -173,7 +173,7 @@ export default function Nav({
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            <p>อุปกรณ์เสริม</p>
+            <p>เสื้อผ้าเด็ก</p>
           </Link>
 
           <Link
