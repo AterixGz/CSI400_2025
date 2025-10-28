@@ -13,6 +13,7 @@ import productsRouter from "./routes/products.js";
 import cors from 'cors';
 import dotenv from 'dotenv';
 import googleAuthRouter from './routes/googleAuth.js';
+import cartRouter from './routes/cart.js';
 
 dotenv.config();
 
@@ -65,6 +66,9 @@ app.use("/api/products", productsRouter);
 
 // ใช้งาน Google Auth routes
 app.use(googleAuthRouter);
+
+// ใช้งาน Cart routes
+app.use('/cart', cartRouter);
 
 // ตัวอย่าง test query จาก DB
 app.get('/test-db', async (req, res) => {

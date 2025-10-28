@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
+import { getToken } from "../utils/api";
 import VYNE from "../assets/VYNE_tranparent_256.png";
+const API_BASE = import.meta.env.VITE_API_BASE || window.__API_BASE__ || "http://localhost:3000";
 
 export default function Nav({
   active,
-  cartCount,
   onSelect = () => {},
   onSearch = () => {},
 }) {
@@ -12,6 +13,7 @@ export default function Nav({
   const [query, setQuery] = useState("");
   const inputRef = useRef(null);
   const [user, setUser] = useState(null);
+  const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
     const readUser = () => {
@@ -22,13 +24,50 @@ export default function Nav({
         setUser(null);
       }
     };
-
     readUser();
     window.addEventListener("user:updated", readUser);
     window.addEventListener("storage", readUser);
     return () => {
       window.removeEventListener("user:updated", readUser);
       window.removeEventListener("storage", readUser);
+    };
+  }, []);
+
+  // sync cart count with cart page
+  useEffect(() => {
+    async function updateCartCount() {
+      const token = getToken();
+      if (token) {
+        try {
+          const res = await fetch(`${API_BASE}/cart`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const data = await res.json();
+          if (res.ok && data.items) {
+            setCartCount(data.items.reduce((sum, it) => sum + (it.qty || 1), 0));
+          } else {
+            setCartCount(0);
+          }
+        } catch {
+          setCartCount(0);
+        }
+      } else {
+        // guest: localStorage
+        try {
+          const raw = localStorage.getItem("cart_items");
+          const items = raw ? JSON.parse(raw) : [];
+          setCartCount(items.reduce((sum, it) => sum + (it.qty || 1), 0));
+        } catch {
+          setCartCount(0);
+        }
+      }
+    }
+    updateCartCount();
+    window.addEventListener("storage", updateCartCount);
+    window.addEventListener("cart:updated", updateCartCount);
+    return () => {
+      window.removeEventListener("storage", updateCartCount);
+      window.removeEventListener("cart:updated", updateCartCount);
     };
   }, []);
 

@@ -1,5 +1,7 @@
 // ...existing code...
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { getToken } from "../utils/api";
 import SidebarFilters from "../components/sidebarFilter";
 import ProductCard from "../components/ProductCard";
 
@@ -86,13 +88,16 @@ function adaptProduct(row) {
   };
 }
 
-export default function ProductsPage({ onAdd }) {
+export default function ProductsPage() {
   // ✅ hooks ทั้งหมดต้องอยู่ "ใน" component
   const [view, setView] = useState("grid");
   const [sort, setSort] = useState("newest");
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
+  const navigate = useNavigate();
+  const token = getToken();
+  const API_BASE = import.meta.env.VITE_API_BASE || window.__API_BASE__ || "http://localhost:3000";
 
   // ✅ useEffect เวอร์ชันเดียวพอ และเรียก /api ตรง ๆ
   useEffect(() => {
@@ -124,6 +129,46 @@ export default function ProductsPage({ onAdd }) {
     return () => { alive = false; };
   }, [sort]);
 
+  // เพิ่มสินค้าเข้าตะกร้าและไปหน้า cart
+  const handleAddToCart = async (product) => {
+    if (token) {
+      try {
+        const res = await fetch(`${API_BASE}/cart/items`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ product_id: product.id, quantity: 1 }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          navigate("/cart");
+        } else {
+          alert(data.error || "เพิ่มสินค้าไม่สำเร็จ");
+        }
+      } catch (e) {
+        alert("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
+      }
+    } else {
+      // guest: localStorage
+      const LS_KEY = "cart_items";
+      let cart = [];
+      try {
+        const raw = localStorage.getItem(LS_KEY);
+        cart = raw ? JSON.parse(raw) : [];
+      } catch { cart = []; }
+      const found = cart.find((it) => it.id === product.id);
+      if (found) {
+        cart = cart.map((it) => (it.id === product.id ? { ...it, qty: it.qty + 1 } : it));
+      } else {
+        cart = [...cart, { ...product, qty: 1 }];
+      }
+      localStorage.setItem(LS_KEY, JSON.stringify(cart));
+      navigate("/cart");
+    }
+  };
+
   return (
     <section className="max-w-6xl mx-auto px-6 py-6">
       <ProductsHeader count={items.length} view={view} setView={setView} sort={sort} setSort={setSort} />
@@ -139,7 +184,7 @@ export default function ProductsPage({ onAdd }) {
             view === "grid" ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                 {items.map((p) => (
-                  <ProductCard key={p.id} p={p} onAdd={onAdd} />
+                  <ProductCard key={p.id} p={p} onAdd={handleAddToCart} />
                 ))}
               </div>
             ) : (
@@ -160,7 +205,7 @@ export default function ProductsPage({ onAdd }) {
                           <span key={i} className="w-3.5 h-3.5 rounded-full border border-slate-300 inline-block" style={{ background: c }} />
                         ))}
                       </div>
-                      <button onClick={()=>onAdd(p)} className="mt-3 px-4 py-2 rounded-xl border border-slate-200 bg-white font-bold hover:bg-slate-50">เพิ่มลงตะกร้า</button>
+                      <button onClick={()=>handleAddToCart(p)} className="mt-3 px-4 py-2 rounded-xl border border-slate-200 bg-white font-bold hover:bg-slate-50">เพิ่มลงตะกร้า</button>
                     </div>
                   </div>
                 ))}
