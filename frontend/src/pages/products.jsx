@@ -149,6 +149,7 @@ export default function ProductsPage({ onAdd }) {
         const data = await res.json();
         if (res.ok && data.success) {
           toast.success("เพิ่มสินค้าลงตะกร้าสำเร็จ");
+          window.dispatchEvent(new Event("cart:updated"));
           navigate("/cart");
         } else {
           toast.error(data.error || "เพิ่มสินค้าไม่สำเร็จ");
