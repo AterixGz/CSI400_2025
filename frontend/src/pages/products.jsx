@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
 import { getToken } from "../utils/api";
 import SidebarFilters from "../components/sidebarFilter";
 import ProductCard from "../components/ProductCard";
@@ -146,29 +147,17 @@ export default function ProductsPage({ onAdd }) {
         });
         const data = await res.json();
         if (res.ok && data.success) {
+          toast.success("เพิ่มสินค้าลงตะกร้าสำเร็จ");
           navigate("/cart");
         } else {
-          alert(data.error || "เพิ่มสินค้าไม่สำเร็จ");
+          toast.error(data.error || "เพิ่มสินค้าไม่สำเร็จ");
         }
       } catch (e) {
-        alert("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
+        toast.error("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
       }
     } else {
-      // guest: localStorage
-      const LS_KEY = "cart_items";
-      let cart = [];
-      try {
-        const raw = localStorage.getItem(LS_KEY);
-        cart = raw ? JSON.parse(raw) : [];
-      } catch { cart = []; }
-      const found = cart.find((it) => it.id === product.id);
-      if (found) {
-        cart = cart.map((it) => (it.id === product.id ? { ...it, qty: it.qty + 1 } : it));
-      } else {
-        cart = [...cart, { ...product, qty: 1 }];
-      }
-      localStorage.setItem(LS_KEY, JSON.stringify(cart));
-      navigate("/cart");
+      toast.error("กรุณาเข้าสู่ระบบก่อนเพิ่มสินค้าลงตะกร้า");
+      navigate("/login");
     }
   };
 
