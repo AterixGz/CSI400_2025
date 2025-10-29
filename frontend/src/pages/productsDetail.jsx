@@ -77,43 +77,27 @@ export default function ProductDetailPage({
       return;
     }
     const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("กรุณาเข้าสู่ระบบก่อนเพิ่มสินค้าลงตะกร้า");
+      navigate("/login");
+      return;
+    }
     const cartItem = {
       product_id: product.id,
       quantity: qty,
       size: size,
     };
     try {
-      if (token) {
-        // Logged-in: เรียก API
-        const res = await api.post("/cart/items", cartItem, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.data.success) {
-          window.dispatchEvent(new Event("cart:updated"));
-          toast.success("เพิ่มสินค้าลงตะกร้าสำเร็จ");
-          navigate("/cart");
-        } else {
-          toast.error(res.data.error || "เกิดข้อผิดพลาด");
-        }
-      } else {
-        // Guest: localStorage
-        let cart = [];
-        try {
-          cart = JSON.parse(localStorage.getItem("cart") || "[]");
-        } catch {}
-        // ถ้ามีสินค้าเดียวกัน+size ให้บวกจำนวน
-        const idx = cart.findIndex(
-          (i) => i.product_id === product.id && i.size === size
-        );
-        if (idx >= 0) {
-          cart[idx].quantity += qty;
-        } else {
-          cart.push({ ...cartItem, name: product.name, price: product.price, image: product.image });
-        }
-        localStorage.setItem("cart", JSON.stringify(cart));
+      // Logged-in: เรียก API
+      const res = await api.post("/cart/items", cartItem, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.data.success) {
         window.dispatchEvent(new Event("cart:updated"));
         toast.success("เพิ่มสินค้าลงตะกร้าสำเร็จ");
         navigate("/cart");
+      } else {
+        toast.error(res.data.error || "เกิดข้อผิดพลาด");
       }
     } catch (e) {
       console.error("เพิ่มลงตะกร้าผิดพลาด", e);
