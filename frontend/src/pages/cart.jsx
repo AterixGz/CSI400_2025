@@ -81,6 +81,7 @@ export default function CartPage() {
     if (qty < 1) return;
     setLoading(true);
     setError("");
+    let updated = false;
     if (token) {
       // PATCH API
       try {
@@ -95,6 +96,7 @@ export default function CartPage() {
         const data = await res.json();
         if (res.ok && data.success) {
           setItems((cur) => cur.map((it) => (it.id === id ? { ...it, qty: qty } : it)));
+          updated = true;
         } else {
           setError(data.error || "แก้ไขจำนวนไม่สำเร็จ");
         }
@@ -104,14 +106,17 @@ export default function CartPage() {
     } else {
       // guest: localStorage
       setItems((cur) => cur.map((it) => (it.id === id ? { ...it, qty: qty } : it)));
+      updated = true;
     }
     setLoading(false);
+    if (updated) window.dispatchEvent(new Event("cart:updated"));
   };
 
   // Remove item handler
   const remove = async (id) => {
     setLoading(true);
     setError("");
+    let updated = false;
     if (token) {
       // DELETE API
       try {
@@ -122,6 +127,7 @@ export default function CartPage() {
         const data = await res.json();
         if (res.ok && data.success) {
           setItems((cur) => cur.filter((it) => it.id !== id));
+          updated = true;
         } else {
           setError(data.error || "ลบสินค้าไม่สำเร็จ");
         }
@@ -131,14 +137,17 @@ export default function CartPage() {
     } else {
       // guest: localStorage
       setItems((cur) => cur.filter((it) => it.id !== id));
+      updated = true;
     }
     setLoading(false);
+    if (updated) window.dispatchEvent(new Event("cart:updated"));
   };
 
   // Add item handler (for demo, not shown in UI)
   const addItem = async (product) => {
     setLoading(true);
     setError("");
+    let updated = false;
     if (token) {
       try {
         const res = await fetch(`${API_BASE}/cart/items`, {
@@ -157,6 +166,7 @@ export default function CartPage() {
           });
           const data2 = await res2.json();
           setItems(data2.items || []);
+          updated = true;
         } else {
           setError(data.error || "เพิ่มสินค้าไม่สำเร็จ");
         }
@@ -173,8 +183,10 @@ export default function CartPage() {
           return [...cur, { ...product, qty: 1 }];
         }
       });
+      updated = true;
     }
     setLoading(false);
+    if (updated) window.dispatchEvent(new Event("cart:updated"));
   };
 
   const subtotal = items.reduce((s, it) => s + (it.price || 0) * (it.qty || 1), 0);

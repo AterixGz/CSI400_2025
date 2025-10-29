@@ -23,52 +23,59 @@ export default function Nav({
       } catch (e) {
         setUser(null);
       }
+      updateCartCount(); // อัพเดต cartCount ทุกครั้งที่ user เปลี่ยน
     };
     readUser();
     window.addEventListener("user:updated", readUser);
     window.addEventListener("storage", readUser);
+    window.addEventListener("authChange", readUser);
     return () => {
       window.removeEventListener("user:updated", readUser);
       window.removeEventListener("storage", readUser);
+      window.removeEventListener("authChange", readUser);
     };
+    // eslint-disable-next-line
   }, []);
 
   // sync cart count with cart page
-  useEffect(() => {
-    async function updateCartCount() {
-      const token = getToken();
-      if (token) {
-        try {
-          const res = await fetch(`${API_BASE}/cart`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          const data = await res.json();
-          if (res.ok && data.items) {
-            setCartCount(data.items.reduce((sum, it) => sum + (it.qty || 1), 0));
-          } else {
-            setCartCount(0);
-          }
-        } catch {
-          setCartCount(0);
-        }
-      } else {
-        // guest: localStorage
-        try {
-          const raw = localStorage.getItem("cart_items");
-          const items = raw ? JSON.parse(raw) : [];
-          setCartCount(items.reduce((sum, it) => sum + (it.qty || 1), 0));
-        } catch {
-          setCartCount(0);
-        }
+  function updateCartCount() {
+    const token = getToken();
+    if (!token) {
+      // guest: localStorage (หลัง logout)
+      try {
+        const raw = localStorage.getItem("cart_items");
+        const items = raw ? JSON.parse(raw) : [];
+        setCartCount(items.reduce((sum, it) => sum + (it.qty || 1), 0));
+      } catch {
+        setCartCount(0);
       }
+      return;
     }
+    fetch(`${API_BASE}/cart`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.items) {
+          setCartCount(data.items.reduce((sum, it) => sum + (it.qty || 1), 0));
+        } else {
+          setCartCount(0);
+        }
+      })
+      .catch(() => setCartCount(0));
+  }
+
+  useEffect(() => {
     updateCartCount();
     window.addEventListener("storage", updateCartCount);
     window.addEventListener("cart:updated", updateCartCount);
+    window.addEventListener("authChange", updateCartCount);
     return () => {
       window.removeEventListener("storage", updateCartCount);
       window.removeEventListener("cart:updated", updateCartCount);
+      window.removeEventListener("authChange", updateCartCount);
     };
+    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
