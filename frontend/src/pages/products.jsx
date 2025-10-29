@@ -186,10 +186,9 @@ export default function ProductsPage({ onAdd }) {
           {!loading && !err && (
             view==='grid' ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-                {items.map((p) => (
+                {filteredItems.map((p) => (
                   <ProductCard key={p.id} p={p} onAdd={handleAddToCart} />
                 ))}
-                {filteredItems.map(p=><ProductCard key={p.id} p={p} onAdd={onAdd} />)}
               </div>
             ) : (
               <div className="space-y-4">
