@@ -104,6 +104,57 @@ export function setupAuthWatcher({ intervalSec = 60 } = {}) {
   };
 }
 
+// --- fetch API helpers ---
+export async function get(url, config = {}) {
+  const res = await fetch(BASE + url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      ...(config.headers || {}),
+    },
+  });
+  const json = await res.json();
+  return { data: json, status: res.status };
+}
+
+export async function post(url, data, config = {}) {
+  const res = await fetch(BASE + url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(config.headers || {}),
+    },
+    body: JSON.stringify(data),
+  });
+  const json = await res.json();
+  return { data: json, status: res.status };
+}
+
+export async function patch(url, data, config = {}) {
+  const res = await fetch(BASE + url, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...(config.headers || {}),
+    },
+    body: JSON.stringify(data),
+  });
+  const json = await res.json();
+  return { data: json, status: res.status };
+}
+
+export async function del(url, config = {}) {
+  const res = await fetch(BASE + url, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      ...(config.headers || {}),
+    },
+  });
+  const json = await res.json();
+  return { data: json, status: res.status };
+}
+
 export default {
   getToken,
   getUser,
@@ -111,4 +162,8 @@ export default {
   verifyTokenWithServer,
   logout,
   setupAuthWatcher,
+  get,
+  post,
+  patch,
+  del,
 };

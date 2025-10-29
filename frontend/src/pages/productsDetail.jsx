@@ -1,6 +1,8 @@
 // src/pages/ProductDetailPage.jsx
 import { useEffect, useState, useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
+import api from "../utils/api";
 import ProductCard from "../components/ProductCard";
 
 // ---------- utils ----------
@@ -53,6 +55,7 @@ export default function ProductDetailPage({
 }) {
   const { id } = useParams();              // "id" จาก URL (string)
   const numericId = useMemo(() => Number(id), [id]);
+  const navigate = useNavigate();
 
   const [product, setProduct] = useState(null);
   const [mainImage, setMainImage] = useState(null);
@@ -64,6 +67,59 @@ export default function ProductDetailPage({
   const [related, setRelated] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
+
+  // เพิ่มฟังก์ชันเพิ่มลงตะกร้าแบบ products.jsx
+  async function handleAddToCart() {
+    if (!product) return toast.error("ไม่พบข้อมูลสินค้า");
+    // ถ้าสินค้ามี size แต่ไม่ได้เลือก
+    if (product.sizes && !size) {
+      toast.error("กรุณาเลือกไซส์ก่อนเพิ่มลงตะกร้า");
+      return;
+    }
+    const token = localStorage.getItem("token");
+    const cartItem = {
+      product_id: product.id,
+      quantity: qty,
+      size: size,
+    };
+    try {
+      if (token) {
+        // Logged-in: เรียก API
+        const res = await api.post("/cart/items", cartItem, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.data.success) {
+          window.dispatchEvent(new Event("cart:updated"));
+          toast.success("เพิ่มสินค้าลงตะกร้าสำเร็จ");
+          navigate("/cart");
+        } else {
+          toast.error(res.data.error || "เกิดข้อผิดพลาด");
+        }
+      } else {
+        // Guest: localStorage
+        let cart = [];
+        try {
+          cart = JSON.parse(localStorage.getItem("cart") || "[]");
+        } catch {}
+        // ถ้ามีสินค้าเดียวกัน+size ให้บวกจำนวน
+        const idx = cart.findIndex(
+          (i) => i.product_id === product.id && i.size === size
+        );
+        if (idx >= 0) {
+          cart[idx].quantity += qty;
+        } else {
+          cart.push({ ...cartItem, name: product.name, price: product.price, image: product.image });
+        }
+        localStorage.setItem("cart", JSON.stringify(cart));
+        window.dispatchEvent(new Event("cart:updated"));
+        toast.success("เพิ่มสินค้าลงตะกร้าสำเร็จ");
+        navigate("/cart");
+      }
+    } catch (e) {
+      console.error("เพิ่มลงตะกร้าผิดพลาด", e);
+      toast.error(e?.response?.data?.error || "เกิดข้อผิดพลาด");
+    }
+  }
 
   // ✅ ดึงรายละเอียดสินค้า
   useEffect(() => {
@@ -231,7 +287,7 @@ export default function ProductDetailPage({
 
             <div className="flex-1 flex gap-3">
               <button
-                onClick={() => onAdd({ ...product, qty, size })}
+                onClick={handleAddToCart}
                 className="flex-1 px-4 py-3 rounded-xl bg-rose-600 text-white font-bold flex items-center justify-center gap-2"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
