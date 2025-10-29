@@ -1,3 +1,4 @@
+// frontend/src/components/navbar.jsx
 import { Link } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { getToken } from "../utils/api";
@@ -6,8 +7,8 @@ const API_BASE = import.meta.env.VITE_API_BASE || window.__API_BASE__ || "http:/
 
 export default function Nav({
   active,
-  onSelect = () => {},
-  onSearch = () => {},
+  onSelect = () => { },
+  onSearch = () => { },
 }) {
   const [showSearch, setShowSearch] = useState(false);
   const [query, setQuery] = useState("");
@@ -135,63 +136,44 @@ export default function Nav({
   return (
     <header className="sticky top-0 z-30 bg-white/100 ">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between relative">
-        <Link
-          to="/"
-          className="flex items-center gap-2 font-extrabold tracking-wide text-slate-900"
-        >
+        <Link to="/" className="flex items-center gap-2 font-extrabold tracking-wide text-slate-900">
           <img src={VYNE} alt="VYNE" className="w-17 h-14 object-contain" />
         </Link>
 
         {/* middle nav */}
         <nav className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-6">
           <Link
-            to="/"
-            onClick={() => onSelect("women")}
-            aria-current={active === "women" ? "page" : undefined}
-            className={`hover:text-slate-900 ${
-              active === "women"
-                ? "font-semibold text-black"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
+            to="/?audience=หญิง"
+            aria-current={active === "หญิง" ? "page" : undefined}
+            className={`hover:text-slate-900 ${active === "หญิง" ? "font-semibold text-black" : "text-slate-600 hover:text-slate-900"
+              }`}
           >
             <p>เสื้อผ้าผู้หญิง</p>
           </Link>
 
           <Link
-            to="/"
-            onClick={() => onSelect("men")}
-            aria-current={active === "men" ? "page" : undefined}
-            className={`hover:text-slate-900 ${
-              active === "men"
-                ? "font-semibold text-black"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
+            to="/?audience=ชาย"
+            aria-current={active === "ชาย" ? "page" : undefined}
+            className={`hover:text-slate-900 ${active === "ชาย" ? "font-semibold text-black" : "text-slate-600 hover:text-slate-900"
+              }`}
           >
             <p>เสื้อผ้าผู้ชาย</p>
           </Link>
 
           <Link
-            to="/"
-            onClick={() => onSelect("accessories")}
-            aria-current={active === "accessories" ? "page" : undefined}
-            className={`hover:text-slate-900 ${
-              active === "accessories"
-                ? "font-semibold text-black"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
+            to="/?audience=เด็ก"
+            aria-current={active === "เด็ก" ? "page" : undefined}
+            className={`hover:text-slate-900 ${active === "เด็ก" ? "font-semibold text-black" : "text-slate-600 hover:text-slate-900"
+              }`}
           >
             <p>เสื้อผ้าเด็ก</p>
           </Link>
 
           <Link
             to="/"
-            onClick={() => onSelect("sale")}
-            aria-current={active === "sale" ? "page" : undefined}
-            className={`hover:text-slate-900 ${
-              active === "sale"
-                ? "font-semibold text-black"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
+            aria-current={active === "ลดราคา" ? "page" : undefined}
+            className={`hover:text-slate-900 ${active === "ลดราคา" ? "font-semibold text-black" : "text-slate-600 hover:text-slate-900"
+              }`}
           >
             <p>ลดราคา</p>
           </Link>
@@ -270,12 +252,12 @@ export default function Nav({
               {cartCount}
             </span>
           </Link>
-            <Link
-              to="/admin/dashboard"
-              className="p-2 hover:text-slate-900 text-sm font-semibold"
-            >
-              Admin
-            </Link>
+          <Link
+            to="/admin/dashboard"
+            className="p-2 hover:text-slate-900 text-sm font-semibold"
+          >
+            Admin
+          </Link>
         </div>
       </div>
     </header>
