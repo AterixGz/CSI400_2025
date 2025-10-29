@@ -12,6 +12,7 @@ import Hero from "./pages/mainPage";
 import ProductDetailPage from "./pages/productsDetail";
 import LoginPage from "./pages/login";
 import { setupAuthWatcher } from "./utils/api";
+import { Toaster } from "react-hot-toast";
 import AdminDashboard from "./pages/admin/main";
 
 export default function App() {
@@ -50,6 +51,7 @@ export default function App() {
 
   return (
     <div className="text-slate-900 bg-white">
+      <Toaster position="top-right" />
       <SmallPromoNav />
       <Nav
         active={activeCat}
@@ -59,72 +61,15 @@ export default function App() {
       />
 
       <Routes>
-        <Route
-          path="/"
-          element={
-            <Hero
-              filtered={filtered}
-              onAdd={addToCart}
-              onViewAll={() => setRoute("products")}
-              onFavorite={(item) =>
-                setFavorites((cur) =>
-                  cur.some((f) => f.id === item.id)
-                    ? cur.filter((f) => f.id !== item.id)
-                    : [...cur, item]
-                )
-              }
-              favorites={favorites}
-            />
-          }
-        />
+        {/* ...existing routes... */}
+        <Route path="/" element={<Hero filtered={filtered} onAdd={addToCart} onViewAll={() => setRoute("products")} onFavorite={(item) => setFavorites((cur) => cur.some((f) => f.id === item.id) ? cur.filter((f) => f.id !== item.id) : [...cur, item])} favorites={favorites} />} />
         <Route path="/products" element={<ProductsPage onAdd={addToCart} />} />
-        <Route
-          path="/products/:id"
-          element={
-            <ProductDetailPage
-              onAdd={addToCart}
-              onFavorite={(item) =>
-                setFavorites((cur) =>
-                  cur.some((f) => f.id === item.id)
-                    ? cur.filter((f) => f.id !== item.id)
-                    : [...cur, item]
-                )
-              }
-              favorites={favorites}
-            />
-          }
-        />
+        <Route path="/products/:id" element={<ProductDetailPage onAdd={addToCart} onFavorite={(item) => setFavorites((cur) => cur.some((f) => f.id === item.id) ? cur.filter((f) => f.id !== item.id) : [...cur, item])} favorites={favorites} />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/login" element={<LoginPage />} />
-  <Route path="/admin/*" element={<AdminDashboard />} />
-        <Route
-          path="/cart"
-          element={
-            <CartPage
-              items={cart}
-              onChangeQty={changeQty}
-              onRemove={removeFromCart}
-            />
-          }
-        />
-        <Route
-          path="/favorites"
-          element={
-            <FavoriteProducts
-              favorites={favorites}
-              onRemove={(id) =>
-                setFavorites((cur) => cur.filter((f) => f.id !== id))
-              }
-              onFavorite={(item) =>
-                setFavorites((cur) =>
-                  cur.some((f) => f.id === item.id)
-                    ? cur.filter((f) => f.id !== item.id)
-                    : [...cur, item]
-                )
-              }
-            />
-          }
-        />
+        <Route path="/admin/*" element={<AdminDashboard />} />
+        <Route path="/cart" element={<CartPage items={cart} onChangeQty={changeQty} onRemove={removeFromCart} />} />
+        <Route path="/favorites" element={<FavoriteProducts favorites={favorites} onRemove={(id) => setFavorites((cur) => cur.filter((f) => f.id !== id))} onFavorite={(item) => setFavorites((cur) => cur.some((f) => f.id === item.id) ? cur.filter((f) => f.id !== item.id) : [...cur, item])} />} />
       </Routes>
 
       {/* Footer จะหายไปถ้า path เริ่มต้นด้วย /login */}
