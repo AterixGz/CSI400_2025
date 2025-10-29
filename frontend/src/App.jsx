@@ -14,6 +14,7 @@ import LoginPage from "./pages/login";
 import { setupAuthWatcher } from "./utils/api";
 import { Toaster } from "react-hot-toast";
 import AdminDashboard from "./pages/admin/main";
+import PaymentComplete from "./pages/paymentComplete";
 
 export default function App() {
   const location = useLocation();
@@ -70,6 +71,7 @@ export default function App() {
         <Route path="/admin/*" element={<AdminDashboard />} />
         <Route path="/cart" element={<CartPage items={cart} onChangeQty={changeQty} onRemove={removeFromCart} />} />
         <Route path="/favorites" element={<FavoriteProducts favorites={favorites} onRemove={(id) => setFavorites((cur) => cur.filter((f) => f.id !== id))} onFavorite={(item) => setFavorites((cur) => cur.some((f) => f.id === item.id) ? cur.filter((f) => f.id !== item.id) : [...cur, item])} />} />
+        <Route path="/payment/complete" element={<PaymentComplete />} />
       </Routes>
 
       {/* Footer จะหายไปถ้า path เริ่มต้นด้วย /login */}

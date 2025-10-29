@@ -14,6 +14,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import googleAuthRouter from './routes/googleAuth.js';
 import cartRouter from './routes/cart.js';
+import stripeRouter from './routes/stripe.js';
 
 dotenv.config();
 
@@ -69,6 +70,9 @@ app.use(googleAuthRouter);
 
 // ใช้งาน Cart routes
 app.use('/cart', cartRouter);
+
+// ใช้งาน Stripe routes
+app.use('/api/stripe', stripeRouter);
 
 // ตัวอย่าง test query จาก DB
 app.get('/test-db', async (req, res) => {

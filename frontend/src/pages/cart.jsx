@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { PRODUCTS } from "../data/seed-list";
 import { getToken } from "../utils/api";
+import StripeCheckout from '../components/payment/StripeCheckout';
 
 const baht = (n) => `฿${n.toLocaleString("th-TH")}`;
 const API_BASE = import.meta.env.VITE_API_BASE || window.__API_BASE__ || "http://localhost:3000";
@@ -35,6 +36,7 @@ export default function CartPage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPayment, setShowPayment] = useState(false);
 
   // Load cart: guest (localStorage) or logged-in (API)
   useEffect(() => {
@@ -192,6 +194,10 @@ export default function CartPage() {
   const subtotal = items.reduce((s, it) => s + (it.price || 0) * (it.qty || 1), 0);
   const shipping = subtotal >= 1000 || subtotal === 0 ? 0 : 50;
 
+  const handleCheckout = () => {
+    setShowPayment(true);
+  };
+
   return (
     <section className="max-w-6xl mx-auto px-6 py-10">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -211,30 +217,52 @@ export default function CartPage() {
         </div>
 
         <aside className="rounded-2xl border bg-white p-6">
-          <h3 className="font-bold text-lg">สรุปคำสั่งซื้อ</h3>
-          <div className="mt-4 text-sm text-slate-600 flex justify-between">
-            <div>ยอดรวมสินค้า</div>
-            <div>{baht(subtotal)}</div>
-          </div>
-          <div className="mt-2 text-sm text-slate-600 flex justify-between items-center">
-            <div>ค่าจัดส่ง</div>
-            <div className={`font-bold ${shipping===0? 'text-emerald-600':'text-slate-700'}`}>{shipping===0? 'ฟรี' : baht(shipping)}</div>
-          </div>
+          {showPayment ? (
+            <>
+              <h3 className="font-bold text-lg mb-6">ชำระเงิน</h3>
+              <StripeCheckout 
+                amount={subtotal + shipping}
+                items={items}
+                onCancel={() => setShowPayment(false)}
+              />
+            </>
+          ) : (
+            <>
+              <h3 className="font-bold text-lg">สรุปคำสั่งซื้อ</h3>
+              <div className="mt-4 text-sm text-slate-600 flex justify-between">
+                <div>ยอดรวมสินค้า</div>
+                <div>{baht(subtotal)}</div>
+              </div>
+              <div className="mt-2 text-sm text-slate-600 flex justify-between items-center">
+                <div>ค่าจัดส่ง</div>
+                <div className={`font-bold ${shipping===0? 'text-emerald-600':'text-slate-700'}`}>{shipping===0? 'ฟรี' : baht(shipping)}</div>
+              </div>
 
-          {shipping === 0 && (
-            <div className="mt-2 text-xs text-emerald-600">🎉 ฟรีค่าจัดส่งสำหรับคำสั่งซื้อเกิน ฿1,000</div>
+              {shipping === 0 && (
+                <div className="mt-2 text-xs text-emerald-600">🎉 ฟรีค่าจัดส่งสำหรับคำสั่งซื้อเกิน ฿1,000</div>
+              )}
+
+              <hr className="my-4 border-slate-200" />
+
+              <div className="flex items-center justify-between">
+                <div className="text-slate-700 font-semibold">ยอดรวมทั้งหมด</div>
+                <div className="text-2xl font-extrabold">{baht(subtotal + shipping)}</div>
+              </div>
+
+              <button 
+                className="mt-6 w-full bg-emerald-600 text-white py-3 rounded-xl font-bold disabled:bg-slate-400" 
+                onClick={handleCheckout}
+                disabled={loading || items.length === 0}
+              >
+                ดำเนินการชำระเงิน
+              </button>
+
+              <p className="mt-3 text-xs text-slate-500">
+                การจัดส่งฟรีสำหรับคำสั่งซื้อเกิน ฿1,000<br/>
+                รับประกันการคืนเงิน 30 วัน
+              </p>
+            </>
           )}
-
-          <hr className="my-4 border-slate-200" />
-
-          <div className="flex items-center justify-between">
-            <div className="text-slate-700 font-semibold">ยอดรวมทั้งหมด</div>
-            <div className="text-2xl font-extrabold">{baht(subtotal + shipping)}</div>
-          </div>
-
-          <button className="mt-6 w-full bg-emerald-600 text-white py-3 rounded-xl font-bold" disabled={loading}>ดำเนินการชำระเงิน</button>
-
-          <p className="mt-3 text-xs text-slate-500">การจัดส่งฟรีสำหรับคำสั่งซื้อเกิน ฿1,000<br/>รับประกันการคืนเงิน 30 วัน</p>
         </aside>
       </div>
     </section>
