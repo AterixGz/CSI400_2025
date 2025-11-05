@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { PRODUCTS } from "../data/seed-list";
+
 import { getToken } from "../utils/api";
 import StripeCheckout from '../components/payment/StripeCheckout';
 import AddressCart from '../components/cart/address_cart';

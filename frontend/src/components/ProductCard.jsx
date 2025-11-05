@@ -86,12 +86,12 @@ export default function ProductCard({
             />
           ))}
         </div>
-        <button
-          onClick={() => onAdd(p)}
-          className="mt-3 w-full px-4 py-2 rounded-xl border border-slate-200 bg-white font-bold hover:bg-slate-50"
+        <Link
+          to={`/products/${p.id}`}
+          className="mt-3 w-full px-4 py-2 rounded-xl border border-slate-200 bg-white font-bold hover:bg-slate-50 block text-center"
         >
-          เพิ่มลงตะกร้า
-        </button>
+          ดูรายละเอียด
+        </Link>
       </div>
     </article>
   );

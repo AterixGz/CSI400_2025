@@ -128,7 +128,14 @@ export default function Nav({
   return (
     <header className="sticky top-0 z-30 bg-white/100 ">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between relative">
-        <Link to="/" className="flex items-center gap-2 font-extrabold tracking-wide text-slate-900">
+        <Link 
+          to="/" 
+          className="flex items-center gap-2 font-extrabold tracking-wide text-slate-900"
+          onClick={() => {
+            // เมื่อคลิก logo ให้ dispatch event เพื่อบอก RecommendedProducts ให้โหลดใหม่
+            window.dispatchEvent(new Event("refresh:recommended"));
+          }}
+        >
           <img src={VYNE} alt="VYNE" className="w-17 h-14 object-contain" />
         </Link>
 

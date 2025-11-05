@@ -84,43 +84,55 @@ export default function RecommendedProducts({
     }
   }, []);
 
-  // เมื่อ audience เปลี่ยน -> sync URL & localStorage และโหลดใหม่
+  // โหลดสินค้าแนะนำครั้งแรกตอน mount component
   useEffect(() => {
-    try {
-      localStorage.setItem("active_audience", audience);
-    } catch {}
-    syncUrlAudience(audience);
     fetchRecommended(audience);
-  }, [audience, fetchRecommended, syncUrlAudience]);
+  }, []); // เรียกครั้งแรกตอน mount
 
-  // ตอบสนองต่อ 3 แหล่งสัญญาณ: URL, CustomEvent, localStorage
+  // รีเฟรชสินค้าเมื่อ audience เปลี่ยนจาก URL
   useEffect(() => {
-    // 1) URL ?audience=...
     const audFromUrl = urlParams.get("audience");
     if (audFromUrl && audFromUrl !== audience) {
       setAudience(audFromUrl);
+      fetchRecommended(audFromUrl); // โหลดใหม่ทันทีจาก DB
     }
+  }, [location.search, audience, fetchRecommended]);
 
-    // 2) CustomEvent audience:change
+  // ตอบสนองต่อ CustomEvent / localStorage และ refresh event
+  useEffect(() => {
+    // 0) เมื่อคลิก logo หรือกลับหน้าแรก
+    const onRefresh = () => {
+      fetchRecommended(audience);
+    };
+
+    // 1) CustomEvent audience:change
     const onCustomChange = (e) => {
       const next = (e?.detail ?? "").trim();
-      if (next && next !== audience) setAudience(next);
+      if (next && next !== audience) {
+        setAudience(next);
+        fetchRecommended(next); // โหลดใหม่ทันที
+      }
     };
-    window.addEventListener("audience:change", onCustomChange);
 
-    // 3) storage (รองรับการเปลี่ยนข้ามแท็บ หรือให้ navbar เซ็ต localStorage)
+    // 2) storage (รองรับการเปลี่ยนข้ามแท็บ หรือ navbar เซ็ต localStorage)
     const onStorage = (e) => {
       if (e.key === "active_audience" && e.newValue && e.newValue !== audience) {
         setAudience(e.newValue);
+        fetchRecommended(e.newValue); // โหลดใหม่ทันที
       }
     };
+
+    window.addEventListener("refresh:recommended", onRefresh);
+    window.addEventListener("audience:change", onCustomChange);
     window.addEventListener("storage", onStorage);
 
     return () => {
+      window.removeEventListener("refresh:recommended", onRefresh);
       window.removeEventListener("audience:change", onCustomChange);
       window.removeEventListener("storage", onStorage);
     };
-  }, [audience, urlParams]);
+  }, [audience, fetchRecommended]);
+
 
   // เลือกรายการที่จะแสดงจริง: หาก parent ส่ง filtered เข้ามา จะให้สิทธิมากกว่า
    const displayList = (items && items.length > 0) ? items : filtered;
