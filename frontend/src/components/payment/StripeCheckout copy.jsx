@@ -47,20 +47,6 @@ function CheckoutForm({ amount, onSuccess, onCancel }) {
 
       // ✅ จ่ายสำเร็จ
       if (paymentIntent && paymentIntent.status === 'succeeded') {
-        // เก็บ cartItems ก่อนลบ localStorage
-        const cartItems = JSON.parse(localStorage.getItem('cart_items') || '[]');
-
-        // เตรียมข้อมูล order สำหรับส่งไป paymentComplete
-        const orderDetails = {
-          id: paymentIntent.id,
-          amount: paymentIntent.amount / 100,
-          date: new Date().toLocaleString('th-TH'),
-          items: cartItems,
-          shipping: {
-            fee: cartItems.reduce((s, it) => s + (it.price || 0) * (it.qty || 1), 0) >= 1000 ? 0 : 50
-          }
-        };
-
         // ลบ cart ใน localStorage
         localStorage.removeItem('cart_items');
 
@@ -85,8 +71,8 @@ function CheckoutForm({ amount, onSuccess, onCancel }) {
           position: 'top-center',
         });
 
-        // ไปหน้า paymentComplete พร้อมข้อมูล
-        navigate('/paymentComplete', { state: { orderDetails } });
+  // ไปหน้า paymentComplete
+  navigate('/paymentComplete');
       }
     } catch (e) {
       setError('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');

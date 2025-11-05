@@ -15,6 +15,7 @@ import dotenv from 'dotenv';
 import googleAuthRouter from './routes/googleAuth.js';
 import cartRouter from './routes/cart.js';
 import stripeRouter from './routes/stripe.js';
+import clearCartRouter from './routes/clearCart.js';
 
 dotenv.config();
 
@@ -70,6 +71,9 @@ app.use(googleAuthRouter);
 
 // ใช้งาน Cart routes
 app.use('/cart', cartRouter);
+
+// ใช้งาน Clear Cart routes
+app.use('/api/clear-cart', clearCartRouter);
 
 // ใช้งาน Stripe routes
 app.use('/api/stripe', stripeRouter);
