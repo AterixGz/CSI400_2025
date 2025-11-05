@@ -19,9 +19,7 @@ import cartRouter from './routes/cart.js';
 import stripeRouter from './routes/stripe.js';
 import clearCartRouter from './routes/clearCart.js';
 import addressRouter from './routes/address.js';
-
-
-
+import favoriteRouter from './routes/favorite.js';
 
 dotenv.config();
 
@@ -83,6 +81,9 @@ app.use('/cart', cartRouter);
 
 // ใช้งาน Clear Cart routes
 app.use('/api/clear-cart', clearCartRouter);
+
+// ใช้งาน Favorite routes
+app.use('/api/favorite', favoriteRouter);
 
 // ใช้งาน Stripe routes
 app.use('/api/stripe', stripeRouter);
