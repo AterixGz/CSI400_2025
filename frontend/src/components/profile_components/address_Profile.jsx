@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 
 function IconLocation({ className = "w-4 h-4" }) {
   return (
@@ -10,26 +11,18 @@ function IconLocation({ className = "w-4 h-4" }) {
 }
 
 export default function AddressProfile() {
-  const [addresses, setAddresses] = useState([
-    {
-      id: 1,
-      isDefault: true,
-      name: "Nemo V.",
-      address: "Room 1201, SPU Residence",
-      street: "Phahonyothin Rd.",
-      city: "Bangkok",
-      postalCode: "10900",
-      country: "Thailand",
-      phone: "+66 81 234 5678"
-    }
-  ]);
+  const [addresses, setAddresses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newAddress, setNewAddress] = useState({
     name: '',
     address: '',
     street: '',
+    subdistrict: '',
     city: '',
+    province: '',
     postalCode: '',
     country: 'Thailand',
     phone: ''
@@ -39,34 +32,154 @@ export default function AddressProfile() {
     setIsAddingNew(true);
   };
 
-  const handleSubmit = (e) => {
+  // Fetch addresses when component mounts
+  useEffect(() => {
+    fetchAddresses();
+  }, []);
+
+  const fetchAddresses = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Not authenticated');
+        return;
+      }
+
+      const response = await fetch('http://localhost:3000/api/addresses', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch addresses');
+      
+      const data = await response.json();
+      setAddresses(data.map(addr => ({
+        id: addr.address_id,
+        isDefault: addr.is_default,
+        name: addr.full_name,
+        address: addr.address_line1,
+        street: addr.address_line2 || '',
+        city: addr.district,
+        province: addr.province,
+        postalCode: addr.postal_code,
+        country: addr.country || 'Thailand',
+        phone: addr.phone_number
+      })));
+    } catch (err) {
+      console.error('Error fetching addresses:', err);
+      setError('Failed to load addresses');
+      toast.error('ไม่สามารถโหลดข้อมูลที่อยู่ได้');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setAddresses(prev => [...prev, {
-      id: Date.now(),
-      isDefault: addresses.length === 0,
-      ...newAddress
-    }]);
-    setNewAddress({
-      name: '',
-      address: '',
-      street: '',
-      city: '',
-      postalCode: '',
-      country: 'Thailand',
-      phone: ''
-    });
-    setIsAddingNew(false);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('กรุณาเข้าสู่ระบบก่อนเพิ่มที่อยู่');
+        return;
+      }
+
+      console.log('Adding address with token:', token);
+
+      const response = await fetch('http://localhost:3000/api/addresses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          full_name: newAddress.name,
+          phone_number: newAddress.phone,
+          address_line1: newAddress.address,
+          address_line2: newAddress.street || '',
+          subdistrict: newAddress.subdistrict || '',
+          district: newAddress.city,
+          province: newAddress.province || 'Bangkok',
+          postal_code: newAddress.postalCode,
+          is_default: addresses.length === 0
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Server error:', errorData);
+        throw new Error(errorData.details || errorData.error || 'Failed to add address');
+      }
+
+      toast.success('เพิ่มที่อยู่เรียบร้อยแล้ว');
+      fetchAddresses(); // Refresh the list
+      setNewAddress({
+        name: '',
+        address: '',
+        street: '',
+        city: '',
+        province: '',
+        postalCode: '',
+        country: 'Thailand',
+        phone: ''
+      });
+      setIsAddingNew(false);
+    } catch (err) {
+      console.error('Error adding address:', err);
+      toast.error(err.message || 'ไม่สามารถเพิ่มที่อยู่ได้');
+    }
   };
 
-  const handleSetDefault = (id) => {
-    setAddresses(prev => prev.map(addr => ({
-      ...addr,
-      isDefault: addr.id === id
-    })));
+  const handleSetDefault = async (id) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('กรุณาเข้าสู่ระบบก่อนแก้ไขที่อยู่');
+        return;
+      }
+
+      const response = await fetch(`http://localhost:3000/api/addresses/${id}/set-default`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to set default address');
+
+      toast.success('ตั้งค่าที่อยู่หลักเรียบร้อยแล้ว');
+      fetchAddresses(); // Refresh the list
+    } catch (err) {
+      console.error('Error setting default address:', err);
+      toast.error('ไม่สามารถตั้งค่าที่อยู่หลักได้');
+    }
   };
 
-  const handleDelete = (id) => {
-    setAddresses(prev => prev.filter(addr => addr.id !== id));
+  const handleDelete = async (id) => {
+    if (!confirm('คุณต้องการลบที่อยู่นี้ใช่หรือไม่?')) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('กรุณาเข้าสู่ระบบก่อนลบที่อยู่');
+        return;
+      }
+
+      const response = await fetch(`http://localhost:3000/api/addresses/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to delete address');
+
+      toast.success('ลบที่อยู่เรียบร้อยแล้ว');
+      fetchAddresses(); // Refresh the list
+    } catch (err) {
+      console.error('Error deleting address:', err);
+      toast.error('ไม่สามารถลบที่อยู่ได้');
+    }
   };
 
   return (
@@ -81,6 +194,20 @@ export default function AddressProfile() {
             Add New Address
           </button>
         </div>
+
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-slate-900 border-t-transparent"></div>
+          </div>
+        ) : error ? (
+          <div className="p-4 bg-red-50 text-red-600 rounded-lg">
+            {error}
+          </div>
+        ) : addresses.length === 0 ? (
+          <div className="text-center py-12 text-slate-500">
+            คุณยังไม่มีที่อยู่ที่บันทึกไว้
+          </div>
+        ) : null}
 
         {isAddingNew && (
           <form onSubmit={handleSubmit} className="mb-8 border rounded-lg p-4">
@@ -123,6 +250,26 @@ export default function AddressProfile() {
                   required
                   value={newAddress.street}
                   onChange={e => setNewAddress(prev => ({ ...prev, street: e.target.value }))}
+                  className="w-full px-3 py-2 border rounded-md"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Subdistrict</label>
+                <input
+                  type="text"
+                  required
+                  value={newAddress.subdistrict}
+                  onChange={e => setNewAddress(prev => ({ ...prev, subdistrict: e.target.value }))}
+                  className="w-full px-3 py-2 border rounded-md"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Province</label>
+                <input
+                  type="text"
+                  required
+                  value={newAddress.province}
+                  onChange={e => setNewAddress(prev => ({ ...prev, province: e.target.value }))}
                   className="w-full px-3 py-2 border rounded-md"
                 />
               </div>

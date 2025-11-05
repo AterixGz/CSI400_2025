@@ -24,8 +24,9 @@ router.post("/", async (req, res) => {
       return res.status(401).json({ success: false, message: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" });
     }
     // สร้าง JWT token
+    // Include both `id` and `user_id` claims so different services can read either
     const token = jwt.sign(
-      { id: user.user_id, email: user.email, role: user.role },
+      { id: user.user_id, user_id: user.user_id, email: user.email, role: user.role },
       process.env.JWT_SECRET || "changeme",
       { expiresIn: "24h" }
     );

@@ -16,6 +16,7 @@ import googleAuthRouter from './routes/googleAuth.js';
 import cartRouter from './routes/cart.js';
 import stripeRouter from './routes/stripe.js';
 import clearCartRouter from './routes/clearCart.js';
+import addressRouter from './routes/address.js';
 
 dotenv.config();
 
@@ -77,6 +78,9 @@ app.use('/api/clear-cart', clearCartRouter);
 
 // ใช้งาน Stripe routes
 app.use('/api/stripe', stripeRouter);
+
+// ใช้งาน Address routes
+app.use('/api/addresses', addressRouter);
 
 // ตัวอย่าง test query จาก DB
 app.get('/test-db', async (req, res) => {
