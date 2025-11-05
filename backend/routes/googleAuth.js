@@ -4,6 +4,7 @@ import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import dotenv from 'dotenv';
 import db from '../db.js';
+import jwt from 'jsonwebtoken';
 
 dotenv.config();
 
@@ -12,7 +13,7 @@ const router = express.Router();
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: '/auth/google/callback'
+  callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3000/auth/google/callback'
 }, async (accessToken, refreshToken, profile, done) => {
   try {
     const email = profile.emails?.[0]?.value;
@@ -55,16 +56,25 @@ router.get('/auth/google',
   passport.authenticate('google', { scope: ['profile', 'email'] })
 );
 
-
 router.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/' }),
   async (req, res) => {
+    // Debug log for callback
+    console.log('Google OAuth callback hit');
     // req.user is now dbUser from done() above
     const dbUser = req.user;
-    // ส่งข้อมูล user จาก DB ไป frontend
+    // สร้าง JWT token แบบเดียวกับ login ปกติ
+    let token = '';
+    if (dbUser) {
+      token = jwt.sign(
+        { user_id: dbUser.user_id, email: dbUser.email, role: dbUser.role },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+    }
+    // ส่งข้อมูล user + token ไป frontend
     const googleUser = encodeURIComponent(JSON.stringify(dbUser || {}));
-    res.redirect(`http://localhost:5173/login?googleUser=${googleUser}`);
+    res.redirect(`http://localhost:5173/login?googleUser=${googleUser}&token=${token}`);
   }
 );
-
 export default router;

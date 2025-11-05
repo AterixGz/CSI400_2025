@@ -132,9 +132,14 @@ export default function LoginPage() {
     // กรณี login ด้วย google
     const params = new URLSearchParams(window.location.search);
     const googleUser = params.get("googleUser");
+    const googleToken = params.get("token");
     if (googleUser) {
       const userObj = JSON.parse(decodeURIComponent(googleUser));
       localStorage.setItem("user", JSON.stringify(userObj));
+      if (googleToken) {
+        localStorage.setItem("token", googleToken);
+      }
+      window.dispatchEvent(new Event("authChange"));
       // redirect ไปหน้าโปรไฟล์หรือรีโหลด
       window.location.href = "/profile";
     }
