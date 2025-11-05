@@ -160,7 +160,11 @@ export default function CartPage() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ product_id: product.product_id || product.id, quantity: 1 }),
+          body: JSON.stringify({ 
+            product_id: product.product_id || product.id, 
+            quantity: 1,
+            size: product.size || null
+          }),
         });
         const data = await res.json();
         if (res.ok && data.success) {
@@ -180,9 +184,15 @@ export default function CartPage() {
     } else {
       // guest: localStorage
       setItems((cur) => {
-        const found = cur.find((it) => it.id === product.id);
+        const found = cur.find((it) => 
+          it.id === product.id && it.size === (product.size || null)
+        );
         if (found) {
-          return cur.map((it) => (it.id === product.id ? { ...it, qty: it.qty + 1 } : it));
+          return cur.map((it) => 
+            (it.id === product.id && it.size === (product.size || null)) 
+              ? { ...it, qty: it.qty + 1 } 
+              : it
+          );
         } else {
           return [...cur, { ...product, qty: 1 }];
         }

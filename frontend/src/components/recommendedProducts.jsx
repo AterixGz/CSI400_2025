@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import ProductCard from "./ProductCard";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { addToCart } from "../utils/cartActions";
 
 const API_BASE =
   import.meta.env.VITE_API_BASE ||
@@ -30,7 +31,7 @@ function adaptProduct(row) {
 export default function RecommendedProducts({
   // props เดิมยังรองรับ (เผื่อที่อื่นส่งมา)
   filtered = [],
-  onAdd = () => {},
+  onAdd = null,
   onViewAll = () => {},
   onFavorite = () => {},
   favorites = [],
@@ -145,7 +146,7 @@ export default function RecommendedProducts({
             <ProductCard
               key={p.id}
               p={p}
-              onAdd={(item) => onAdd(item)}
+              onAdd={(item) => (onAdd ? onAdd(item) : addToCart(item, navigate))}
               onFavorite={(item) => onFavorite(item)}
               isFavorite={favorites.some((f) => f.id === p.id)}
             />

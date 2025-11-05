@@ -13,11 +13,15 @@ import productsRouter from "./routes/products.js";
 import searchRouter from "./routes/search.js";
 import cors from 'cors';
 import dotenv from 'dotenv';
+import adminRoutes from './routes/Admin.js';
 import googleAuthRouter from './routes/googleAuth.js';
 import cartRouter from './routes/cart.js';
 import stripeRouter from './routes/stripe.js';
 import clearCartRouter from './routes/clearCart.js';
 import addressRouter from './routes/address.js';
+
+
+
 
 dotenv.config();
 
@@ -86,6 +90,8 @@ app.use('/api/stripe', stripeRouter);
 // ใช้งาน Address routes
 app.use('/api/addresses', addressRouter);
 
+// ใช้งาน Admin routes
+app.use("/api/admin", adminRoutes);
 // ตัวอย่าง test query จาก DB
 app.get('/test-db', async (req, res) => {
   try {
