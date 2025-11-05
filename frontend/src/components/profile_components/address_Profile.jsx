@@ -16,6 +16,7 @@ export default function AddressProfile() {
   const [error, setError] = useState(null);
 
   const [isAddingNew, setIsAddingNew] = useState(false);
+  const [settingDefaultId, setSettingDefaultId] = useState(null);
   const [newAddress, setNewAddress] = useState({
     name: '',
     address: '',
@@ -131,12 +132,14 @@ export default function AddressProfile() {
   };
 
   const handleSetDefault = async (id) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast.error('กรุณาเข้าสู่ระบบก่อนแก้ไขที่อยู่');
+      return;
+    }
+
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        toast.error('กรุณาเข้าสู่ระบบก่อนแก้ไขที่อยู่');
-        return;
-      }
+      setSettingDefaultId(id);
 
       const response = await fetch(`http://localhost:3000/api/addresses/${id}/set-default`, {
         method: 'POST',
@@ -145,13 +148,19 @@ export default function AddressProfile() {
         }
       });
 
-      if (!response.ok) throw new Error('Failed to set default address');
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.details || err.error || 'Failed to set default address');
+      }
 
+      // Optimistically update UI: mark selected address as default
+      setAddresses(prev => prev.map(a => ({ ...a, isDefault: a.id === id })));
       toast.success('ตั้งค่าที่อยู่หลักเรียบร้อยแล้ว');
-      fetchAddresses(); // Refresh the list
     } catch (err) {
       console.error('Error setting default address:', err);
-      toast.error('ไม่สามารถตั้งค่าที่อยู่หลักได้');
+      toast.error(err.message || 'ไม่สามารถตั้งค่าที่อยู่หลักได้');
+    } finally {
+      setSettingDefaultId(null);
     }
   };
 
@@ -346,9 +355,10 @@ export default function AddressProfile() {
                   {!addr.isDefault && (
                     <button
                       onClick={() => handleSetDefault(addr.id)}
-                      className="px-3 py-1.5 text-sm border rounded-md hover:bg-slate-50"
+                      disabled={settingDefaultId !== null}
+                      className={`px-3 py-1.5 text-sm border rounded-md ${settingDefaultId === addr.id ? 'opacity-70 cursor-wait' : 'hover:bg-slate-50'}`}
                     >
-                      Set as Default
+                      {settingDefaultId === addr.id ? 'Setting...' : 'Set as Default'}
                     </button>
                   )}
                 </div>

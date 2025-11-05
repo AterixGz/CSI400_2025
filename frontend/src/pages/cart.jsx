@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { PRODUCTS } from "../data/seed-list";
 import { getToken } from "../utils/api";
 import StripeCheckout from '../components/payment/StripeCheckout';
+import AddressCart from '../components/cart/address_cart';
 
 const baht = (n) => `฿${n.toLocaleString("th-TH")}`;
 const API_BASE = import.meta.env.VITE_API_BASE || window.__API_BASE__ || "http://localhost:3000";
@@ -23,13 +24,14 @@ function CartItem({ item, onChangeQty, onRemove, loading }) {
         <div className="font-extrabold text-lg">{baht(item.price * item.qty)}</div>
         <div className="text-slate-500 text-sm mt-1">{baht(item.price)} ต่อชิ้น</div>
       </div>
-      <button disabled={loading} onClick={() => onRemove(item.id)} className="text-red-600 ml-3">🗑️</button>
+      <button disabled={loading} onClick={() => onRemove(item.id)} className="text-red-600 ml-3 mx-5">ลบ</button>
     </div>
   );
 }
 
 
 export default function CartPage() {
+  const [selectedAddress, setSelectedAddress] = useState(null);
   // localStorage key
   const LS_KEY = "cart_items";
   const token = getToken();
@@ -214,6 +216,11 @@ export default function CartPage() {
               ))}
             </div>
           </div>
+
+          {/* Address selection zone */}
+          <div className="rounded-2xl border bg-white p-6 mt-6">
+            <AddressCart selectedAddress={selectedAddress} setSelectedAddress={setSelectedAddress} />
+          </div>
         </div>
 
         <aside className="rounded-2xl border bg-white p-6">
@@ -223,6 +230,7 @@ export default function CartPage() {
               <StripeCheckout 
                 amount={subtotal + shipping}
                 items={items}
+                address={selectedAddress}
                 onCancel={() => setShowPayment(false)}
               />
             </>
@@ -252,7 +260,7 @@ export default function CartPage() {
               <button 
                 className="mt-6 w-full bg-emerald-600 text-white py-3 rounded-xl font-bold disabled:bg-slate-400" 
                 onClick={handleCheckout}
-                disabled={loading || items.length === 0}
+                disabled={loading || items.length === 0 || !selectedAddress}
               >
                 ดำเนินการชำระเงิน
               </button>
