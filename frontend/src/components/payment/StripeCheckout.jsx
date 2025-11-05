@@ -85,10 +85,18 @@ function CheckoutForm({ amount, onSuccess, onCancel }) {
           position: 'top-center',
         });
 
+        // เก็บข้อมูลคำสั่งซื้อไว้ชั่วคราวเผื่อผู้ใช้ refresh หน้าจอ
+        try {
+          sessionStorage.setItem('last_order', JSON.stringify(orderDetails));
+        } catch (e) {
+          console.warn('ไม่สามารถเก็บคำสั่งซื้อใน sessionStorage ได้', e);
+        }
+
         // ไปหน้า paymentComplete พร้อมข้อมูล
-        navigate('/paymentComplete', { state: { orderDetails } });
+        navigate('/payment/complete', { state: { orderDetails } });
       }
-    } catch (e) {
+    } catch (err) {
+      console.error('payment submit error:', err);
       setError('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
       toast.error('เกิดข้อผิดพลาดในการชำระเงิน ❌');
     } finally {
