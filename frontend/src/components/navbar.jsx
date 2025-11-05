@@ -3,16 +3,12 @@ import { Link } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { getToken } from "../utils/api";
 import VYNE from "../assets/VYNE_tranparent_256.png";
+import SearchBox from "./SearchBox";
 const API_BASE = import.meta.env.VITE_API_BASE || window.__API_BASE__ || "http://localhost:3000";
 
 export default function Nav({
   active,
-  onSelect = () => { },
-  onSearch = () => { },
 }) {
-  const [showSearch, setShowSearch] = useState(false);
-  const [query, setQuery] = useState("");
-  const inputRef = useRef(null);
   const [user, setUser] = useState(null);
   const [cartCount, setCartCount] = useState(0);
 
@@ -78,10 +74,6 @@ export default function Nav({
     };
     // eslint-disable-next-line
   }, []);
-
-  useEffect(() => {
-    if (showSearch && inputRef.current) inputRef.current.focus();
-  }, [showSearch]);
 
   const Icon = {
     Search: (props) => (
@@ -181,37 +173,7 @@ export default function Nav({
 
         <div className="flex items-center gap-4 text-slate-700">
           <div className="relative">
-            {!showSearch && (
-              <button
-                className="p-2 hover:text-slate-900"
-                title="ค้นหา"
-                onClick={() => setShowSearch(true)}
-                aria-label="เปิดค้นหา"
-              >
-                <Icon.Search className="w-5 h-5" />
-              </button>
-            )}
-
-            {showSearch && (
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  onSearch(query);
-                  setShowSearch(false);
-                }}
-                className="flex items-center"
-              >
-                <input
-                  ref={inputRef}
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onBlur={() => setShowSearch(false)}
-                  placeholder="ค้นหา"
-                  className="w-24 md:w-32 rounded-md border px-3 py-1 text-sm outline-none"
-                  aria-label="ค้นหา"
-                />
-              </form>
-            )}
+            <SearchBox />
           </div>
 
           {/* account: ถ้ามี user ใน localStorage ให้ไป /profile, ถ้าไม่มีไป /login */}

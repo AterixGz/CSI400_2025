@@ -10,6 +10,7 @@ import loginRouter from './routes/login.js';
 import registerRouter from "./routes/register.js";
 import userRoutes from "./routes/userRoutes.js";
 import productsRouter from "./routes/products.js";
+import searchRouter from "./routes/search.js";
 import cors from 'cors';
 import dotenv from 'dotenv';
 import googleAuthRouter from './routes/googleAuth.js';
@@ -66,6 +67,9 @@ app.use("/api/users", userRoutes);
 
 // ใช้งาน route /api/products
 app.use("/api/products", productsRouter);
+
+// ใช้งาน Search routes
+app.use("/api/search", searchRouter);
 
 // ใช้งาน Google Auth routes
 app.use(googleAuthRouter);
