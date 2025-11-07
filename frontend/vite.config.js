@@ -12,11 +12,11 @@ export default defineConfig({
         secure: false,
       },
       // also proxy /cart (server mounts cart router at '/cart')
-      "/cart": {
-        target: "http://localhost:3000",
-        changeOrigin: true,
-        secure: false,
-      },
+      // "/cart": {
+      //   target: "http://localhost:3000",
+      //   changeOrigin: true,
+      //   secure: false,
+      // },
     },
   },
 });

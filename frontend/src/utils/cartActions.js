@@ -43,7 +43,7 @@ export async function addToCart(product, navigate, quantity = 1) {
       localStorage.setItem(key, JSON.stringify(items));
       window.dispatchEvent(new Event("cart:updated"));
       toast.success("เพิ่มสินค้าลงตะกร้าสำเร็จ");
-      navigate("/cart");
+      // navigate("/cart");
       return true;
     } catch (e) {
       console.error("addToCart guest error:", e);
@@ -73,7 +73,7 @@ export async function addToCart(product, navigate, quantity = 1) {
     if (res.ok && data.success) {
       window.dispatchEvent(new Event("cart:updated"));
       toast.success("เพิ่มสินค้าลงตะกร้าสำเร็จ");
-      navigate("/cart");
+      // navigate("/cart");
       return true;
     }
     console.error("addToCart api error:", data);

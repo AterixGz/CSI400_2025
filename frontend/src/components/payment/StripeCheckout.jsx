@@ -61,22 +61,36 @@ function CheckoutForm({ amount, onSuccess, onCancel }) {
           }
         };
 
-        // ลบ cart ใน localStorage
-        localStorage.removeItem('cart_items');
-
-        // ลบ cart ใน DB
+        // ลบสินค้าที่เลือกใน DB
         const token = localStorage.getItem('token');
         if (token) {
           try {
-            await fetch('http://localhost:3000/api/clear-cart', {
+            const res = await fetch('http://localhost:3000/cart/selected', {
               method: 'DELETE',
               headers: {
                 'Authorization': `Bearer ${token}`,
               },
             });
+            const data = await res.json();
+            if (!res.ok) {
+              console.warn('ไม่สามารถลบสินค้าที่เลือกได้:', data.error);
+            } else {
+              console.log(data.message); // แสดงผลการลบในคอนโซล
+            }
           } catch (err) {
-            console.warn('ไม่สามารถล้างตะกร้าใน DB ได้:', err);
+            console.warn('ไม่สามารถลบสินค้าที่เลือกได้:', err);
           }
+        }
+
+        // ลบสินค้าที่เลือกใน localStorage สำหรับ guest user
+        const currentCart = JSON.parse(localStorage.getItem('cart_items') || '[]');
+        const selectedIds = cartItems.map(item => item.id);
+        const updatedCart = currentCart.filter(item => !selectedIds.includes(item.id));
+        localStorage.setItem('cart_items', JSON.stringify(updatedCart));
+
+        // เรียกใช้ onSuccess callback ถ้ามี
+        if (typeof onSuccess === 'function') {
+          onSuccess();
         }
 
         // ✅ แสดง toast แจ้งผล
@@ -134,7 +148,7 @@ function CheckoutForm({ amount, onSuccess, onCancel }) {
   );
 }
 
-export default function StripeCheckout({ amount, items, onCancel }) {
+export default function StripeCheckout({ amount, items, onCancel, onSuccess }) {
   const [clientSecret, setClientSecret] = useState('');
   const token = localStorage.getItem('token');
 
@@ -196,6 +210,7 @@ export default function StripeCheckout({ amount, items, onCancel }) {
       <CheckoutForm 
         amount={amount} 
         onCancel={onCancel}
+        onSuccess={onSuccess}
       />
     </Elements>
   );
