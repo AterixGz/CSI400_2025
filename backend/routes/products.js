@@ -5,13 +5,11 @@ const router = express.Router();
 
 // ✅ ดึงสินค้าทั้งหมด + ชื่อหมวดหมู่/กลุ่มเป้าหมาย + ไซซ์
 router.get("/", async (req, res) => {
-  const { sort, audience } = req.query;
-  const orderBy =
-    sort === "price_asc"
-      ? "p.price ASC"
-      : sort === "price_desc"
-      ? "p.price DESC"
-      : "p.created_at DESC";
+  const { sort, audience } = req.query; // เปลี่ยนจาก category_id เป็น audience
+  // รองรับทั้ง price-asc, price_asc, price-desc, price_desc
+  let orderBy = "p.created_at DESC";
+  if (sort === "price-asc" || sort === "price_asc") orderBy = "p.price ASC";
+  else if (sort === "price-desc" || sort === "price_desc") orderBy = "p.price DESC";
 
   try {
     const values = [];
