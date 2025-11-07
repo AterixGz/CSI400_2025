@@ -50,7 +50,6 @@ function adaptProduct(row) {
 
 export default function ProductDetailPage({
   onAdd = () => {},
-  onFavorite = () => {},
   favorites = [],
 }) {
   const { id } = useParams();              // "id" จาก URL (string)
@@ -63,6 +62,51 @@ export default function ProductDetailPage({
   const [size, setSize] = useState(null);
   const [activeTab, setActiveTab] = useState("detail");
   const [isFav, setIsFav] = useState(false);
+  // ฟังก์ชันกดหัวใจ (favorite) สำหรับหน้าดีเทล
+  async function handleFavorite() {
+    if (!product) return;
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("กรุณาเข้าสู่ระบบก่อนเพิ่มรายการโปรด");
+      navigate("/login");
+      return;
+    }
+    try {
+      let res;
+      if (isFav) {
+        // Remove favorite
+        res = await fetch(`/api/favorite/${product.id}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      } else {
+        // Add favorite
+        res = await fetch(`/api/favorite`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ product_id: product.id }),
+        });
+      }
+      if (!res.ok) {
+        let errMsg = "เกิดข้อผิดพลาด";
+        try {
+          const err = await res.json();
+          errMsg = err.error || errMsg;
+        } catch {}
+        throw new Error(errMsg);
+      }
+      setIsFav((v) => !v);
+      toast.success(isFav ? "นำออกจากรายการโปรดแล้ว" : "เพิ่มในรายการโปรดแล้ว");
+    } catch (err) {
+      toast.error(err.message || "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
+    }
+  }
 
   const [related, setRelated] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -286,10 +330,7 @@ export default function ProductDetailPage({
               </button>
 
               <button
-                onClick={() => {
-                  setIsFav((v) => !v);
-                  onFavorite(product);
-                }}
+                onClick={handleFavorite}
                 className={`p-3 rounded-lg border ${isFav ? "bg-rose-100 text-rose-600" : "bg-white text-slate-700"}`}
                 aria-label="รายการที่ชอบ"
               >
