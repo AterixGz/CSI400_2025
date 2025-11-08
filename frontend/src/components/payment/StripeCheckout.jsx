@@ -10,8 +10,9 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+const API_BASE = import.meta.env.VITE_API_BASE || window.__API_BASE__ || "http://localhost:3000";
 
-function CheckoutForm({ amount, onSuccess, onCancel }) {
+function CheckoutForm({ amount, items, address, onSuccess, onCancel }) {
   const stripe = useStripe();
   const elements = useElements();
   const navigate = useNavigate();
@@ -47,8 +48,44 @@ function CheckoutForm({ amount, onSuccess, onCancel }) {
 
       // ✅ จ่ายสำเร็จ
       if (paymentIntent && paymentIntent.status === 'succeeded') {
-        // เก็บ cartItems ก่อนลบ localStorage
-        const cartItems = JSON.parse(localStorage.getItem('cart_items') || '[]');
+        const authToken = localStorage.getItem('token');
+        // สร้าง order ใหม่
+        if (authToken) {
+          try {
+            const orderRes = await fetch(`${API_BASE}/api/orders/user`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`,
+              },
+              body: JSON.stringify({
+                items,
+                address,
+                total_amount: amount,
+                shipping_fee: amount >= 1000 ? 0 : 50,
+                payment_intent_id: paymentIntent.id
+              }),
+            });
+            const orderData = await orderRes.json();
+            if (!orderRes.ok) {
+              throw new Error(orderData.error || 'ไม่สามารถสร้างคำสั่งซื้อได้');
+            }
+          } catch (err) {
+            console.error('Error creating order:', err);
+            toast.error('เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ');
+          }
+        }
+
+        // เก็บ cartItems ก่อนลบ localStorage (safe parse)
+        let cartItems = [];
+        try {
+          const raw = localStorage.getItem('cart_items') || '[]';
+          cartItems = JSON.parse(raw);
+          if (!Array.isArray(cartItems)) cartItems = [];
+        } catch (parseErr) {
+          console.warn('ไม่สามารถอ่าน cart_items จาก localStorage:', parseErr);
+          cartItems = [];
+        }
 
         // เตรียมข้อมูล order สำหรับส่งไป paymentComplete
         const orderDetails = {
@@ -61,22 +98,47 @@ function CheckoutForm({ amount, onSuccess, onCancel }) {
           }
         };
 
-        // ลบ cart ใน localStorage
-        localStorage.removeItem('cart_items');
-
-        // ลบ cart ใน DB
-        const token = localStorage.getItem('token');
-        if (token) {
+        // ลบสินค้าที่เลือกใน DB
+        if (authToken) {
           try {
-            await fetch('http://localhost:3000/api/clear-cart', {
+            const res = await fetch(`${API_BASE}/cart/selected`, {
               method: 'DELETE',
               headers: {
-                'Authorization': `Bearer ${token}`,
+                'Authorization': `Bearer ${authToken}`,
               },
             });
+            let data = {};
+            try {
+              data = await res.json();
+            } catch (jerr) {
+              console.warn('ไม่สามารถแปลงผลลัพธ์เป็น JSON ได้:', jerr);
+            }
+            if (!res.ok) {
+              console.warn('ไม่สามารถลบสินค้าที่เลือกได้:', data.error || res.statusText);
+            } else {
+              console.log(data.message); // แสดงผลการลบในคอนโซล
+            }
           } catch (err) {
-            console.warn('ไม่สามารถล้างตะกร้าใน DB ได้:', err);
+            console.warn('ไม่สามารถลบสินค้าที่เลือกได้ (network):', err);
           }
+        }
+
+        // ลบสินค้าที่เลือกใน localStorage สำหรับ guest user (safe)
+        try {
+          const currentRaw = localStorage.getItem('cart_items') || '[]';
+          const currentCart = JSON.parse(currentRaw);
+          const selectedIds = Array.isArray(cartItems) ? cartItems.map(item => item.id) : [];
+          const updatedCart = Array.isArray(currentCart)
+            ? currentCart.filter(item => !selectedIds.includes(item.id))
+            : [];
+          localStorage.setItem('cart_items', JSON.stringify(updatedCart));
+        } catch (lsErr) {
+          console.warn('ไม่สามารถอัปเดต cart_items ใน localStorage ได้:', lsErr);
+        }
+
+        // เรียกใช้ onSuccess callback ถ้ามี
+        if (typeof onSuccess === 'function') {
+          onSuccess();
         }
 
         // ✅ แสดง toast แจ้งผล
@@ -134,7 +196,7 @@ function CheckoutForm({ amount, onSuccess, onCancel }) {
   );
 }
 
-export default function StripeCheckout({ amount, items, onCancel }) {
+export default function StripeCheckout({ amount, items, onCancel, onSuccess, address }) {
   const [clientSecret, setClientSecret] = useState('');
   const token = localStorage.getItem('token');
 
@@ -194,8 +256,11 @@ export default function StripeCheckout({ amount, items, onCancel }) {
       }}
     >
       <CheckoutForm 
-        amount={amount} 
+        amount={amount}
+        items={items}
+        address={address}
         onCancel={onCancel}
+        onSuccess={onSuccess}
       />
     </Elements>
   );

@@ -4,27 +4,38 @@ import pool from "../db.js";
 
 const router = express.Router();
 
-function getUserIdFromReq(req) {
-  // Try session user (passport) first
-  if (req.user && req.user.id) return req.user.id;
-  if (req.user && req.user.user_id) return req.user.user_id;
-  // Try Authorization Bearer JWT
+// Middleware to verify JWT token
+const verifyToken = (req, res, next) => {
   const auth = req.headers.authorization || req.headers.Authorization;
-  if (!auth) return null;
+  if (!auth) {
+    return res.status(401).json({ error: "กรุณาเข้าสู่ระบบ" });
+  }
+
   const parts = auth.split(" ");
-  if (parts.length !== 2) return null;
+  if (parts.length !== 2 || parts[0] !== "Bearer") {
+    return res.status(401).json({ error: "รูปแบบ Token ไม่ถูกต้อง" });
+  }
+
   const token = parts[1];
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET || "changeme");
-    // payload should contain id or user_id
-    return payload.id || payload.user_id || null;
-  } catch (e) {
-    return null;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "changeme");
+    req.user = decoded;
+    next();
+  } catch (err) {
+    if (err.name === "TokenExpiredError") {
+      return res.status(401).json({ error: "Token หมดอายุ กรุณาเข้าสู่ระบบใหม่" });
+    }
+    return res.status(401).json({ error: "Token ไม่ถูกต้อง" });
   }
+};
+
+function getUserIdFromReq(req) {
+  if (!req.user) return null;
+  return req.user.id || req.user.user_id || null;
 }
 
 // GET /cart - get current user's cart
-router.get("/", async (req, res) => {
+router.get("/", verifyToken, async (req, res) => {
   const userId = getUserIdFromReq(req);
   if (!userId) return res.status(401).json({ error: "Unauthorized" });
   if (!pool) return res.status(503).json({ error: "DB not available" });
@@ -32,7 +43,7 @@ router.get("/", async (req, res) => {
   try {
     const sql = `
       SELECT c.cart_id, c.product_id, c.quantity, c.added_at,
-             c.size,
+             c.size, c.selected,
              p.name AS product_name, p.price, p.stock, p.image_url, p.description
       FROM cart c
       JOIN products p ON p.product_id = c.product_id
@@ -51,6 +62,7 @@ router.get("/", async (req, res) => {
       description: r.description,
       added_at: r.added_at,
       stock: r.stock ?? null,
+      selected: r.selected ?? false
     }));
     res.json({ items });
   } catch (err) {
@@ -60,7 +72,7 @@ router.get("/", async (req, res) => {
 });
 
 // POST /cart/items { product_id, quantity, size }
-router.post("/items", async (req, res) => {
+router.post("/items", verifyToken, async (req, res) => {
   const userId = getUserIdFromReq(req);
   if (!userId) return res.status(401).json({ error: "Unauthorized" });
   if (!pool) return res.status(503).json({ error: "DB not available" });
@@ -113,7 +125,7 @@ router.post("/items", async (req, res) => {
 });
 
 // PATCH /cart/items/:cart_id { quantity }
-router.patch("/items/:cart_id", async (req, res) => {
+router.patch("/items/:cart_id", verifyToken, async (req, res) => {
   const userId = getUserIdFromReq(req);
   if (!userId) return res.status(401).json({ error: "Unauthorized" });
   if (!pool) return res.status(503).json({ error: "DB not available" });
@@ -138,7 +150,31 @@ router.patch("/items/:cart_id", async (req, res) => {
 });
 
 // DELETE /cart/items/:cart_id
-router.delete("/items/:cart_id", async (req, res) => {
+// PATCH /cart/items/:cart_id/select { selected }
+router.patch("/items/:cart_id/select", verifyToken, async (req, res) => {
+  const userId = getUserIdFromReq(req);
+  if (!userId) return res.status(401).json({ error: "Unauthorized" });
+  if (!pool) return res.status(503).json({ error: "DB not available" });
+  const { cart_id } = req.params;
+  const { selected } = req.body;
+
+  try {
+    const result = await pool.query(
+      "UPDATE cart SET selected = $1 WHERE cart_id = $2 AND user_id = $3 RETURNING cart_id, selected",
+      [selected, cart_id, userId]
+    );
+    if (!result.rows[0]) {
+      return res.status(404).json({ error: "ไม่พบรายการในตะกร้า" });
+    }
+    res.json({ success: true, item: result.rows[0] });
+  } catch (err) {
+    console.error("🛒 PATCH cart/select error:", err);
+    res.status(500).json({ error: "ไม่สามารถอัปเดตสถานะการเลือกได้" });
+  }
+});
+
+// DELETE single item from cart
+router.delete("/items/:cart_id", verifyToken, async (req, res) => {
   const userId = getUserIdFromReq(req);
   if (!userId) return res.status(401).json({ error: "Unauthorized" });
   if (!pool) return res.status(503).json({ error: "DB not available" });
@@ -155,6 +191,33 @@ router.delete("/items/:cart_id", async (req, res) => {
   } catch (err) {
     console.error("🛒 DELETE cart error:", err);
     res.status(500).json({ error: "ไม่สามารถลบสินค้าออกจากตะกร้าได้" });
+  }
+});
+
+// DELETE selected items after payment
+router.delete("/selected", verifyToken, async (req, res) => {
+  const userId = getUserIdFromReq(req);
+  if (!userId) return res.status(401).json({ error: "Unauthorized" });
+  if (!pool) return res.status(503).json({ error: "DB not available" });
+
+  try {
+    const result = await pool.query(
+      "DELETE FROM cart WHERE user_id = $1 AND selected = true RETURNING cart_id",
+      [userId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "ไม่พบรายการที่เลือกในตะกร้า" });
+    }
+
+    res.json({ 
+      success: true, 
+      message: `ลบสินค้าที่ชำระเงินแล้ว ${result.rows.length} รายการ`,
+      deletedIds: result.rows.map(row => row.cart_id)
+    });
+  } catch (err) {
+    console.error("🛒 DELETE selected cart items error:", err);
+    res.status(500).json({ error: "ไม่สามารถลบสินค้าที่เลือกออกจากตะกร้าได้" });
   }
 });
 

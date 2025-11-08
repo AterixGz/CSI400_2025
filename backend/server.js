@@ -22,6 +22,8 @@ import addressRouter from './routes/address.js';
 import favoriteRouter from './routes/favorite.js';
 import productAdminRouter from "./admin/admin_products.js";
 import categoriesAdminRouter from "./admin/admin_categories.js";
+import orderUserRouter from './routes/orderUser.js';
+
 dotenv.config();
 
 
@@ -92,6 +94,9 @@ app.use('/api/stripe', stripeRouter);
 
 // ใช้งาน Address routes
 app.use('/api/addresses', addressRouter);
+
+// ใช้งาน Order User routes
+app.use('/api/orders/user', orderUserRouter);
 
 // ใช้งาน Admin routes
 app.use("/api/admin", adminRoutes);

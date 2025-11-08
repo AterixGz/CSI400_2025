@@ -98,7 +98,7 @@ export default function PaymentComplete() {
 
       <footer className="flex gap-3">
         <button onClick={() => navigate('/')} className="px-4 py-2 bg-emerald-600 text-white rounded">กลับไปหน้าหลัก</button>
-        <button onClick={() => navigate('/profile/orders')} className="px-4 py-2 border rounded">ดูคำสั่งซื้อของฉัน</button>
+        <button onClick={() => navigate('/profile')} className="px-4 py-2 border rounded">ดูคำสั่งซื้อของฉัน</button>
         {/* <button onClick={handlePrint} className="px-4 py-2 bg-slate-100 rounded">พิมพ์ใบเสร็จ</button> */}
       </footer>
     </div>

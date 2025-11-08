@@ -1,76 +1,65 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function OrderProfile() {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const orders = [
-    {
-      id: "ORD-2024-001",
-      date: "March 15, 2024",
-      status: "ส่งถึงแล้ว",
-      total: 289.99,
-      items: [
-        { id: "p1", title: "Organic Cotton T-Shirt", size: "M", color: "White", qty: 2, price: 49.99, img: "/VYNE_tran.png" },
-        { id: "p2", title: "Linen Summer Dress", size: "S", color: "Beige", qty: 1, price: 189.99, img: "/VYNE_tran.png" },
-      ],
-      tracking: { code: "TRK123456789", date: "March 18, 2024" },
-    },
-    {
-      id: "ORD-2024-002",
-      date: "April 02, 2024",
-      status: "ยังไม่จ่ายเงิน",
-      total: 79.98,
-      items: [
-        { id: "p3", title: "Minimalist Wallet", size: "-", color: "Black", qty: 1, price: 39.99, img: "/VYNE_tran.png" },
-        { id: "p4", title: "Socks (3-pack)", size: "L", color: "Grey", qty: 1, price: 39.99, img: "/VYNE_tran.png" },
-      ],
-    },
-    {
-      id: "ORD-2024-003",
-      date: "May 10, 2024",
-      status: "กำลังจัดส่ง",
-      total: 129.5,
-      items: [
-        { id: "p5", title: "Canvas Tote Bag", size: "-", color: "Natural", qty: 1, price: 29.5, img: "/VYNE_tran.png" },
-        { id: "p6", title: "Ceramic Mug", size: "-", color: "Blue", qty: 2, price: 50.0, img: "/VYNE_tran.png" },
-      ],
-      tracking: { code: "TRK987654321", date: "May 12, 2024" },
-    },
-    {
-      id: "ORD-2024-004",
-      date: "June 01, 2024",
-      status: "กำลังจัดส่ง",
-      total: 45.0,
-      items: [
-        { id: "p7", title: "Silk Scarf", size: "-", color: "Red", qty: 1, price: 45.0, img: "/VYNE_tran.png" },
-      ],
-    },
-    // เพิ่มตัวอย่างคำสั่งซื้อเพิ่มเติมสำหรับทดสอบปุ่ม
-    {
-      id: "ORD-2024-005",
-      date: "July 12, 2024",
-      status: "ยังไม่จ่ายเงิน",
-      total: 199.99,
-      items: [
-        { id: "p8", title: "Bluetooth Headphones", size: "-", color: "Black", qty: 1, price: 199.99, img: "/VYNE_tran.png" },
-      ],
-    },
-    {
-      id: "ORD-2024-006",
-      date: "August 05, 2024",
-      status: "ส่งถึงแล้ว",
-      total: 59.0,
-      items: [
-        { id: "p9", title: "Travel Adapter", size: "-", color: "White", qty: 1, price: 29.0, img: "/VYNE_tran.png" },
-        { id: "p10", title: "Phone Stand", size: "-", color: "Grey", qty: 1, price: 30.0, img: "/VYNE_tran.png" },
-      ],
-      tracking: { code: "TRK555666777", date: "August 08, 2024" },
-    },
-  ];
+  useEffect(() => {
+    async function fetchOrders() {
+      setLoading(true);
+      setError(null);
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${import.meta.env.VITE_API_BASE || "http://localhost:3000"}/api/orders/user`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!res.ok) throw new Error("ไม่สามารถดึงข้อมูลคำสั่งซื้อได้");
+        const data = await res.json();
+        // Map backend fields to frontend format
+        setOrders(
+          (data.orders || []).map((o) => ({
+            id: o.order_id,
+            date: o.created_at ? new Date(o.created_at).toLocaleDateString("th-TH", { year: "numeric", month: "long", day: "numeric" }) : "",
+            status: mapStatus(o.status),
+            total: o.total_amount,
+            items: (o.items || []).map((it, idx) => ({
+              id: it.product_id || idx,
+              title: it.name || "สินค้า",
+              size: it.size || "-",
+              color: it.color || "-",
+              qty: it.quantity || 1,
+              price: it.price || 0,
+              img: it.image || "/VYNE_tran.png",
+            })),
+            // Tracking info can be added if available in backend
+          }))
+        );
+      } catch (e) {
+        setError(e.message || "เกิดข้อผิดพลาด");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchOrders();
+  }, []);
+
+  function mapStatus(status) {
+    // Map backend status to Thai labels
+    if (status === "pending" || status === "unpaid") return "ยังไม่จ่ายเงิน";
+    if (status === "paid") return "ชำระเงินแล้ว";
+    if (status === "shipping" || status === "กำลังจัดส่ง") return "กำลังจัดส่ง";
+    if (status === "completed" || status === "ส่งถึงแล้ว") return "ส่งถึงแล้ว";
+    return status || "-";
+  }
 
   const statusLabel = {
     unpaid: "ยังไม่จ่ายเงิน",
+    paid: "ชำระเงินแล้ว",
     shipping: "กำลังจัดส่ง",
     delivered: "ส่งถึงแล้ว",
   };
@@ -79,11 +68,12 @@ export default function OrderProfile() {
     (acc, o) => {
       acc.all += 1;
       if (o.status === statusLabel.unpaid) acc.unpaid += 1;
+      if (o.status === statusLabel.paid) acc.paid += 1;
       if (o.status === statusLabel.shipping) acc.shipping += 1;
       if (o.status === statusLabel.delivered) acc.delivered += 1;
       return acc;
     },
-    { all: 0, unpaid: 0, shipping: 0, delivered: 0 }
+    { all: 0, unpaid: 0, paid: 0, shipping: 0, delivered: 0 }
   );
 
   const displayedOrders = orders.filter((o) => {
@@ -93,7 +83,7 @@ export default function OrderProfile() {
       if (o.status !== label) return false;
     }
     if (!q) return true;
-    if ((o.id || "").toLowerCase().includes(q)) return true;
+    if ((o.id || "").toString().toLowerCase().includes(q)) return true;
     if ((o.items || []).some((it) => (it.title || "").toLowerCase().includes(q))) return true;
     return false;
   });
@@ -126,13 +116,21 @@ export default function OrderProfile() {
                 <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full text-xs">{counts.all}</span>
               </button>
 
-              <button
+              {/* <button
                 onClick={() => setStatusFilter("unpaid")}
                 className={`rounded-full px-4 py-2 text-sm flex items-center gap-3 border ${statusFilter === "unpaid" ? "bg-slate-900 text-white" : "bg-white"}`}
                 aria-pressed={statusFilter === "unpaid"}
               >
                 <span>ยังไม่จ่ายเงิน</span>
                 <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full text-xs">{counts.unpaid}</span>
+              </button> */}
+              <button
+                onClick={() => setStatusFilter("paid")}
+                className={`rounded-full px-4 py-2 text-sm flex items-center gap-3 border ${statusFilter === "paid" ? "bg-slate-900 text-white" : "bg-white"}`}
+                aria-pressed={statusFilter === "paid"}
+              >
+                <span>ชำระเงินแล้ว</span>
+                <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full text-xs">{counts.paid}</span>
               </button>
 
               <button
@@ -158,11 +156,12 @@ export default function OrderProfile() {
       </div>
 
       <div className="space-y-6">
-        {displayedOrders.length === 0 && (
+        {loading && <div className="py-6 text-center text-slate-500">กำลังโหลดข้อมูล...</div>}
+        {error && <div className="py-6 text-center text-red-500">{error}</div>}
+        {!loading && !error && displayedOrders.length === 0 && (
           <div className="py-6 text-center text-slate-500">ไม่พบคำสั่งซื้อที่ตรงกับการค้นหา</div>
         )}
-
-        {displayedOrders.map((o) => (
+        {!loading && !error && displayedOrders.map((o) => (
           <div key={o.id} className="bg-white border rounded-xl shadow-sm overflow-hidden">
             <div className="flex items-center justify-between p-5 border-b">
               <div className="flex items-center gap-3">
@@ -172,7 +171,7 @@ export default function OrderProfile() {
               </div>
               <div className="text-right">
                 <div className="text-sm text-slate-500">ยอดรวม</div>
-                <div className="text-2xl font-extrabold">${o.total.toFixed(2)}</div>
+                <div className="text-2xl font-extrabold">฿{Number(o.total || 0).toFixed(2)}</div>
               </div>
             </div>
 
@@ -187,20 +186,12 @@ export default function OrderProfile() {
                       <div className="font-medium">{it.title}</div>
                       <div className="text-sm text-slate-600 mt-1">ไซส์: {it.size} &nbsp; สี: {it.color} &nbsp; จำนวน: {it.qty}</div>
                     </div>
-                    <div className="text-right font-semibold">${it.price.toFixed(2)}</div>
+                    <div className="text-right font-semibold">฿{Number(it.price || 0).toFixed(2)}</div>
                   </div>
                 ))}
               </div>
 
-              {o.tracking && (
-                <div className="mt-6 bg-emerald-50 border border-emerald-100 rounded-md p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="text-emerald-700 font-medium">หมายเลขติดตามพัสดุ</div>
-                    <div className="ml-auto text-slate-500 text-sm">ส่งถึงเมื่อ {o.tracking.date}</div>
-                  </div>
-                  <div className="mt-2 text-slate-700 font-mono font-semibold">{o.tracking.code}</div>
-                </div>
-              )}
+              {/* Tracking info can be added here if backend provides it */}
 
               <div className="mt-6 flex items-center gap-3">
                 <button className="px-4 py-2 border rounded-md text-sm bg-white">ดูใบเสร็จ</button>

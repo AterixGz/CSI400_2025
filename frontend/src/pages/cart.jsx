@@ -7,9 +7,15 @@ import AddressCart from '../components/cart/address_cart';
 const baht = (n) => `฿${n.toLocaleString("th-TH")}`;
 const API_BASE = import.meta.env.VITE_API_BASE || window.__API_BASE__ || "http://localhost:3000";
 
-function CartItem({ item, onChangeQty, onRemove, loading }) {
+function CartItem({ item, onChangeQty, onRemove, loading, selected, onSelect }) {
   return (
     <div className="flex items-center gap-4 border rounded-2xl p-4 bg-white">
+      <input
+        type="checkbox"
+        checked={selected}
+        onChange={(e) => onSelect(item.id, e.target.checked)}
+        className="w-5 h-5 accent-emerald-600"
+      />
       <img src={item.image} alt={item.name} className="w-24 h-24 object-cover rounded-md" />
       <div className="flex-1">
         <div className="font-bold text-lg">{item.name}</div>
@@ -32,6 +38,7 @@ function CartItem({ item, onChangeQty, onRemove, loading }) {
 
 export default function CartPage() {
   const [selectedAddress, setSelectedAddress] = useState(null);
+  const [selectedItems, setSelectedItems] = useState([]);
   // localStorage key
   const LS_KEY = "cart_items";
   const token = getToken();
@@ -52,7 +59,10 @@ export default function CartPage() {
           });
           const data = await res.json();
           if (res.ok && data.items) {
-            setItems(data.items.map((it) => ({ ...it })));
+            const items = data.items.map((it) => ({ ...it }));
+            setItems(items);
+            // Set selectedItems based on selected field from backend
+            setSelectedItems(items.filter(it => it.selected).map(it => it.id));
           } else {
             setError(data.error || "โหลดตะกร้าไม่สำเร็จ");
           }
@@ -203,7 +213,8 @@ export default function CartPage() {
     if (updated) window.dispatchEvent(new Event("cart:updated"));
   };
 
-  const subtotal = items.reduce((s, it) => s + (it.price || 0) * (it.qty || 1), 0);
+  const selectedItemsData = items.filter(it => selectedItems.includes(it.id));
+  const subtotal = selectedItemsData.reduce((s, it) => s + (it.price || 0) * (it.qty || 1), 0);
   const shipping = subtotal >= 1000 || subtotal === 0 ? 0 : 50;
 
   const handleCheckout = () => {
@@ -214,6 +225,13 @@ export default function CartPage() {
     <section className="max-w-6xl mx-auto px-6 py-10">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
+          {/* Address selection zone - Moved to top */}
+          <div className="rounded-2xl border bg-white p-6">
+            {/* <h3 className="font-bold text-lg mb-4">ที่อยู่จัดส่ง</h3> */}
+            <AddressCart selectedAddress={selectedAddress} setSelectedAddress={setSelectedAddress} />
+          </div>
+
+          {/* Cart items - Moved below address */}
           <div className="rounded-2xl border bg-white p-6">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-lg">รถเข็นของคุณ ({items.length} รายการ)</h3>
@@ -222,14 +240,48 @@ export default function CartPage() {
 
             <div className="mt-6 space-y-4">
               {items.map((it) => (
-                <CartItem key={it.id} item={it} onChangeQty={changeQty} onRemove={remove} loading={loading} />
+                <CartItem 
+                  key={it.id} 
+                  item={it} 
+                  onChangeQty={changeQty} 
+                  onRemove={remove} 
+                  loading={loading}
+                  selected={selectedItems.includes(it.id)}
+                  onSelect={async (id, checked) => {
+                    if (token) {
+                      try {
+                        const res = await fetch(`${API_BASE}/cart/items/${id}/select`, {
+                          method: 'PATCH',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                          },
+                          body: JSON.stringify({ selected: checked })
+                        });
+                        const data = await res.json();
+                        if (res.ok && data.success) {
+                          setSelectedItems(prev => 
+                            checked 
+                              ? [...prev, id]
+                              : prev.filter(itemId => itemId !== id)
+                          );
+                        } else {
+                          setError(data.error || "ไม่สามารถอัปเดตสถานะการเลือกได้");
+                        }
+                      } catch (e) {
+                        setError("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
+                      }
+                    } else {
+                      setSelectedItems(prev => 
+                        checked 
+                          ? [...prev, id]
+                          : prev.filter(itemId => itemId !== id)
+                      );
+                    }
+                  }}
+                />
               ))}
             </div>
-          </div>
-
-          {/* Address selection zone */}
-          <div className="rounded-2xl border bg-white p-6 mt-6">
-            <AddressCart selectedAddress={selectedAddress} setSelectedAddress={setSelectedAddress} />
           </div>
         </div>
 
@@ -239,9 +291,31 @@ export default function CartPage() {
               <h3 className="font-bold text-lg mb-6">ชำระเงิน</h3>
               <StripeCheckout 
                 amount={subtotal + shipping}
-                items={items}
+                items={selectedItemsData}
                 address={selectedAddress}
                 onCancel={() => setShowPayment(false)}
+                onSuccess={async () => {
+                  if (token) {
+                    try {
+                      const res = await fetch(`${API_BASE}/cart/selected`, {
+                        method: 'DELETE',
+                        headers: {
+                          'Authorization': `Bearer ${token}`
+                        }
+                      });
+                      const data = await res.json();
+                      if (res.ok && data.success) {
+                        // Remove selected items from local state
+                        setItems(cur => cur.filter(it => !selectedItems.includes(it.id)));
+                        setSelectedItems([]);
+                      } else {
+                        setError(data.error || "ไม่สามารถลบสินค้าที่ชำระเงินแล้ว");
+                      }
+                    } catch (e) {
+                      setError("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
+                    }
+                  }
+                }}
               />
             </>
           ) : (
@@ -270,9 +344,9 @@ export default function CartPage() {
               <button 
                 className="mt-6 w-full bg-emerald-600 text-white py-3 rounded-xl font-bold disabled:bg-slate-400" 
                 onClick={handleCheckout}
-                disabled={loading || items.length === 0 || !selectedAddress}
+                disabled={loading || selectedItems.length === 0 || !selectedAddress}
               >
-                ดำเนินการชำระเงิน
+                ดำเนินการชำระเงิน ({selectedItems.length} รายการ)
               </button>
 
               <p className="mt-3 text-xs text-slate-500">
