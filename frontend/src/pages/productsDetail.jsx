@@ -139,7 +139,7 @@ export default function ProductDetailPage({
       if (res.data.success) {
         window.dispatchEvent(new Event("cart:updated"));
         toast.success("เพิ่มสินค้าลงตะกร้าสำเร็จ");
-        navigate("/cart");
+        // navigate("/cart");
       } else {
         toast.error(res.data.error || "เกิดข้อผิดพลาด");
       }

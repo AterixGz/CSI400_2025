@@ -12,7 +12,7 @@ const verifyToken = (req, res, next) => {
   }
 
   const token = authHeader.split(' ')[1];
-  console.log('Received token:', token);
+  // console.log('Received token:', token);
   
   try {
     // Verify token and get user_id
@@ -23,7 +23,7 @@ const verifyToken = (req, res, next) => {
       console.log('Decoded token missing user id claim:', decoded);
       return res.status(401).json({ error: 'Invalid token format: no user id' });
     }
-    console.log('Decoded token:', decoded);
+    // console.log('Decoded token:', decoded);
     req.userId = userId;
     next();
   } catch (err) {
