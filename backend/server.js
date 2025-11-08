@@ -20,12 +20,14 @@ import stripeRouter from './routes/stripe.js';
 import clearCartRouter from './routes/clearCart.js';
 import addressRouter from './routes/address.js';
 import favoriteRouter from './routes/favorite.js';
-
+import productAdminRouter from "./admin/admin_products.js";
+import categoriesAdminRouter from "./admin/admin_categories.js";
 dotenv.config();
+
+
 
 // **import DB pool**
 import db from './db.js';
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -49,7 +51,6 @@ app.use(cors({
 }));
 
 
-
 passport.serializeUser((user, done) => {
   done(null, user);
 });
@@ -57,6 +58,7 @@ passport.deserializeUser((user, done) => {
   done(null, user);
 });
 
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // เพิ่ม API สำหรับ Login
 app.use("/login", loginRouter);
@@ -93,6 +95,17 @@ app.use('/api/addresses', addressRouter);
 
 // ใช้งาน Admin routes
 app.use("/api/admin", adminRoutes);
+
+
+// ============ admin ============
+// ใช้งาน Product Admin routes
+app.use("/api/admin_products", productAdminRouter);
+
+// ใช้งาน Categories Admin routes
+app.use("/api/admin_categories", categoriesAdminRouter);
+
+
+
 // ตัวอย่าง test query จาก DB
 app.get('/test-db', async (req, res) => {
   try {
