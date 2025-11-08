@@ -90,8 +90,7 @@ export default function Products() {
       formData.append("category_id", form.category_id);
       formData.append("image", form.image);
 
-      const res = await fetch("http://localhost:3000/api/products", {
-        // ✅ เปลี่ยนตรงนี้ด้วย
+      const res = await fetch("http://localhost:3000/api/admin_products", {
         method: "POST",
         body: formData,
       });
