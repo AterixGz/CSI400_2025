@@ -1,5 +1,5 @@
 // frontend/src/components/navbar.jsx
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { getToken } from "../utils/api";
 import VYNE from "../assets/VYNE_tranparent_256.png";
@@ -125,24 +125,64 @@ export default function Nav({
     ),
   };
 
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  function handleLogoClick(e) {
+    // prevent default Link behavior and use navigate so we can smooth-scroll to top
+    e.preventDefault();
+    // navigate to home
+    navigate('/');
+    // smooth scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // notify recommended products to refresh
+    window.dispatchEvent(new Event('refresh:recommended'));
+  }
+
+  function handleCategoryClick(e, audience) {
+    // Always prevent default Link navigation; we'll handle it.
+    e.preventDefault();
+    // If we're on the home page, smooth scroll to the recommended products section
+    if ((location.pathname || '/') === '/') {
+      const el = document.getElementById('recommended-products');
+      if (el) {
+        // compute offset to account for sticky header
+        const header = document.querySelector('header');
+        const headerHeight = header ? header.getBoundingClientRect().height : 0;
+        const rect = el.getBoundingClientRect();
+        const top = window.scrollY + rect.top - headerHeight - 12; // small offset
+        window.scrollTo({ top, behavior: 'smooth' });
+      }
+      // Also update the URL query param using react-router so components
+      // (useLocation) detect the change and react accordingly.
+      try {
+        navigate(`/?audience=${encodeURIComponent(audience)}`, { replace: true });
+      } catch (err) {
+        console.warn('Failed to update URL via navigate:', err);
+      }
+      return;
+    }
+
+    // Otherwise navigate to home with the audience query
+    navigate(`/?audience=${encodeURIComponent(audience)}`);
+  }
+
   return (
     <header className="sticky top-0 z-30 bg-white/100 ">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between relative">
-        <Link 
-          to="/" 
+        <Link
+          to="/"
           className="flex items-center gap-2 font-extrabold tracking-wide text-slate-900"
-          onClick={() => {
-            // เมื่อคลิก logo ให้ dispatch event เพื่อบอก RecommendedProducts ให้โหลดใหม่
-            window.dispatchEvent(new Event("refresh:recommended"));
-          }}
+          onClick={handleLogoClick}
         >
           <img src={VYNE} alt="VYNE" className="w-17 h-14 object-contain" />
         </Link>
 
         {/* middle nav */}
-        <nav className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-6">
+        <nav className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-6 z-1000">
           <Link
             to="/?audience=หญิง"
+            onClick={(e) => handleCategoryClick(e, 'หญิง')}
             aria-current={active === "หญิง" ? "page" : undefined}
             className={`hover:text-slate-900 ${active === "หญิง" ? "font-semibold text-black" : "text-slate-600 hover:text-slate-900"
               }`}
@@ -152,6 +192,7 @@ export default function Nav({
 
           <Link
             to="/?audience=ชาย"
+            onClick={(e) => handleCategoryClick(e, 'ชาย')}
             aria-current={active === "ชาย" ? "page" : undefined}
             className={`hover:text-slate-900 ${active === "ชาย" ? "font-semibold text-black" : "text-slate-600 hover:text-slate-900"
               }`}
@@ -161,6 +202,7 @@ export default function Nav({
 
           <Link
             to="/?audience=เด็ก"
+            onClick={(e) => handleCategoryClick(e, 'เด็ก')}
             aria-current={active === "เด็ก" ? "page" : undefined}
             className={`hover:text-slate-900 ${active === "เด็ก" ? "font-semibold text-black" : "text-slate-600 hover:text-slate-900"
               }`}
@@ -170,6 +212,7 @@ export default function Nav({
 
           <Link
             to="/"
+            onClick={(e) => handleCategoryClick(e, 'ลดราคา')}
             aria-current={active === "ลดราคา" ? "page" : undefined}
             className={`hover:text-slate-900 ${active === "ลดราคา" ? "font-semibold text-black" : "text-slate-600 hover:text-slate-900"
               }`}

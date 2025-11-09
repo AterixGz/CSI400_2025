@@ -219,8 +219,44 @@ export default function CartPage() {
   const shipping = subtotal >= 1000 || subtotal === 0 ? 0 : 50;
 
   const handleCheckout = () => {
+    // If user hasn't selected an address, show a helpful popup directing them
+    // to add an address in their profile instead of proceeding to payment.
+    if (!selectedAddress) {
+      setShowNoAddressModal(true);
+      return;
+    }
+
     setShowPayment(true);
   };
+
+  // Modal state for missing address
+  const [showNoAddressModal, setShowNoAddressModal] = useState(false);
+
+  function NoAddressModal({ isOpen, onClose }) {
+    if (!isOpen) return null;
+    return (
+      <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center z-50">
+        <div className="bg-white rounded-xl shadow-lg p-6 max-w-sm mx-4">
+          <h3 className="text-lg font-semibold mb-2">กรุณาเพิ่มที่อยู่</h3>
+          <p className="text-sm text-slate-600 mb-4">ก่อนทำการชำระเงิน โปรดเพิ่มที่อยู่จัดส่งที่หน้าโปรไฟล์ของคุณ</p>
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg border text-sm hover:bg-slate-50"
+            >
+              ปิด
+            </button>
+            <button
+              onClick={() => { window.location.href = '/profile'; }}
+              className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700"
+            >
+              ไปที่หน้าโปรไฟล์
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <section className="max-w-6xl mx-auto px-6 py-10">
@@ -345,7 +381,7 @@ export default function CartPage() {
               <button 
                 className="mt-6 w-full bg-emerald-600 text-white py-3 rounded-xl font-bold disabled:bg-slate-400" 
                 onClick={handleCheckout}
-                disabled={loading || selectedItems.length === 0 || !selectedAddress}
+                disabled={loading || selectedItems.length === 0}
               >
                 ดำเนินการชำระเงิน ({selectedItems.length} รายการ)
               </button>
@@ -358,6 +394,7 @@ export default function CartPage() {
           )}
         </aside>
       </div>
+      <NoAddressModal isOpen={showNoAddressModal} onClose={() => setShowNoAddressModal(false)} />
     </section>
   );
 }

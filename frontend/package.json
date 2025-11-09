@@ -12,6 +12,7 @@
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.0.1",
     "@fortawesome/react-fontawesome": "^3.0.2",
+    "@material-tailwind/react": "^2.1.10",
     "@stripe/react-stripe-js": "^5.3.0",
     "@stripe/stripe-js": "^8.2.0",
     "dotenv": "^17.2.3",

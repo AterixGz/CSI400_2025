@@ -35,12 +35,12 @@ export default function Footer() {
             <b>ติดต่อเรา</b>
             <ul className="mt-2 space-y-1 text-slate-600">
               <li>โทร: 02-xxx-xxxx</li>
-              <li>อีเมล: info@minimal.co.th</li>
+              <li>อีเมล: info@vyne.co.th</li>
               <li>จันทร์–ศุกร์ 9:00-18:00</li>
             </ul>
           </div>
         </div>
-        <p className="mt-4 text-slate-500">© 2025 MINIMAL. สงวนลิขสิทธิ์</p>
+        <p className="mt-4 text-slate-500">© 2025 VYNE สงวนลิขสิทธิ์</p>
       </div>
     </footer>
   );

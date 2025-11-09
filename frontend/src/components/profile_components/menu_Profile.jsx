@@ -3,10 +3,12 @@ import { Link } from "react-router-dom";
 function IconOrders({ className = "w-4 h-4" }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 10H7" />
-      <path d="M21 6H3" />
-      <path d="M7 14H3" />
-      <path d="M21 18H11" />
+      <rect x="2" y="3" width="20" height="18" rx="2" />
+      <path d="M16 2v4" />
+      <path d="M8 2v4" />
+      <path d="M2 10h20" />
+      <path d="M7 15h4" />
+      <path d="M7 18h8" />
     </svg>
   );
 }
@@ -14,8 +16,10 @@ function IconOrders({ className = "w-4 h-4" }) {
 function IconAccount({ className = "w-4 h-4" }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-      <circle cx="12" cy="7" r="4" />
+      <path d="M3 20a6 6 0 0 1 6-6h6a6 6 0 0 1 6 6" />
+      <circle cx="12" cy="9" r="5" />
+      <path d="M12 14c-3.315 0-6 2.685-6 6" />
+      <path d="M12 14c3.315 0 6 2.685 6 6" />
     </svg>
   );
 }
@@ -68,14 +72,15 @@ export default function MenuProfile({ onLogout, activeView, onChangeView }) {
             }`}
           >
             <span className={`p-2 ${activeView === 'addresses' ? 'bg-slate-800' : 'bg-slate-100'} rounded-md`}>
-              <svg className={`w-4 h-4 ${activeView === 'addresses' ? 'text-white' : 'text-slate-600'}`} viewBox="0 0 24 24" fill="none">
-                <path d="M3 7h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <svg className={`w-4 h-4 ${activeView === 'addresses' ? 'text-white' : 'text-slate-600'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
+                <circle cx="12" cy="9" r="2.5" />
               </svg>
             </span>
             <span className={activeView === 'addresses' ? 'font-medium' : 'text-slate-700'}>Addresses</span>
           </button>
         </li>
-        <li>
+        {/* <li>
           <button
             onClick={() => onChangeView('payment')}
             className={`w-full flex items-center gap-3 py-3 px-3 rounded-lg ${
@@ -89,9 +94,9 @@ export default function MenuProfile({ onLogout, activeView, onChangeView }) {
             </span>
             <span className={activeView === 'payment' ? 'font-medium' : 'text-slate-700'}>Payment Methods</span>
           </button>
-        </li>
+        </li> */}
         <li>
-          <Link to="#" className="flex items-center gap-3 py-3 px-3 rounded-lg hover:bg-slate-50">
+          {/* <Link to="#" className="flex items-center gap-3 py-3 px-3 rounded-lg hover:bg-slate-50">
             <span className="p-2 bg-slate-100 rounded-md">
               <svg className="w-4 h-4 text-slate-600" viewBox="0 0 24 24" fill="none">
                 <path d="M12 21l-8-5V6l8-5 8 5v10l-8 5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -109,14 +114,19 @@ export default function MenuProfile({ onLogout, activeView, onChangeView }) {
               </svg>
             </span>
             <span className="text-slate-700">Settings</span>
-          </Link>
+          </Link> */}
         </li>
       </ul>
 
       <div className="mt-6 border-t pt-4">
-        <button onClick={onLogout} className="w-full flex items-center gap-3 text-left px-3 py-2 rounded-md hover:bg-slate-50">
-          <span className="p-2 bg-slate-100 rounded-md"><IconLogout className="w-4 h-4 text-slate-600" /></span>
-          <span className="text-slate-700">Log Out</span>
+        <button 
+          onClick={onLogout} 
+          className="w-full flex items-center gap-3 text-left px-3 py-2 rounded-md hover:bg-red-50 group"
+        >
+          <span className="p-2 bg-red-100 rounded-md group-hover:bg-red-200">
+            <IconLogout className="w-4 h-4 text-red-600" />
+          </span>
+          <span className="text-red-600 font-medium">Log Out</span>
         </button>
       </div>
     </nav>
