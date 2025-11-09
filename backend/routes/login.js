@@ -37,7 +37,9 @@ router.post("/", async (req, res) => {
       last_name: user.last_name,
       email: user.email,
       role: user.role,
-      phone_number: user.phone_number
+      phone_number: user.phone_number,
+      profile_image_url: user.profile_image_url || null,
+      profile_image_public_id: user.profile_image_public_id || null
     };
     return res.json({ success: true, message: "Login สำเร็จ", user: userData, token });
   } catch (err) {

@@ -11,7 +11,7 @@ export default function ProfilePage() {
   const navigate = useNavigate();
   const [profilePreview, setProfilePreview] = useState(null);
   const [hasUserData, setHasUserData] = useState(false);
-  const [activeView, setActiveView] = useState('orders'); // เพิ่ม state นี้
+  const [activeView, setActiveView] = useState("orders"); // เพิ่ม state นี้
 
   const [user, setUser] = useState({
     name: "Sarah Anderson",
@@ -27,12 +27,14 @@ export default function ProfilePage() {
         const u = JSON.parse(raw);
         setUser((prev) => ({
           ...prev,
-          name: (u.first_name || u.name || "Sarah Anderson") + (u.last_name ? " " + u.last_name : ""),
+          name:
+            (u.first_name || u.name || "Sarah Anderson") +
+            (u.last_name ? " " + u.last_name : ""),
           email: u.email || u.email_address || prev.email,
           memberSince: u.memberSince || prev.memberSince,
-          avatar: u.profile_image_url || prev.avatar,
+          avatar: u.profile_image_url && u.profile_image_url.trim() !== "" ? u.profile_image_url : "/default-avatar.png",
         }));
-        if (u.profile_image_url) setProfilePreview(u.profile_image_url);
+        setProfilePreview(u.profile_image_url && u.profile_image_url.trim() !== "" ? u.profile_image_url : "/default-avatar.png");
         setHasUserData(true);
       } else {
         setHasUserData(false);
@@ -50,23 +52,75 @@ export default function ProfilePage() {
     navigate("/login");
   };
 
-  const handleFileUpload = (file) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      setProfilePreview(reader.result);
-    };
-    reader.readAsDataURL(file);
+  const handleFileUpload = async (file) => {
+    if (!file) return;
+
+    const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
+    const userId = savedUser.user_id || null;
+    const oldPublicId = savedUser.profile_image_public_id || "";
+
+    if (!userId) {
+      alert("ไม่พบ user_id กรุณาเข้าสู่ระบบใหม่");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("image", file);
+    formData.append("old_public_id", oldPublicId);
+
+    try {
+      // 1️⃣ Upload ไป Cloudinary
+      const res = await fetch("http://localhost:3000/api/upload/profile", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+
+      if (data.url) {
+        // 2️⃣ Update avatar ใน DB
+        const resDb = await fetch(
+          `http://localhost:3000/api/users/${userId}/avatar`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              profile_image_url: data.url, // URL จริงจาก Cloudinary
+              profile_image_public_id: data.public_id,
+            }),
+          }
+        );
+
+        const dbResult = await resDb.json();
+        console.log(dbResult);
+
+        // 3️⃣ Update UI และ localStorage
+        setProfilePreview(dbResult.profile_image_url);
+        setUser((prev) => ({ ...prev, avatar: dbResult.profile_image_url }));
+
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            ...savedUser,
+            profile_image_url: dbResult.profile_image_url,
+            profile_image_public_id: data.public_id,
+          })
+        );
+      }
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert("เกิดข้อผิดพลาดในการอัปโหลด");
+    }
   };
 
   const handleUpdateProfile = async (updatedData) => {
     try {
-      console.log('Updating profile:', updatedData);
-      setUser(prev => ({
+      console.log("Updating profile:", updatedData);
+      setUser((prev) => ({
         ...prev,
-        ...updatedData
+        ...updatedData,
       }));
     } catch (error) {
-      console.error('Failed to update profile:', error);
+      console.error("Failed to update profile:", error);
     }
   };
 
@@ -74,7 +128,9 @@ export default function ProfilePage() {
     return (
       <section className="max-w-7xl mx-auto px-6 py-10">
         <div className="text-center py-10 bg-white rounded-xl border shadow-sm">
-          <h2 className="text-xl font-semibold text-slate-800 mb-2">ไม่สามารถดูข้อมูลได้</h2>
+          <h2 className="text-xl font-semibold text-slate-800 mb-2">
+            ไม่สามารถดูข้อมูลได้
+          </h2>
           <p className="text-slate-600 mb-6">คุณไม่มีข้อมูลอยู่ในระบบ</p>
           <button
             onClick={() => navigate("/login")}
@@ -91,12 +147,12 @@ export default function ProfilePage() {
     <section className="max-w-7xl mx-auto px-6 py-10">
       <div className="grid grid-cols-12 gap-8">
         <aside className="col-span-12 lg:col-span-3">
-          <ProfileProfile 
+          <ProfileProfile
             user={user}
             profilePreview={profilePreview}
             onUpload={handleFileUpload}
           />
-          <MenuProfile 
+          <MenuProfile
             onLogout={handleLogout}
             activeView={activeView}
             onChangeView={setActiveView}
@@ -104,15 +160,12 @@ export default function ProfilePage() {
         </aside>
 
         <div className="col-span-12 lg:col-span-9">
-          {activeView === 'orders' && <OrderProfile />}
-          {activeView === 'account' && (
-            <AccountDetailsProfile 
-              user={user}
-              onUpdate={handleUpdateProfile}
-            />
+          {activeView === "orders" && <OrderProfile />}
+          {activeView === "account" && (
+            <AccountDetailsProfile user={user} onUpdate={handleUpdateProfile} />
           )}
-          {activeView === 'addresses' && <AddressProfile />}
-          {activeView === 'payment' && <PaymentProfile />}
+          {activeView === "addresses" && <AddressProfile />}
+          {activeView === "payment" && <PaymentProfile />}
         </div>
       </div>
     </section>

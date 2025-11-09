@@ -29,6 +29,9 @@ router.post("/", async (req, res) => {
   const values = [username, lastname, hashedPassword, number, role || "user", email, false, new Date(), birthdate, gender];
   const result = await pool.query(insertQuery, values);
   const newUser = result.rows[0];
+  // เพิ่ม field profile_image_url และ profile_image_public_id ถ้ายังไม่มี
+  if (!('profile_image_url' in newUser)) newUser.profile_image_url = null;
+  if (!('profile_image_public_id' in newUser)) newUser.profile_image_public_id = null;
   res.json({ success: true, message: "สมัครสมาชิกสำเร็จ", user: newUser });
   } catch (err) {
     console.error("Register error:", err);

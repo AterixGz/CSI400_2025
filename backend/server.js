@@ -24,6 +24,8 @@ import productAdminRouter from "./admin/admin_products.js";
 import categoriesAdminRouter from "./admin/admin_categories.js";
 import orderUserRouter from './routes/orderUser.js';
 import dashboardRouter from './routes/dashboard.js';
+import uploadRoutes from "./routes/upload.js";
+import usersRouter from './routes/users.js';
 dotenv.config();
 
 
@@ -100,6 +102,12 @@ app.use('/api/orders/user', orderUserRouter);
 
 // ใช้งาน Admin routes
 app.use("/api/admin", adminRoutes);
+
+// ใช้งาน Upload routes
+app.use("/api/upload", uploadRoutes);
+
+// ใช้งาน Users routes
+app.use("/api/users", usersRouter);
 
 
 // ============ admin ============
