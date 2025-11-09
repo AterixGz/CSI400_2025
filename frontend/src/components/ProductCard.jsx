@@ -76,7 +76,7 @@ export default function ProductCard({
             <del className="text-slate-500">{baht(p.compareAt)}</del>
           )}
         </div>
-        <div className="mt-2 flex items-center gap-2">
+        {/* <div className="mt-2 flex items-center gap-2">
           <span className="text-slate-600 text-sm">สี:</span>
           {p.colors?.map((c, i) => (
             <span
@@ -85,7 +85,7 @@ export default function ProductCard({
               style={{ background: c }}
             />
           ))}
-        </div>
+        </div> */}
         <Link
           to={`/products/${p.id}`}
           className="mt-3 w-full px-4 py-2 rounded-xl border border-slate-200 bg-white font-bold hover:bg-slate-50 block text-center"

@@ -274,7 +274,7 @@ export default function ProductDetailPage({
 
           <p className="mt-4 text-slate-700">{product.description || "รายละเอียดสินค้าแบบย่อ..."}</p>
 
-          <div className="mt-4">
+          {/* <div className="mt-4">
             <div className="text-sm text-slate-600 mb-2">สี:</div>
             <div className="flex items-center gap-2">
               {(product.colors ?? ["#ffffff"]).map((c, i) => (
@@ -287,7 +287,7 @@ export default function ProductDetailPage({
                 />
               ))}
             </div>
-          </div>
+          </div> */}
 
           {product.sizes && (
             <div className="mt-4">

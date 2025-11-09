@@ -184,7 +184,8 @@ export default function OrderProfile() {
                     </div>
                     <div className="flex-1">
                       <div className="font-medium">{it.title}</div>
-                      <div className="text-sm text-slate-600 mt-1">ไซส์: {it.size} &nbsp; สี: {it.color} &nbsp; จำนวน: {it.qty}</div>
+                      {/* ตัดสีก่อน */}
+                      <div className="text-sm text-slate-600 mt-1">ไซส์: {it.size} &nbsp; จำนวน: {it.qty}</div>
                     </div>
                     <div className="text-right font-semibold">฿{Number(it.price || 0).toFixed(2)}</div>
                   </div>

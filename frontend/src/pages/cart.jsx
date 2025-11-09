@@ -19,7 +19,8 @@ function CartItem({ item, onChangeQty, onRemove, loading, selected, onSelect }) 
       <img src={item.image} alt={item.name} className="w-24 h-24 object-cover rounded-md" />
       <div className="flex-1">
         <div className="font-bold text-lg">{item.name}</div>
-        <div className="text-slate-600 text-sm mt-1">ไซส์: {item.size} &nbsp; สี: {item.color}</div>
+        {/* เอาระบบสีออก */}
+        <div className="text-slate-600 text-sm mt-1">ไซส์: {item.size} &nbsp; </div> 
         <div className="mt-3 flex items-center gap-3">
           <button disabled={loading} onClick={() => onChangeQty(item.id, Math.max(1, item.qty - 1))} className="w-8 h-8 rounded-md border bg-white">−</button>
           <div className="w-8 text-center">{item.qty}</div>
