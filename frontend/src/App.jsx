@@ -53,13 +53,17 @@ export default function App() {
   return (
     <div className="text-slate-900 bg-white">
       <Toaster position="top-right" />
-      <SmallPromoNav />
-      <Nav
-        active={activeCat}
-        onSelect={setActiveCat}
-        cartCount={cart.length}
-        go={setRoute}
-      />
+      {!(location.pathname || "").startsWith("/admin") && (
+        <>
+          <SmallPromoNav />
+          <Nav
+            active={activeCat}
+            onSelect={setActiveCat}
+            cartCount={cart.length}
+            go={setRoute}
+          />
+        </>
+      )}
 
       <Routes>
         {/* ...existing routes... */}
