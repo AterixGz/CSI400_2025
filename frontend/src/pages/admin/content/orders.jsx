@@ -174,6 +174,36 @@ function useDebounce(value, delay) {
   return debouncedValue;
 }
 
+// Sort direction types
+const SORT_DIR = {
+  NONE: 'none',
+  ASC: 'asc',
+  DESC: 'desc'
+};
+
+// Sort icons component
+function SortIcon({ direction }) {
+  if (direction === SORT_DIR.NONE) {
+    return (
+      <svg className="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+      </svg>
+    );
+  }
+  if (direction === SORT_DIR.ASC) {
+    return (
+      <svg className="w-4 h-4 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+      </svg>
+    );
+  }
+  return (
+    <svg className="w-4 h-4 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+    </svg>
+  );
+}
+
 export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
@@ -188,6 +218,10 @@ export default function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState(null);
+  const [sortConfig, setSortConfig] = useState({
+    key: 'code',
+    direction: SORT_DIR.DESC
+  });
 
   // Debounce search term to avoid too many re-renders
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
@@ -285,11 +319,49 @@ export default function OrdersPage() {
     });
   }, []);
 
-  // Apply filters whenever orders, search term or status changes
+  // Sort function
+  const sortData = useCallback((data, { key, direction }) => {
+    if (direction === SORT_DIR.NONE) return data;
+
+    return [...data].sort((a, b) => {
+      let aValue = a[key];
+      let bValue = b[key];
+
+      // Handle special cases
+      if (key === 'total') {
+        aValue = Number(aValue) || 0;
+        bValue = Number(bValue) || 0;
+      } else {
+        aValue = String(aValue || '').toLowerCase();
+        bValue = String(bValue || '').toLowerCase();
+      }
+
+      if (aValue < bValue) return direction === SORT_DIR.ASC ? -1 : 1;
+      if (aValue > bValue) return direction === SORT_DIR.ASC ? 1 : -1;
+      return 0;
+    });
+  }, []);
+
+  // Handle sort click
+  const handleSort = useCallback((key) => {
+    setSortConfig(current => {
+      if (current.key === key) {
+        // Cycle through: none -> asc -> desc -> none
+        const directions = [SORT_DIR.NONE, SORT_DIR.ASC, SORT_DIR.DESC];
+        const nextIndex = (directions.indexOf(current.direction) + 1) % directions.length;
+        return { key, direction: directions[nextIndex] };
+      }
+      // New column: start with ascending
+      return { key, direction: SORT_DIR.ASC };
+    });
+  }, []);
+
+  // Apply filters and sort whenever orders, search term or status changes
   useEffect(() => {
-    const filtered = filterOrders(orders, debouncedSearchTerm, statusFilter);
-    setFilteredOrders(filtered);
-  }, [orders, debouncedSearchTerm, statusFilter, filterOrders]);
+    let result = filterOrders(orders, debouncedSearchTerm, statusFilter);
+    result = sortData(result, sortConfig);
+    setFilteredOrders(result);
+  }, [orders, debouncedSearchTerm, statusFilter, filterOrders, sortConfig, sortData]);
 
   useEffect(() => {
     fetchOrders();
@@ -504,12 +576,60 @@ export default function OrdersPage() {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-slate-500">
               <tr>
-                <th className="px-4 py-3 text-left">Order</th>
-                <th className="px-4 py-3 text-left">Customer</th>
-                <th className="px-4 py-3 text-left">Total</th>
-                <th className="px-4 py-3 text-left">Payment</th>
-                <th className="px-4 py-3 text-left">Shipping status</th>
-                <th className="px-4 py-3 text-left">Tracking</th>
+                <th 
+                  className="px-4 py-3 text-left cursor-pointer hover:bg-slate-100"
+                  onClick={() => handleSort('code')}
+                >
+                  <div className="flex items-center gap-2">
+                    <span>Order</span>
+                    <SortIcon direction={sortConfig.key === 'code' ? sortConfig.direction : SORT_DIR.NONE} />
+                  </div>
+                </th>
+                <th 
+                  className="px-4 py-3 text-left cursor-pointer hover:bg-slate-100"
+                  onClick={() => handleSort('customerName')}
+                >
+                  <div className="flex items-center gap-2">
+                    <span>Customer</span>
+                    <SortIcon direction={sortConfig.key === 'customerName' ? sortConfig.direction : SORT_DIR.NONE} />
+                  </div>
+                </th>
+                <th 
+                  className="px-4 py-3 text-left cursor-pointer hover:bg-slate-100"
+                  onClick={() => handleSort('total')}
+                >
+                  <div className="flex items-center gap-2">
+                    <span>Total</span>
+                    <SortIcon direction={sortConfig.key === 'total' ? sortConfig.direction : SORT_DIR.NONE} />
+                  </div>
+                </th>
+                <th 
+                  className="px-4 py-3 text-left cursor-pointer hover:bg-slate-100"
+                  onClick={() => handleSort('paymentStatus')}
+                >
+                  <div className="flex items-center gap-2">
+                    <span>Payment</span>
+                    <SortIcon direction={sortConfig.key === 'paymentStatus' ? sortConfig.direction : SORT_DIR.NONE} />
+                  </div>
+                </th>
+                <th 
+                  className="px-4 py-3 text-left cursor-pointer hover:bg-slate-100"
+                  onClick={() => handleSort('shippingStatus')}
+                >
+                  <div className="flex items-center gap-2">
+                    <span>Shipping status</span>
+                    <SortIcon direction={sortConfig.key === 'shippingStatus' ? sortConfig.direction : SORT_DIR.NONE} />
+                  </div>
+                </th>
+                <th 
+                  className="px-4 py-3 text-left cursor-pointer hover:bg-slate-100"
+                  onClick={() => handleSort('tracking')}
+                >
+                  <div className="flex items-center gap-2">
+                    <span>Tracking</span>
+                    <SortIcon direction={sortConfig.key === 'tracking' ? sortConfig.direction : SORT_DIR.NONE} />
+                  </div>
+                </th>
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
