@@ -1,0 +1,12 @@
+.react-multi-carousel-arrow,
+.react-multiple-carousel__arrow,
+.react-multi-carousel__arrow,
+.react-multi-carousel-arrow button {
+  z-index: 0 !important;
+  pointer-events: auto;
+}
+
+/* also ensure the carousel list sits above background but arrows at z-0 */
+.react-multi-carousel-list {
+  z-index: 1;
+}

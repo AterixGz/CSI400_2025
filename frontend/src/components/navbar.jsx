@@ -1,6 +1,6 @@
 // frontend/src/components/navbar.jsx
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { getToken } from "../utils/api";
 import VYNE from "../assets/VYNE_tranparent_256.png";
 import SearchBox from "./SearchBox";
@@ -17,9 +17,9 @@ export default function Nav({
       const raw = typeof window !== "undefined" ? localStorage.getItem("user") : null;
       try {
         setUser(raw ? JSON.parse(raw) : null);
-      } catch (e) {
-        setUser(null);
-      }
+      } catch {
+          setUser(null);
+        }
       updateCartCount(); // อัพเดต cartCount ทุกครั้งที่ user เปลี่ยน
     };
     readUser();
@@ -31,7 +31,6 @@ export default function Nav({
       window.removeEventListener("storage", readUser);
       window.removeEventListener("authChange", readUser);
     };
-    // eslint-disable-next-line
   }, []);
 
   // sync cart count with cart page
@@ -72,7 +71,6 @@ export default function Nav({
       window.removeEventListener("cart:updated", updateCartCount);
       window.removeEventListener("authChange", updateCartCount);
     };
-    // eslint-disable-next-line
   }, []);
 
   const Icon = {
@@ -144,7 +142,13 @@ export default function Nav({
     e.preventDefault();
     // If we're on the home page, smooth scroll to the recommended products section
     if ((location.pathname || '/') === '/') {
-      const el = document.getElementById('recommended-products');
+      // เลือก id ของ section ที่ตรงกับ audience
+      let targetId = 'recommended-products';
+      if (audience === 'ชาย') targetId = 'recommended-men';
+      else if (audience === 'หญิง') targetId = 'recommended-women';
+      else if (audience === 'เด็ก') targetId = 'recommended-kids';
+
+      const el = document.getElementById(targetId) || document.getElementById('recommended-products');
       if (el) {
         // compute offset to account for sticky header
         const header = document.querySelector('header');
@@ -153,8 +157,7 @@ export default function Nav({
         const top = window.scrollY + rect.top - headerHeight - 12; // small offset
         window.scrollTo({ top, behavior: 'smooth' });
       }
-      // Also update the URL query param using react-router so components
-      // (useLocation) detect the change and react accordingly.
+      // Update the URL query param so components can react as well
       try {
         navigate(`/?audience=${encodeURIComponent(audience)}`, { replace: true });
       } catch (err) {
@@ -180,6 +183,16 @@ export default function Nav({
 
         {/* middle nav */}
         <nav className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-6 z-1000">
+        <Link
+            to="/?audience=ชาย"
+            onClick={(e) => handleCategoryClick(e, 'ชาย')}
+            aria-current={active === "ชาย" ? "page" : undefined}
+            className={`hover:text-slate-900 ${active === "ชาย" ? "font-semibold text-black" : "text-slate-600 hover:text-slate-900"
+              }`}
+          >
+            <p>เสื้อผ้าผู้ชาย</p>
+          </Link>
+          
           <Link
             to="/?audience=หญิง"
             onClick={(e) => handleCategoryClick(e, 'หญิง')}
@@ -190,15 +203,7 @@ export default function Nav({
             <p>เสื้อผ้าผู้หญิง</p>
           </Link>
 
-          <Link
-            to="/?audience=ชาย"
-            onClick={(e) => handleCategoryClick(e, 'ชาย')}
-            aria-current={active === "ชาย" ? "page" : undefined}
-            className={`hover:text-slate-900 ${active === "ชาย" ? "font-semibold text-black" : "text-slate-600 hover:text-slate-900"
-              }`}
-          >
-            <p>เสื้อผ้าผู้ชาย</p>
-          </Link>
+          
 
           <Link
             to="/?audience=เด็ก"

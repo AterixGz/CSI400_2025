@@ -69,7 +69,7 @@ export default function Hero({ filtered = [], onAdd = () => {}, onViewAll = () =
           <button
             onClick={goPrev}
             aria-label="ก่อนหน้า"
-            className="absolute z-30 left-0 top-1/2 -translate-y-1/2 w-60 h-full bg-white/0 text-slate-900 flex items-center justify-center hover:bg-white/20"
+            className="absolute z-0 left-0 top-1/2 -translate-y-1/2 w-60 h-full bg-white/0 text-slate-900 flex items-center justify-center hover:bg-white/20"
           >
             
             <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
@@ -81,7 +81,7 @@ export default function Hero({ filtered = [], onAdd = () => {}, onViewAll = () =
           <button
             onClick={goNext}
             aria-label="ถัดไป"
-            className="absolute z-30 right-0 top-1/2 -translate-y-1/2 w-60 h-full bg-white/0 text-slate-900 flex items-center justify-center hover:bg-white/20"
+            className="absolute z-0 right-0 top-1/2 -translate-y-1/2 w-60 h-full bg-white/0 text-slate-900 flex items-center justify-center hover:bg-white/20"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
               <path fillRule="evenodd" d="M12.293 16.293a1 1 0 010-1.414L15.586 11H5a1 1 0 110-2h10.586l-3.293-3.293a1 1 0 011.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clipRule="evenodd" />
