@@ -23,7 +23,7 @@ import favoriteRouter from './routes/favorite.js';
 import productAdminRouter from "./admin/admin_products.js";
 import categoriesAdminRouter from "./admin/admin_categories.js";
 import orderUserRouter from './routes/orderUser.js';
-
+import dashboardRouter from './routes/dashboard.js';
 dotenv.config();
 
 
@@ -109,8 +109,8 @@ app.use("/api/admin_products", productAdminRouter);
 // ใช้งาน Categories Admin routes
 app.use("/api/admin_categories", categoriesAdminRouter);
 
-
-
+// ใช้งาน Admin Dashboard routes
+app.use('/api/dashboard', dashboardRouter);
 // ตัวอย่าง test query จาก DB
 app.get('/test-db', async (req, res) => {
   try {
