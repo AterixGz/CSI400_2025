@@ -26,6 +26,8 @@ import orderUserRouter from './routes/orderUser.js';
 import dashboardRouter from './routes/dashboard.js';
 import uploadRoutes from "./routes/upload.js";
 import usersRouter from './routes/users.js';
+import ordersAdminRouter from './admin/admin_orders.js';
+
 dotenv.config();
 
 
@@ -119,6 +121,11 @@ app.use("/api/admin_categories", categoriesAdminRouter);
 
 // ใช้งาน Admin Dashboard routes
 app.use('/api/dashboard', dashboardRouter);
+// ใช้งาน Orders Admin routes
+app.use("/api/admin/orders", ordersAdminRouter);
+
+
+
 // ตัวอย่าง test query จาก DB
 app.get('/test-db', async (req, res) => {
   try {

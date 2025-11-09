@@ -25,7 +25,8 @@ export default function OrderProfile() {
           (data.orders || []).map((o) => ({
             id: o.order_id,
             date: o.created_at ? new Date(o.created_at).toLocaleDateString("th-TH", { year: "numeric", month: "long", day: "numeric" }) : "",
-            status: mapStatus(o.status),
+            status: o.status, // เก็บค่า status แบบดั้งเดิมไว้สำหรับการกรอง
+            statusLabel: mapStatus(o.status), // เพิ่ม statusLabel สำหรับการแสดงผล
             total: o.total_amount,
             items: (o.items || []).map((it, idx) => ({
               id: it.product_id || idx,
@@ -48,39 +49,70 @@ export default function OrderProfile() {
     fetchOrders();
   }, []);
 
+  const SHIPPING_STATUS = {
+    PENDING: "pending",
+    PROCESSING: "processing",
+    SHIPPED: "shipped",
+    DELIVERED: "delivered",
+    CANCELLED: "cancelled",
+    PAID: "paid"
+  };
+
+  const statusClass = {
+    [SHIPPING_STATUS.PENDING]: "bg-slate-100 text-slate-700",
+    [SHIPPING_STATUS.PROCESSING]: "bg-blue-100 text-blue-700",
+    [SHIPPING_STATUS.SHIPPED]: "bg-indigo-100 text-indigo-700",
+    [SHIPPING_STATUS.DELIVERED]: "bg-emerald-100 text-emerald-700",
+    [SHIPPING_STATUS.CANCELLED]: "bg-red-100 text-red-700",
+    [SHIPPING_STATUS.PAID]: "bg-green-100 text-green-700"
+  };
+
+  function getStatusInfo(status) {
+    // Map backend status to Thai labels and colors
+    const statusMap = {
+      [SHIPPING_STATUS.PENDING]: { label: "รอดำเนินการ", classes: statusClass[SHIPPING_STATUS.PENDING] },
+      [SHIPPING_STATUS.PROCESSING]: { label: "กำลังดำเนินการ", classes: statusClass[SHIPPING_STATUS.PROCESSING] },
+      [SHIPPING_STATUS.SHIPPED]: { label: "จัดส่งแล้ว", classes: statusClass[SHIPPING_STATUS.SHIPPED] },
+      [SHIPPING_STATUS.DELIVERED]: { label: "ส่งถึงแล้ว", classes: statusClass[SHIPPING_STATUS.DELIVERED] },
+      [SHIPPING_STATUS.CANCELLED]: { label: "ยกเลิก", classes: statusClass[SHIPPING_STATUS.CANCELLED] },
+      [SHIPPING_STATUS.PAID]: { label: "ชำระเงินแล้ว", classes: statusClass[SHIPPING_STATUS.PAID] }
+    };
+
+    const statusInfo = statusMap[status] || { label: status || "-", classes: "bg-slate-100 text-slate-700" };
+    return {
+      label: statusInfo.label,
+      bgColor: statusInfo.classes.split(' ')[0],
+      textColor: statusInfo.classes.split(' ')[1]
+    };
+  }
+
   function mapStatus(status) {
-    // Map backend status to Thai labels
-    if (status === "pending" || status === "unpaid") return "ยังไม่จ่ายเงิน";
-    if (status === "paid") return "ชำระเงินแล้ว";
-    if (status === "shipping" || status === "กำลังจัดส่ง") return "กำลังจัดส่ง";
-    if (status === "completed" || status === "ส่งถึงแล้ว") return "ส่งถึงแล้ว";
-    return status || "-";
+    return getStatusInfo(status).label;
   }
 
   const statusLabel = {
-    unpaid: "ยังไม่จ่ายเงิน",
-    paid: "ชำระเงินแล้ว",
-    shipping: "กำลังจัดส่ง",
-    delivered: "ส่งถึงแล้ว",
+    [SHIPPING_STATUS.PENDING]: "รอดำเนินการ",
+    [SHIPPING_STATUS.PROCESSING]: "กำลังดำเนินการ",
+    [SHIPPING_STATUS.SHIPPED]: "จัดส่งแล้ว",
+    [SHIPPING_STATUS.DELIVERED]: "ส่งถึงแล้ว",
+    [SHIPPING_STATUS.CANCELLED]: "ยกเลิก",
+    [SHIPPING_STATUS.PAID]: "ชำระเงินแล้ว"
   };
 
+  // Initialize counts object with all status types
   const counts = orders.reduce(
     (acc, o) => {
       acc.all += 1;
-      if (o.status === statusLabel.unpaid) acc.unpaid += 1;
-      if (o.status === statusLabel.paid) acc.paid += 1;
-      if (o.status === statusLabel.shipping) acc.shipping += 1;
-      if (o.status === statusLabel.delivered) acc.delivered += 1;
+      acc[o.status] = (acc[o.status] || 0) + 1;
       return acc;
     },
-    { all: 0, unpaid: 0, paid: 0, shipping: 0, delivered: 0 }
+    { all: 0, ...Object.values(SHIPPING_STATUS).reduce((obj, status) => ({ ...obj, [status]: 0 }), {}) }
   );
 
   const displayedOrders = orders.filter((o) => {
     const q = (search || "").trim().toLowerCase();
-    if (statusFilter !== "all") {
-      const label = statusLabel[statusFilter];
-      if (o.status !== label) return false;
+    if (statusFilter !== "all" && o.status !== statusFilter) {
+      return false;
     }
     if (!q) return true;
     if ((o.id || "").toString().toLowerCase().includes(q)) return true;
@@ -95,7 +127,7 @@ export default function OrderProfile() {
           <h1 className="text-2xl font-extrabold">คำสั่งซื้อของคุณ</h1>
           <p className="text-sm text-slate-500 mt-1">ติดตามและจัดการคำสั่งซื้อของคุณ</p>
 
-          <div className="mt-4 flex flex-col md:flex-row md:items-center md:gap-4">
+          <div className="mt-4 space-y-4">
             <div className="w-full md:w-80">
               <label className="sr-only">ค้นหา</label>
               <input
@@ -106,50 +138,31 @@ export default function OrderProfile() {
               />
             </div>
 
-            <div className="mt-3 md:mt-0 flex gap-3 items-center">
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setStatusFilter("all")}
-                className={`rounded-full px-4 py-2 text-sm flex items-center gap-3 border ${statusFilter === "all" ? "bg-slate-900 text-white" : "bg-white"}`}
+                className={`rounded-full px-4 py-2 text-sm inline-flex items-center gap-2 border whitespace-nowrap ${statusFilter === "all" ? "bg-slate-900 text-white" : "bg-white"}`}
                 aria-pressed={statusFilter === "all"}
               >
                 <span className="font-medium">ทั้งหมด</span>
-                <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full text-xs">{counts.all}</span>
+                <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full text-xs min-w-[1.5rem] text-center">{counts.all}</span>
               </button>
 
-              {/* <button
-                onClick={() => setStatusFilter("unpaid")}
-                className={`rounded-full px-4 py-2 text-sm flex items-center gap-3 border ${statusFilter === "unpaid" ? "bg-slate-900 text-white" : "bg-white"}`}
-                aria-pressed={statusFilter === "unpaid"}
-              >
-                <span>ยังไม่จ่ายเงิน</span>
-                <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full text-xs">{counts.unpaid}</span>
-              </button> */}
-              <button
-                onClick={() => setStatusFilter("paid")}
-                className={`rounded-full px-4 py-2 text-sm flex items-center gap-3 border ${statusFilter === "paid" ? "bg-slate-900 text-white" : "bg-white"}`}
-                aria-pressed={statusFilter === "paid"}
-              >
-                <span>ชำระเงินแล้ว</span>
-                <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full text-xs">{counts.paid}</span>
-              </button>
-
-              <button
-                onClick={() => setStatusFilter("shipping")}
-                className={`rounded-full px-4 py-2 text-sm flex items-center gap-3 border ${statusFilter === "shipping" ? "bg-slate-900 text-white" : "bg-white"}`}
-                aria-pressed={statusFilter === "shipping"}
-              >
-                <span>กำลังจัดส่ง</span>
-                <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full text-xs">{counts.shipping}</span>
-              </button>
-
-              <button
-                onClick={() => setStatusFilter("delivered")}
-                className={`rounded-full px-4 py-2 text-sm flex items-center gap-3 border ${statusFilter === "delivered" ? "bg-slate-900 text-white" : "bg-white"}`}
-                aria-pressed={statusFilter === "delivered"}
-              >
-                <span>ส่งถึงแล้ว</span>
-                <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full text-xs">{counts.delivered}</span>
-              </button>
+              {Object.values(SHIPPING_STATUS).map(value => (
+                <button
+                  key={value}
+                  onClick={() => setStatusFilter(value)}
+                  className={`rounded-full px-4 py-2 text-sm inline-flex items-center gap-2 border whitespace-nowrap ${
+                    statusFilter === value ? "bg-slate-900 text-white" : "bg-white"
+                  }`}
+                  aria-pressed={statusFilter === value}
+                >
+                  <span>{statusLabel[value]}</span>
+                  <span className={`${statusClass[value]} px-2 py-0.5 rounded-full text-xs min-w-[1.5rem] text-center`}>
+                    {counts[value] || 0}
+                  </span>
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -164,9 +177,11 @@ export default function OrderProfile() {
         {!loading && !error && displayedOrders.map((o) => (
           <div key={o.id} className="bg-white border rounded-xl shadow-sm overflow-hidden">
             <div className="flex items-center justify-between p-5 border-b">
-              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3">
                 <div className="text-sm font-medium">{o.id}</div>
-                <div className="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-700">{o.status}</div>
+                <div className={`text-xs px-2 py-1 rounded-full ${getStatusInfo(o.status).bgColor} ${getStatusInfo(o.status).textColor}`}>
+                  {o.statusLabel}
+                </div>
                 <div className="text-sm text-slate-500 ml-3">สั่งซื้อเมื่อ {o.date}</div>
               </div>
               <div className="text-right">
