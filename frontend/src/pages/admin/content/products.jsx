@@ -35,7 +35,14 @@ export default function Products() {
     description: "",
     price: "",
     image: null,
+    audience_id: "",
     category_id: "",
+    sizes: [
+      { size_name: "freesize", stock: "" },
+      { size_name: "L", stock: "" },
+      { size_name: "M", stock: "" },
+      { size_name: "S", stock: "" },
+    ],
   });
   const [adding, setAdding] = useState(false);
 
@@ -45,7 +52,7 @@ export default function Products() {
     setErr("");
     try {
       console.log("📦 กำลังโหลดสินค้า...");
-      const res = await fetch("http://localhost:3000/api/products"); // ✅ เปลี่ยนเป็น /api/products
+  const res = await fetch("http://localhost:3000/api/admin_products/all"); // ✅ ใช้ endpoint admin_products/all เพื่อดึงสินค้าทุกตัว
       console.log("📡 Response status:", res.status);
 
       const text = await res.text();
@@ -74,6 +81,43 @@ export default function Products() {
   useEffect(() => {
     loadProducts();
   }, []);
+// ฟังก์ชันลบสินค้าออกจากระบบ (ลบ DB จริง)
+  async function deleteProduct(product_id) {
+    if (!window.confirm("ต้องการลบสินค้านี้ออกจากระบบถาวรใช่หรือไม่?")) return;
+    try {
+      const res = await fetch(`http://localhost:3000/api/admin_products/${product_id}`, {
+        method: "DELETE"
+      });
+      if (!res.ok) throw new Error("ลบสินค้าไม่สำเร็จ");
+      await loadProducts();
+    } catch (e) {
+      alert(e.message || "เกิดข้อผิดพลาด");
+    }
+  }
+
+  // ฟังก์ชันซ่อนสินค้า (ไม่แสดงในหน้าขาย)
+  async function toggleHideProduct(product_id, is_hidden) {
+  const action = is_hidden ? "ต้องการแสดงสินค้านี้ในหน้าขายใช่หรือไม่?" : "ต้องการซ่อนสินค้านี้จากหน้าขายใช่หรือไม่?";
+  if (!window.confirm(action)) return;
+  try {
+    const res = await fetch(`http://localhost:3000/api/admin_products/${product_id}/hide`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_hidden: !is_hidden })
+    });
+    if (!res.ok) throw new Error(is_hidden ? "แสดงสินค้าไม่สำเร็จ" : "ซ่อนสินค้าไม่สำเร็จ");
+
+    // ✅ แก้เฉพาะ product ตัวนั้นใน state
+    setProducts(prev =>
+      prev.map(p =>
+        p.product_id === product_id ? { ...p, is_hidden: !is_hidden } : p
+      )
+    );
+  } catch (e) {
+    alert(e.message || "เกิดข้อผิดพลาด");
+  }
+}
+
 
   // เพิ่มสินค้าใหม่
   async function handleAddProduct(e) {
@@ -83,12 +127,15 @@ export default function Products() {
     setAdding(true);
 
     try {
-      const formData = new FormData();
-      formData.append("name", form.name);
-      formData.append("description", form.description);
-      formData.append("price", form.price);
-      formData.append("category_id", form.category_id);
-      formData.append("image", form.image);
+  const formData = new FormData();
+  formData.append("name", form.name);
+  formData.append("description", form.description);
+  formData.append("price", form.price);
+  formData.append("audience_id", Number(form.audience_id));
+  formData.append("category_id", Number(form.category_id));
+  formData.append("image", form.image);
+  // ส่งข้อมูล size_name/stock_size เป็น JSON string
+  formData.append("sizes", JSON.stringify(form.sizes));
 
       const res = await fetch("http://localhost:3000/api/admin_products", {
         method: "POST",
@@ -112,7 +159,14 @@ export default function Products() {
         description: "",
         price: "",
         image: null,
+        audience_id: "",
         category_id: "",
+        sizes: [
+          { size_name: "freesize", stock: "" },
+          { size_name: "L", stock: "" },
+          { size_name: "M", stock: "" },
+          { size_name: "S", stock: "" },
+        ],
       });
       setShowModal(false);
       await loadProducts();
@@ -199,20 +253,56 @@ export default function Products() {
                   />
                 </div>
                 <div>
-                  <label className="block mb-1 font-medium">ประเภทสินค้า</label>
+                  <label className="block mb-1 font-medium">ประเภทสินค้า (เสื้อ/กางเกง)</label>
                   <select
                     className="w-full border rounded px-3 py-2"
                     required
                     value={form.category_id}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, category_id: e.target.value }))
-                    }
+                    onChange={e => setForm(f => ({ ...f, category_id: e.target.value }))}
                   >
-                    <option value="">เลือกประเภท</option>
+                    <option value="">เลือกประเภทสินค้า</option>
+                    <option value="1">เสื้อ</option>
+                    <option value="2">กางเกง</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block mb-1 font-medium">กลุ่มเป้าหมาย</label>
+                  <select
+                    className="w-full border rounded px-3 py-2"
+                    required
+                    value={form.audience_id}
+                    onChange={e => setForm(f => ({ ...f, audience_id: e.target.value }))}
+                  >
+                    <option value="">เลือกกลุ่มเป้าหมาย</option>
                     <option value="1">ชาย</option>
                     <option value="2">หญิง</option>
                     <option value="3">เด็ก</option>
                   </select>
+                </div>
+                {/* เพิ่มฟิลด์กรอก stock แต่ละ size */}
+                <div>
+                  <label className="block mb-1 font-medium">Stock แต่ละไซต์</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {form.sizes.map((sz, idx) => (
+                      <div key={sz.size_name} className="flex items-center gap-2">
+                        <span className="w-20">{sz.size_name}</span>
+                        <input
+                          type="number"
+                          min={0}
+                          className="border rounded px-2 py-1 w-24"
+                          placeholder={`Stock ${sz.size_name}`}
+                          value={sz.stock}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setForm(f => ({
+                              ...f,
+                              sizes: f.sizes.map((s, i) => i === idx ? { ...s, stock: val } : s)
+                            }));
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <button
                   type="submit"
@@ -283,6 +373,18 @@ export default function Products() {
                         >
                           +
                         </button>
+                      </div>
+                      <div className="flex gap-2 mt-2 justify-center">
+                        <button
+                          className="px-2 py-1 bg-red-500 text-white rounded text-sm"
+                          onClick={() => deleteProduct(p.product_id)}
+                          disabled={adding}
+                        >ลบออกจากระบบ</button>
+                        <button
+                          className={`px-2 py-1 rounded text-sm ${p.is_hidden ? "bg-green-500 text-white" : "bg-yellow-400 text-black"}`}
+                          onClick={() => toggleHideProduct(p.product_id, p.is_hidden)}
+                          disabled={adding}
+                          >{p.is_hidden ? "แสดงสินค้า" : "ซ่อนสินค้า"}</button>
                       </div>
                     </td>
                   </tr>

@@ -95,6 +95,7 @@ export default function ProductsPage({ onAdd }) {
 
   // map isFavorite ที่นี่แทน (ไม่ต้อง re-fetch ทั้ง products)
   const filteredItems = items
+    .filter(p => !p.is_hidden) // แสดงเฉพาะสินค้าที่ไม่ถูกซ่อน
     .map(p => ({ ...p, isFavorite: favoriteIds.includes(p.id) }))
     .filter((p) => {
       const catMatch = !filters.categories.length || filters.categories.includes(p.audience.name);
@@ -203,6 +204,7 @@ function adaptProduct(row) {
     rating: row.rating || 0,
     reviews: row.reviews || 0,
     colors: row.colors || [],
+    is_hidden: Boolean(row.is_hidden),
   };
 }
   return (

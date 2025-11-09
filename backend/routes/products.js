@@ -23,6 +23,9 @@ router.get("/", async (req, res) => {
       values.push(...list);
     }
 
+    // filter เฉพาะสินค้าที่ไม่ถูกซ่อน (is_hidden ไม่เป็น true)
+    const whereHidden = "p.is_hidden IS NOT TRUE";
+    const whereAll = [whereHidden, ...where];
     const sql = `
       SELECT 
         p.product_id, p.name AS product_name, p.description,
@@ -34,7 +37,7 @@ router.get("/", async (req, res) => {
       JOIN categories c ON p.category_id = c.category_id
       LEFT JOIN audiences a ON p.audience_id = a.audience_id
       LEFT JOIN product_sizes ps ON p.product_id = ps.product_id
-      ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
+      ${whereAll.length ? `WHERE ${whereAll.join(" AND ")}` : ""}
       GROUP BY p.product_id, c.category_id, a.audience_id
       ORDER BY ${orderBy}
       LIMIT 50
