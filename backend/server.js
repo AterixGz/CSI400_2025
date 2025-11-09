@@ -23,12 +23,9 @@ import favoriteRouter from './routes/favorite.js';
 import productAdminRouter from "./admin/admin_products.js";
 import categoriesAdminRouter from "./admin/admin_categories.js";
 import orderUserRouter from './routes/orderUser.js';
-<<<<<<< Updated upstream
 import dashboardRouter from './routes/dashboard.js';
-=======
 import ordersAdminRouter from './admin/admin_orders.js';
 
->>>>>>> Stashed changes
 dotenv.config();
 
 
@@ -114,16 +111,13 @@ app.use("/api/admin_products", productAdminRouter);
 // ใช้งาน Categories Admin routes
 app.use("/api/admin_categories", categoriesAdminRouter);
 
-<<<<<<< Updated upstream
 // ใช้งาน Admin Dashboard routes
 app.use('/api/dashboard', dashboardRouter);
-=======
 // ใช้งาน Orders Admin routes
 app.use("/api/admin/orders", ordersAdminRouter);
 
 
 
->>>>>>> Stashed changes
 // ตัวอย่าง test query จาก DB
 app.get('/test-db', async (req, res) => {
   try {
