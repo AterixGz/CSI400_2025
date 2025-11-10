@@ -19,21 +19,21 @@ import {
 
 const sidebarItems = [
   { icon: Home, label: 'Dashboard', path: '/admin/dashboard', count: '' },
-  { icon: BarChart3, label: 'Analytics', path: '/admin/analytics' },
+  // { icon: BarChart3, label: 'Analytics', path: '/admin/analytics' },
   // { icon: Users, label: 'Organization', path: '/admin/organization' },
   // { icon: FolderOpen, label: 'Projects', path: '/admin/projects', count: '12' },
   { icon: Package, label: 'Products', path: '/admin/products' },
   { icon: ShoppingCart, label: 'Orders', path: '/admin/orders', count: '' },
   { icon: Users, label: 'Customers', path: '/admin/customers' },
-  { icon: DollarSign, label: 'Transactions', path: '/admin/transactions' },
-  { icon: FileText, label: 'Invoices', path: '/admin/invoices', count: '' },
+  // { icon: DollarSign, label: 'Transactions', path: '/admin/transactions' },
+  // { icon: FileText, label: 'Invoices', path: '/admin/invoices', count: '' },
   // { icon: CreditCard, label: 'Payments', path: '/admin/payments' },
   { icon: Users, label: 'Members', path: '/admin/members' },
 //   { icon: Archive, label: 'Backup & Restore', path: '/admin/backup' }
 ];
 
 const categoryBreaks = [0, 2, 5, 7, 10, 12];
-const categories = ['OVERVIEW', 'E-COMMERCE', 'FINANCE', 'TEAM & COMMUNICATION', 'UTILITY'];
+const categories = ['OVERVIEW', 'E-COMMERCE', 'TEAM & COMMUNICATION', 'UTILITY'];//ลบ finance ออก
 
 export default function AdminSidebar() {
   let currentCategory = 0;
