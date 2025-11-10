@@ -160,7 +160,7 @@ const categoryData = (categories || []).map((cat, i) => ({
                 <YAxis allowDecimals={false}   // ❌ ไม่ให้มีทศนิยม
                 />
                 <Tooltip formatter={(value) => value} labelFormatter={(label) => `Product: ${label}`} />
-                <Bar dataKey="total_sold" fill="#F59E0B" radius={[4,4,0,0]} />
+                <Bar dataKey="total_sold" fill="#6cbe28ff" radius={[4,4,0,0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -177,7 +177,7 @@ const categoryData = (categories || []).map((cat, i) => ({
         <XAxis dataKey="product_name" />
         <YAxis 
           allowDecimals={false}   // ❌ ไม่ให้มีทศนิยม
-          domain={[0, 3]}   // ✅ ให้เริ่มจาก 0 เสมอ
+          domain={[0, 'auto']}   // ✅ ให้เริ่มจาก 0 เสมอ
         />
         <Tooltip
           content={({ active, payload }) => {
@@ -198,7 +198,7 @@ const categoryData = (categories || []).map((cat, i) => ({
                   <p
                     style={{
                       margin: 0,
-                      color: stock < 2 ? '#EF4444' : '#000',
+                      color: stock < 2 ? '#f44d00ff' : '#dfce35ff',
                       fontWeight: '500',
                     }}
                   >
@@ -212,7 +212,7 @@ const categoryData = (categories || []).map((cat, i) => ({
         />
         <Bar 
           dataKey="stock" 
-          fill="#EF4444" 
+          fill="#197ba2ff" 
           radius={[4, 4, 0, 0]} 
           isAnimationActive={true}
           minPointSize={4}   // ✅ ให้แท่งที่มีค่า 0 ยังคงมองเห็นเล็กๆ
