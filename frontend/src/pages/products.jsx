@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
@@ -12,12 +11,28 @@ const stars = (value = 0) => `${Number(value ?? 0).toFixed(1)}`;
 function ProductsHeader({ count, view, setView, sort, setSort }) {
   const Icon = {
     ChevronDown: ({ className = "" }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        className={className}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         <path d="M6 9l6 6 6-6" />
       </svg>
     ),
     Grid: ({ className = "" }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        className={className}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         <rect x="3" y="3" width="8" height="8" />
         <rect x="13" y="3" width="8" height="8" />
         <rect x="3" y="13" width="8" height="8" />
@@ -25,7 +40,15 @@ function ProductsHeader({ count, view, setView, sort, setSort }) {
       </svg>
     ),
     List: ({ className = "" }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        className={className}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         <path d="M8 6h13" />
         <path d="M8 12h13" />
         <path d="M8 18h13" />
@@ -33,38 +56,25 @@ function ProductsHeader({ count, view, setView, sort, setSort }) {
     ),
   };
   // ฟังก์ชันนี้ใช้สำหรับ icon เท่านั้น (ถ้าไม่ได้ใช้ render ให้ลบ return/null ออก)
-
 }
-export default function ProductsPage({ onAdd }) {
+
+export default function ProductsPage({ onAdd, favorites = [], onFavorite }) {
   const [view, setView] = useState("grid");
   const [sort, setSort] = useState("newest");
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
-  const [favoriteIds, setFavoriteIds] = useState([]); // product_id ที่ favorite
   const navigate = useNavigate();
   const token = getToken();
-  const API_BASE = import.meta.env.VITE_API_BASE || window.__API_BASE__ || "http://localhost:3000";
-  const [filters, setFilters] = useState({ categories: [], prices: [], colors: [] });
-
-  // โหลด favorite ids (product_id) ของ user
-  useEffect(() => {
-    let alive = true;
-    async function loadFav() {
-      if (!token) return setFavoriteIds([]);
-      try {
-        const res = await fetch("/api/favorite", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error();
-        const rows = await res.json();
-        if (alive) setFavoriteIds((rows || []).map(row => row.product_id));
-      } catch {
-        if (alive) setFavoriteIds([]);
-      }
-    }
-    loadFav();
-  }, [token]);
+  const API_BASE =
+    import.meta.env.VITE_API_BASE ||
+    window.__API_BASE__ ||
+    "http://localhost:3000";
+  const [filters, setFilters] = useState({
+    categories: [],
+    prices: [],
+    colors: [],
+  });
 
   useEffect(() => {
     let alive = true;
@@ -74,7 +84,8 @@ export default function ProductsPage({ onAdd }) {
       try {
         const params = new URLSearchParams();
         if (sort) params.set("sort", sort);
-        if (filters.categories.length > 0) params.set("audience", filters.categories.join(","));
+        if (filters.categories.length > 0)
+          params.set("audience", filters.categories.join(","));
         const res = await fetch(`/api/products?${params.toString()}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
@@ -93,22 +104,28 @@ export default function ProductsPage({ onAdd }) {
     };
   }, [sort, filters, token]);
 
-  // map isFavorite ที่นี่แทน (ไม่ต้อง re-fetch ทั้ง products)
+  // map isFavorite จาก favorites prop ที่มาจาก App.jsx
   const filteredItems = items
-    .filter(p => !p.is_hidden) // แสดงเฉพาะสินค้าที่ไม่ถูกซ่อน
-    .map(p => ({ ...p, isFavorite: favoriteIds.includes(p.id) }))
+    .filter((p) => !p.is_hidden)
+    .map((p) => ({ ...p, isFavorite: favorites.some((f) => f.id === p.id) }))
     .filter((p) => {
-      const catMatch = !filters.categories.length || filters.categories.includes(p.audience.name);
+      const catMatch =
+        !filters.categories.length ||
+        filters.categories.includes(p.audience.name);
       const priceMatch =
         !filters.prices.length ||
         filters.prices.some((pr) => {
           if (pr === "ต่ำกว่า ฿1,000") return p.price < 1000;
-          if (pr === "฿1,000 - ฿2,000") return p.price >= 1000 && p.price <= 2000;
-          if (pr === "฿2,000 - ฿3,000") return p.price > 2000 && p.price <= 3000;
+          if (pr === "฿1,000 - ฿2,000")
+            return p.price >= 1000 && p.price <= 2000;
+          if (pr === "฿2,000 - ฿3,000")
+            return p.price > 2000 && p.price <= 3000;
           if (pr === "มากกว่า ฿3,000") return p.price > 3000;
           return false;
         });
-      const colorMatch = !filters.colors.length || p.colors.some((c) => filters.colors.includes(c));
+      const colorMatch =
+        !filters.colors.length ||
+        p.colors.some((c) => filters.colors.includes(c));
       return catMatch && priceMatch && colorMatch;
     });
 
@@ -140,76 +157,37 @@ export default function ProductsPage({ onAdd }) {
     }
   };
 
-  const handleToggleFavorite = async (productId, currentState) => {
-    if (!token) {
-      toast.error("กรุณาเข้าสู่ระบบก่อนเพิ่มรายการโปรด");
-      return;
-    }
 
-    try {
-      let res;
-      if (currentState) {
-        // Remove favorite
-        res = await fetch(`${API_BASE}/api/favorite/${productId}`, {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-      } else {
-        // Add favorite
-        res = await fetch(`${API_BASE}/api/favorite`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ product_id: productId }),
-        });
-      }
-
-      if (!res.ok) {
-        let errMsg = "เกิดข้อผิดพลาด";
-        try {
-          const err = await res.json();
-          errMsg = err.error || errMsg;
-        } catch {}
-        throw new Error(errMsg);
-      }
-
-      setFavoriteIds((prev) =>
-        currentState ? prev.filter((id) => id !== productId) : [...prev, productId]
-      );
-
-      toast.success(currentState ? "นำออกจากรายการโปรดแล้ว" : "เพิ่มในรายการโปรดแล้ว");
-    } catch (err) {
-      toast.error(err.message || "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
-    }
-  };
+  // ใช้ onFavorite ที่มาจาก App.jsx
 
   // แปลงข้อมูลจาก backend (row) ให้เป็นโครงสร้างที่ frontend ใช้
-function adaptProduct(row) {
-  return {
-    id: row.product_id,
-    name: row.product_name || row.name,
-    description: row.description,
-    price: Number(row.price),
-    compareAt: row.compare_at ? Number(row.compare_at) : null,
-    stock: row.stock,
-    image: row.image_url,
-    createdAt: row.created_at,
-    category: { id: row.category_id, name: row.category_name },
-    audience: { id: row.audience_id, name: row.audience_name },
-    rating: row.rating || 0,
-    reviews: row.reviews || 0,
-    colors: row.colors || [],
-    is_hidden: Boolean(row.is_hidden),
-  };
-}
+  function adaptProduct(row) {
+    return {
+      id: row.product_id,
+      name: row.product_name || row.name,
+      description: row.description,
+      price: Number(row.price),
+      compareAt: row.compare_at ? Number(row.compare_at) : null,
+      stock: row.stock,
+      image: row.image_url,
+      createdAt: row.created_at,
+      category: { id: row.category_id, name: row.category_name },
+      audience: { id: row.audience_id, name: row.audience_name },
+      rating: row.rating || 0,
+      reviews: row.reviews || 0,
+      colors: row.colors || [],
+      is_hidden: Boolean(row.is_hidden),
+    };
+  }
   return (
     <section className="max-w-6xl mx-auto px-6 py-6">
-      <ProductsHeader count={filteredItems.length} view={view} setView={setView} sort={sort} setSort={setSort} />
+      <ProductsHeader
+        count={filteredItems.length}
+        view={view}
+        setView={setView}
+        sort={sort}
+        setSort={setSort}
+      />
 
       <div className="mt-6 flex gap-6">
         <SidebarFilters filters={filters} setFilters={setFilters} />
@@ -218,22 +196,55 @@ function adaptProduct(row) {
           {loading && <div className="p-6">กำลังโหลดสินค้า…</div>}
           {!loading && err && <div className="p-6 text-red-600">{err}</div>}
 
-          {!loading && !err && (
-            view === "grid" ? (
+          {!loading &&
+            !err &&
+            (view === "grid" ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                 {filteredItems.map((p) => (
-                  <div key={p.id} className="relative border rounded-2xl overflow-hidden hover:shadow-md bg-white group">
+                  <div
+                    key={p.id}
+                    className="relative border rounded-2xl overflow-hidden hover:shadow-md bg-white group"
+                  >
                     {/* ปุ่มหัวใจ */}
                     <button
-                      onClick={e => { e.stopPropagation(); handleToggleFavorite(p.id, p.isFavorite); }}
+                      onClick={e => {
+                        e.stopPropagation();
+                        onFavorite(p);
+                      }}
                       className="absolute top-3 right-3 w-10 h-10 flex items-center justify-center rounded-full hover:scale-110 transition-all text-xl text-red-500 bg-transparent favorite-btn"
-                      aria-label={p.isFavorite ? 'ลบออกจากรายการโปรด' : 'เพิ่มในรายการโปรด'}
+                      aria-label={
+                        p.isFavorite
+                          ? "ลบออกจากรายการโปรด"
+                          : "เพิ่มในรายการโปรด"
+                      }
                     >
                       {p.isFavorite ? (
-                        "❤️"
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="#ff4b4bff"
+                          stroke="#ff4b4bff"
+                          strokeWidth="2.2"
+                          className="w-6 h-6"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
+                          />
+                        </svg>
                       ) : (
-                        <svg viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.2" className="w-6 h-6">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="#000"
+                          strokeWidth="2.2"
+                          className="w-6 h-6"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
+                          />
                         </svg>
                       )}
                     </button>
@@ -253,9 +264,9 @@ function adaptProduct(row) {
                       </div>
                       <div className="text-slate-500 mt-1">{baht(p.price)}</div>
                       <button
-                        onClick={e => {
+                        onClick={(e) => {
                           e.stopPropagation();
-                          console.log('navigate to detail id:', p.id);
+                          console.log("navigate to detail id:", p.id);
                           navigate(`/products/${p.id}`);
                         }}
                         className="mt-3 w-full px-4 py-2 rounded-xl border border-slate-200 bg-white font-bold text-slate-800 hover:bg-slate-50"
@@ -269,7 +280,10 @@ function adaptProduct(row) {
             ) : (
               <div className="space-y-4">
                 {filteredItems.map((p) => (
-                  <div key={p.id} className="flex gap-4 border rounded-2xl overflow-hidden group">
+                  <div
+                    key={p.id}
+                    className="flex gap-4 border rounded-2xl overflow-hidden group"
+                  >
                     <img
                       src={p.image}
                       alt={p.name}
@@ -277,34 +291,40 @@ function adaptProduct(row) {
                       onClick={() => navigate(`/productsDetail/${p.id}`)}
                     />
                     <div className="flex-1 p-4 bg-[#e8fbfb] relative">
-                      {/* ปุ่มหัวใจ */}
-                      <button
-                        onClick={e => { e.stopPropagation(); handleToggleFavorite(p.id, p.isFavorite); }}
-                        className="absolute top-3 right-3 w-10 h-10 flex items-center justify-center rounded-full bg-white border border-slate-200 shadow hover:scale-110 hover:bg-rose-50 transition-all text-xl text-red-500 favorite-btn"
-                        aria-label={p.isFavorite ? 'ลบออกจากรายการโปรด' : 'เพิ่มในรายการโปรด'}
-                      >
-                        {p.isFavorite ? "❤️" : "🤍"}
-                      </button>
-
                       <div
                         className="font-bold text-lg cursor-pointer hover:underline"
                         onClick={() => navigate(`/productsDetail/${p.id}`)}
                       >
                         {p.name}
                       </div>
-                      <div className="mt-1 text-sm text-slate-600">⭐ {stars(p.rating)} ({p.reviews})</div>
+                      <div className="mt-1 text-sm text-slate-600">
+                        ⭐ {stars(p.rating)} ({p.reviews})
+                      </div>
                       <div className="mt-1 flex items-baseline gap-2">
-                        <div className="text-2xl font-extrabold">{baht(p.price)}</div>
-                        {p.compareAt && <del className="text-slate-500">{baht(p.compareAt)}</del>}
+                        <div className="text-2xl font-extrabold">
+                          {baht(p.price)}
+                        </div>
+                        {p.compareAt && (
+                          <del className="text-slate-500">
+                            {baht(p.compareAt)}
+                          </del>
+                        )}
                       </div>
                       <div className="mt-2 flex items-center gap-2">
                         <span className="text-slate-600 text-sm">สี:</span>
                         {(p.colors || []).map((c, i) => (
-                          <span key={i} className="w-3.5 h-3.5 rounded-full border border-slate-300 inline-block" style={{ background: c }} />
+                          <span
+                            key={i}
+                            className="w-3.5 h-3.5 rounded-full border border-slate-300 inline-block"
+                            style={{ background: c }}
+                          />
                         ))}
                       </div>
                       <button
-                        onClick={e => { e.stopPropagation(); handleAddToCart(p); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddToCart(p);
+                        }}
                         className="mt-3 px-4 py-2 rounded-xl border border-slate-200 bg-white font-bold text-slate-800 hover:bg-slate-50"
                       >
                         เพิ่มลงตะกร้า
@@ -313,8 +333,7 @@ function adaptProduct(row) {
                   </div>
                 ))}
               </div>
-            )
-          )}
+            ))}
         </div>
       </div>
     </section>

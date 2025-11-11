@@ -2,7 +2,7 @@ import RecommendedProducts from "../components/RecommendedProducts";
 
 import { useState, useEffect, useRef } from "react";
 
-export default function Hero({ filtered = [], onAdd = () => {}, onViewAll = () => {}, onFavorite = () => {}, favorites = [] }) {
+export default function Hero({ filtered = [], onAdd = () => {}, onViewAll = () => {}, onFavorite, favorites }) {
   // slides for carousel (you can replace images/text as needed)
   const slides = [
     {
@@ -103,7 +103,13 @@ export default function Hero({ filtered = [], onAdd = () => {}, onViewAll = () =
       </section>
 
       <div id="recommended-products">
-        <RecommendedProducts filtered={filtered} onAdd={onAdd} onViewAll={onViewAll} onFavorite={onFavorite} favorites={favorites} />
+        <RecommendedProducts
+          filtered={filtered}
+          onAdd={onAdd}
+          onViewAll={onViewAll}
+          onFavorite={onFavorite}
+          favorites={favorites}
+        />
       </div>
     </>
   );
