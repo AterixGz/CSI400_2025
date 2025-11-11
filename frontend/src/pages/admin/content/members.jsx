@@ -27,26 +27,27 @@ export default function Members() {
   }, [token]);
 
   // ฟังก์ชันเปลี่ยน role
-  const changeRole = async (userId, newRole) => {
-    try {
-      const res = await fetch(`http://localhost:3000/api/admin/users/${userId}/role`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ role: newRole }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setAdmins((cur) =>
-          cur.map((u) => (u.user_id === userId ? data.user : u))
-        );
-      }
-    } catch (err) {
-      console.error("Failed to update role:", err);
+  const changeRole = async (userId, newRoleId) => {
+  try {
+    const res = await fetch(`http://localhost:3000/api/admin/users/${userId}/role`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ role_id: newRoleId }), // ต้องส่ง role_id
+    });
+    const data = await res.json();
+    if (data.success) {
+      setAdmins((cur) =>
+        cur.map((u) => (u.user_id === userId ? data.user : u))
+      );
     }
-  };
+  } catch (err) {
+    console.error("Failed to update role:", err);
+  }
+};
+
 
   if (loading) return <div>Loading...</div>;
 
@@ -74,16 +75,18 @@ export default function Members() {
                       {admin.first_name} {admin.last_name}
                     </td>
                     <td className="px-6 py-4">{admin.email}</td>
-                    <td className="px-6 py-4">{admin.role}</td>
+                    <td className="px-6 py-4">{admin.role_name}</td>
                     <td className="px-6 py-4">
                       <select
-                        value={admin.role}
-                        onChange={(e) => changeRole(admin.user_id, e.target.value)}
-                        className="border border-gray-200 rounded px-2 py-1"
-                      >
-                        <option value="staff">Staff</option>
-                        <option value="manager">Manager</option>
-                   
+                        value={admin.role_name}
+                         onChange={(e) => {
+    const newRoleId = e.target.value === "staff" ? 2 : 3; // map role_name → role_id
+    changeRole(admin.user_id, newRoleId);
+  }}
+  className="border border-gray-200 rounded px-2 py-1"
+>
+  <option value="staff">Staff</option>
+  <option value="manager">Manager</option>
                       </select>
                     </td>
                   </tr>
