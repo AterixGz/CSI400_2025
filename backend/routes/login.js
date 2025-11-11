@@ -11,12 +11,20 @@ const router = express.Router();
 router.post("/", async (req, res) => {
   const { email, password } = req.body;
   try {
-    // ค้นหา user จาก Supabase
-    const query = "SELECT * FROM users WHERE email = $1 LIMIT 1";
+    // Join users กับ roles เพื่อดึง role_id และ role name
+    const query = `
+      SELECT u.*, r.role_name 
+      FROM users u
+      LEFT JOIN roles r ON u.role_id = r.role_id
+      WHERE u.email = $1
+      LIMIT 1
+    `;
     const result = await pool.query(query, [email]);
+
     if (result.rows.length === 0) {
       return res.status(401).json({ success: false, message: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" });
     }
+
     const user = result.rows[0];
     // เปรียบเทียบรหัสผ่านด้วย bcrypt
     const passwordMatch = await bcrypt.compare(password, user.password_hash);
@@ -26,7 +34,10 @@ router.post("/", async (req, res) => {
     // สร้าง JWT token
     // Include both `id` and `user_id` claims so different services can read either
     const token = jwt.sign(
-      { id: user.user_id, user_id: user.user_id, email: user.email, role: user.role },
+      { id: user.user_id, user_id: user.user_id, email: user.email, 
+        role_id: user.role_id, 
+        role_name: user.role_name 
+       },
       process.env.JWT_SECRET || "changeme",
       { expiresIn: "24h" }
     );
@@ -36,7 +47,8 @@ router.post("/", async (req, res) => {
       first_name: user.first_name,
       last_name: user.last_name,
       email: user.email,
-      role: user.role,
+      role_id: user.role_id,
+      role_name: user.role_name,
       phone_number: user.phone_number,
       profile_image_url: user.profile_image_url || null,
       profile_image_public_id: user.profile_image_public_id || null

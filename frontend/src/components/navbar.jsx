@@ -269,12 +269,17 @@ export default function Nav({
               {cartCount}
             </span>
           </Link>
-          <Link
-            to="/admin/dashboard"
-            className="p-2 hover:text-slate-900 text-sm font-semibold"
-          >
-            Admin
-          </Link>
+          {/* ปุ่ม Admin */}
+{user && ["admin", "manager", "staff"].includes(user.role_name) && (
+  <Link
+    to="/admin/dashboard"
+    className="p-2 hover:text-slate-900 text-sm font-semibold"
+  >
+    Admin
+  </Link>
+)}
+
+
         </div>
       </div>
     </header>

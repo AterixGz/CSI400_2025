@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import VYNE from '../../../assets/VYNE_tranparent_256.png';
 import {
@@ -17,7 +17,26 @@ import {
   BookOpen
 } from 'lucide-react';
 
-const sidebarItems = [
+
+
+const categoryBreaks = [0, 2, 5, 7, 10, 12];
+const categories = ['OVERVIEW', 'E-COMMERCE', 'TEAM & COMMUNICATION', 'UTILITY'];//ลบ finance ออก
+
+export default function AdminSidebar() {
+   const [user, setUser] = useState(null);
+   let currentCategory = 0;
+
+  useEffect(() => {
+    const raw = localStorage.getItem('user');
+    if (raw) {
+      try {
+        setUser(JSON.parse(raw));
+      } catch {
+        setUser(null);
+      }
+    }
+  }, []);
+  const sidebarItems = [
   { icon: Home, label: 'Dashboard', path: '/admin/dashboard', count: '' },
   // { icon: BarChart3, label: 'Analytics', path: '/admin/analytics' },
   // { icon: Users, label: 'Organization', path: '/admin/organization' },
@@ -28,15 +47,10 @@ const sidebarItems = [
   // { icon: DollarSign, label: 'Transactions', path: '/admin/transactions' },
   // { icon: FileText, label: 'Invoices', path: '/admin/invoices', count: '' },
   // { icon: CreditCard, label: 'Payments', path: '/admin/payments' },
-  { icon: Users, label: 'Members', path: '/admin/members' },
-//   { icon: Archive, label: 'Backup & Restore', path: '/admin/backup' }
-];
-
-const categoryBreaks = [0, 2, 5, 7, 10, 12];
-const categories = ['OVERVIEW', 'E-COMMERCE', 'TEAM & COMMUNICATION', 'UTILITY'];//ลบ finance ออก
-
-export default function AdminSidebar() {
-  let currentCategory = 0;
+  ...(user?.role_name === 'manager'
+      ? [{ icon: Users, label: 'AdminManagement', path: '/admin/members' }]
+      : []),
+  ];
 
   return (
     <div className="w-64 bg-white border-r border-gray-200 flex flex-col sticky top-0 h-screen">

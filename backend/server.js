@@ -27,8 +27,17 @@ import dashboardRouter from './routes/dashboard.js';
 import uploadRoutes from "./routes/upload.js";
 import usersRouter from './routes/users.js';
 import ordersAdminRouter from './admin/admin_orders.js';
-
+import { checkRole } from "./middlewares/checkRole.js";
+import adminUsersRouter from "./routes/adminUsers.js";
 dotenv.config();
+
+
+
+
+const router = express.Router();
+
+
+
 
 
 
@@ -62,6 +71,15 @@ passport.serializeUser((user, done) => {
 });
 passport.deserializeUser((user, done) => {
   done(null, user);
+});
+
+// ทุก route ของ admin
+router.use("/admin", checkRole(["staff", "manager"]));
+
+// ตัวอย่าง API admin
+router.get("/admin/users", async (req, res) => {
+  const result = await pool.query("SELECT * FROM users ORDER BY user_id ASC");
+  res.json(result.rows);
 });
 
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
@@ -113,6 +131,8 @@ app.use("/api/users", usersRouter);
 
 
 // ============ admin ============
+// ใช้งาน Admin Users routes
+app.use("/api/admin/users", adminUsersRouter);
 // ใช้งาน Product Admin routes
 app.use("/api/admin_products", productAdminRouter);
 

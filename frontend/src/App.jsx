@@ -17,6 +17,7 @@ import { setupAuthWatcher } from "./utils/api";
 import { Toaster } from "react-hot-toast";
 import AdminDashboard from "./pages/admin/main";
 import PaymentComplete from "./pages/paymentComplete";
+import AdminRoute from "./pages/admin/component/AdminRoute";
 
 export default function App() {
   const location = useLocation();
@@ -132,7 +133,9 @@ export default function App() {
         <Route path="/products/:id" element={<ProductDetailPage onAdd={addToCart} onFavorite={(item) => setFavorites((cur) => cur.some((f) => f.id === item.id) ? cur.filter((f) => f.id !== item.id) : [...cur, item])} favorites={favorites} />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/admin/*" element={<AdminDashboard />} />
+        <Route path="/admin/*" element={
+          <AdminRoute> <AdminDashboard /></AdminRoute>
+         } />
         <Route path="/cart" element={<CartPage items={cart} onChangeQty={changeQty} onRemove={removeFromCart} />} />
         <Route path="/favorites" element={<FavoriteProducts favorites={favorites} onRemove={(id) => setFavorites((cur) => cur.filter((f) => f.id !== id))} onFavorite={(item) => setFavorites((cur) => cur.some((f) => f.id === item.id) ? cur.filter((f) => f.id !== item.id) : [...cur, item])} />} />
         <Route path="/payment/complete" element={<PaymentComplete />} />

@@ -48,6 +48,7 @@ export default function ProfilePage() {
     try {
       localStorage.removeItem("user");
       localStorage.removeItem("token");
+       window.dispatchEvent(new Event("authChange"));
     } catch (e) {}
     navigate("/login");
   };
