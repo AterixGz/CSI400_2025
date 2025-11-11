@@ -147,7 +147,45 @@ export default function ProductDetailPage({
       console.error("เพิ่มลงตะกร้าผิดพลาด", e);
       toast.error(e?.response?.data?.error || "เกิดข้อผิดพลาด");
     }
+    
   }
+  async function handleBuyNow() {
+  if (!product) return toast.error("ไม่พบข้อมูลสินค้า");
+  if (product.sizes && !size) {
+    toast.error("กรุณาเลือกไซส์ก่อนซื้อ");
+    return;
+  }
+
+  const token = localStorage.getItem("token");
+  if (!token) {
+    toast.error("กรุณาเข้าสู่ระบบก่อนทำการซื้อ");
+    navigate("/login");
+    return;
+  }
+
+  const cartItem = {
+    product_id: product.id,
+    quantity: qty,
+    size: size,
+  };
+
+  try {
+    const res = await api.post("/cart/items", cartItem, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.data.success) {
+      window.dispatchEvent(new Event("cart:updated"));
+      toast.success("เพิ่มสินค้าและกำลังไปหน้าตะกร้า...");
+      navigate("/cart"); // ✅ ไปหน้าตะกร้าเลย
+    } else {
+      toast.error(res.data.error || "เกิดข้อผิดพลาด");
+    }
+  } catch (e) {
+    console.error("ซื้อทันทีผิดพลาด", e);
+    toast.error(e?.response?.data?.error || "เกิดข้อผิดพลาด");
+  }
+}
+
 
   // ✅ ดึงรายละเอียดสินค้า
   useEffect(() => {
@@ -323,9 +361,8 @@ export default function ProductDetailPage({
               </button>
 
               <button
-                onClick={() => { /* buy now */ }}
-                className="px-4 py-3 rounded-xl bg-amber-500 text-white font-bold"
-              >
+                onClick={handleBuyNow}
+                className="px-4 py-3 rounded-xl bg-amber-500 text-white font-bold">
                 ซื้อทันที
               </button>
 
