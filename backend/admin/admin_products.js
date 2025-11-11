@@ -73,24 +73,25 @@ router.post("/", upload.single("image"), async (req, res) => {
 });
 
 // PATCH /api/products/:product_id/stock - ปรับ stock สินค้า (เพิ่ม/ลด)
+// PATCH /api/admin_products/products/:product_id/stock - ปรับ stock เฉพาะ size ใน product_sizes
 router.patch("/products/:product_id/stock", async (req, res) => {
   const { product_id } = req.params;
-  const { delta } = req.body;
-  if (!product_id || typeof delta !== "number") {
+  const { size_name, delta } = req.body;
+  if (!product_id || !size_name || typeof delta !== "number") {
     return res.status(400).json({ error: "ข้อมูลไม่ถูกต้อง" });
   }
   try {
-    // อัปเดต stock โดยเพิ่มหรือลดตาม delta
+    // อัปเดต stock เฉพาะ size ที่ระบุ
     const result = await pool.query(
-      `UPDATE products SET stock = stock + $1 WHERE product_id = $2 RETURNING stock`,
-      [delta, product_id]
+      `UPDATE product_sizes SET stock = stock + $1 WHERE product_id = $2 AND size_name = $3 RETURNING stock`,
+      [delta, product_id, size_name]
     );
     if (result.rowCount === 0) {
-      return res.status(404).json({ error: "ไม่พบสินค้า" });
+      return res.status(404).json({ error: "ไม่พบ size หรือสินค้า" });
     }
     res.json({ success: true, stock: result.rows[0].stock });
   } catch (e) {
-    console.error("❌ ปรับ stock ผิดพลาด:", e);
+    console.error("❌ ปรับ stock size ผิดพลาด:", e);
     res.status(500).json({ error: e.message });
   }
 });
@@ -121,26 +122,120 @@ router.patch('/:product_id/hide', async (req, res) => {
   }
 });
 
+// PATCH /api/admin_products/:product_id - แก้ไขข้อมูลสินค้า (รวมรูป, รายละเอียด, size)
+router.patch("/:product_id", upload.single("image"), async (req, res) => {
+  const { product_id } = req.params;
+  const { name, description, price, audience_id, category_id, sizes } = req.body;
+
+  try {
+    // ดึงข้อมูลสินค้าเดิมก่อน
+    const check = await pool.query("SELECT * FROM products WHERE product_id = $1", [product_id]);
+    if (check.rowCount === 0) {
+      return res.status(404).json({ error: "ไม่พบสินค้า" });
+    }
+    const old = check.rows[0];
+
+    // ใช้ค่าจาก form ถ้ามี ไม่งั้นใช้ค่าจาก DB เดิม
+    const updated = {
+      name: name ?? old.name,
+      description: description ?? old.description,
+      price: price ?? old.price,
+      image_url: old.image_url,
+      audience_id:
+        audience_id && audience_id !== "" ? Number(audience_id) : old.audience_id,
+      category_id:
+        category_id && category_id !== "" ? Number(category_id) : old.category_id,
+    };
+
+    // ถ้ามีรูปใหม่ → ใช้ของใหม่แทน
+    if (req.file) {
+      updated.image_url = req.file.path || req.file.url || req.file.filename;
+    }
+
+    // อัปเดตข้อมูลในตาราง products
+    await pool.query(
+      `UPDATE products 
+       SET name = $1, description = $2, price = $3, image_url = $4, audience_id = $5, category_id = $6
+       WHERE product_id = $7`,
+      [
+        updated.name,
+        updated.description,
+        updated.price,
+        updated.image_url,
+        updated.audience_id,
+        updated.category_id,
+        product_id,
+      ]
+    );
+
+    // อัปเดต sizes ถ้าส่งมาด้วย
+    if (sizes) {
+      let sizesArr;
+      try {
+        sizesArr = JSON.parse(sizes);
+      } catch (err) {
+        return res.status(400).json({ error: "ข้อมูลไซต์สินค้าไม่ถูกต้อง" });
+      }
+
+      // ลบของเดิมก่อน
+      await pool.query("DELETE FROM product_sizes WHERE product_id = $1", [product_id]);
+
+      // เพิ่มใหม่
+      for (const sz of sizesArr) {
+        if (!sz.size_name || isNaN(Number(sz.stock)) || sz.stock === "") continue;
+        await pool.query(
+          `INSERT INTO product_sizes (product_id, size_name, stock) VALUES ($1, $2, $3)`,
+          [product_id, sz.size_name, Number(sz.stock)]
+        );
+      }
+    }
+
+    res.json({ success: true, image_url: updated.image_url });
+  } catch (e) {
+    console.error("❌ แก้ไขสินค้า error:", e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+
+
 // GET /api/admin_products/all - ดึงสินค้าทุกตัว (รวมที่ซ่อนอยู่)
 router.get("/all", async (req, res) => {
   try {
-    const result = await pool.query(`
+    // ดึงสินค้าทั้งหมด
+    const productsRes = await pool.query(`
       SELECT 
         p.product_id, p.name AS product_name, p.description,
         p.price, p.compare_at, p.stock, p.image_url, p.created_at,
         p.is_hidden,
         c.category_id, c.name AS category_name,
-        a.audience_id, a.name AS audience_name,
-        ARRAY_AGG(ps.size_name ORDER BY ps.size_id) AS sizes
+        a.audience_id, a.name AS audience_name
       FROM products p
       JOIN categories c ON p.category_id = c.category_id
       LEFT JOIN audiences a ON p.audience_id = a.audience_id
-      LEFT JOIN product_sizes ps ON p.product_id = ps.product_id
-      GROUP BY p.product_id, c.category_id, a.audience_id
       ORDER BY p.created_at DESC
       LIMIT 100
     `);
-    res.json(result.rows);
+
+    // ดึงไซส์และ stock ของสินค้าทั้งหมด
+    const sizesRes = await pool.query(`
+      SELECT product_id, size_name, stock FROM product_sizes
+    `);
+
+    // สร้าง map สำหรับ product_id -> [{ size_name, stock }]
+    const sizesMap = {};
+    for (const row of sizesRes.rows) {
+      if (!sizesMap[row.product_id]) sizesMap[row.product_id] = [];
+      sizesMap[row.product_id].push({ size_name: row.size_name, stock: row.stock });
+    }
+
+    // รวมข้อมูล
+    const products = productsRes.rows.map((p) => ({
+      ...p,
+      sizes: sizesMap[p.product_id] || [],
+    }));
+
+    res.json(products);
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: "failed" });

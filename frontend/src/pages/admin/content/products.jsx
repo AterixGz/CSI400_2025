@@ -1,35 +1,21 @@
 import React, { useEffect, useState } from "react";
 import Header from "../component/header";
+import { toast } from "react-hot-toast";
 
 export default function Products() {
-  // ฟังก์ชันปรับ stock
-  async function updateStock(product_id, delta) {
-    try {
-      const res = await fetch(
-        `http://localhost:3000/api/admin_products/products/${product_id}/stock`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ delta }),
-        }
-      );
-      const data = await res.json();
-      if (!res.ok || !data.success)
-        throw new Error(data.error || "ปรับ stock ไม่สำเร็จ");
-      // อัปเดต stock เฉพาะรายการนั้น ไม่ต้อง reload ทั้งหมด
-      setProducts((products) =>
-        products.map((p) =>
-          p.product_id === product_id ? { ...p, stock: data.stock } : p
-        )
-      );
-    } catch (e) {
-      alert(e.message || "เกิดข้อผิดพลาด");
-    }
-  }
   const [showModal, setShowModal] = useState(false);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [editProduct, setEditProduct] = useState(null);
+  const [editProductDraft, setEditProductDraft] = useState(null); // เก็บสินค้าที่แก้ไข (draft)
+  const [editingProduct, setEditingProduct] = useState(null); // เก็บสินค้าที่กำลังแก้
+  const [sizes, setSizes] = useState([]); // เก็บข้อมูลไซส์ของสินค้าที่แก้ไข
+  const [showHideConfirmModal, setShowHideConfirmModal] = useState(false);
+  const [hideTargetProduct, setHideTargetProduct] = useState(null);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [deleteTargetProduct, setDeleteTargetProduct] = useState(null);
   const [form, setForm] = useState({
     name: "",
     description: "",
@@ -38,40 +24,26 @@ export default function Products() {
     audience_id: "",
     category_id: "",
     sizes: [
-      { size_name: "freesize", stock: "" },
+      { size_name: "Freesize", stock: "" },
       { size_name: "L", stock: "" },
       { size_name: "M", stock: "" },
       { size_name: "S", stock: "" },
     ],
   });
-  const [adding, setAdding] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   // โหลดสินค้า
   async function loadProducts() {
     setLoading(true);
     setErr("");
     try {
-      console.log("📦 กำลังโหลดสินค้า...");
-  const res = await fetch("http://localhost:3000/api/admin_products/all"); // ✅ ใช้ endpoint admin_products/all เพื่อดึงสินค้าทุกตัว
-      console.log("📡 Response status:", res.status);
-
+      const res = await fetch("http://localhost:3000/api/admin_products/all");
       const text = await res.text();
-      console.log("📨 Raw response:", text);
-
       if (!res.ok) throw new Error(`โหลดสินค้าล้มเหลว (status: ${res.status})`);
 
-      let rows;
-      try {
-        rows = JSON.parse(text);
-      } catch (err) {
-        console.error("❌ JSON parse error:", err);
-        throw new Error("รูปแบบข้อมูลไม่ถูกต้อง (ไม่ใช่ JSON)");
-      }
-
+      const rows = JSON.parse(text);
       setProducts(Array.isArray(rows) ? rows : []);
-      console.log("✅ โหลดสินค้าสำเร็จ:", rows);
     } catch (e) {
-      console.error("🔥 โหลดสินค้าผิดพลาด:", e);
       setErr(e.message || "โหลดสินค้าล้มเหลว");
     } finally {
       setLoading(false);
@@ -81,79 +53,85 @@ export default function Products() {
   useEffect(() => {
     loadProducts();
   }, []);
-// ฟังก์ชันลบสินค้าออกจากระบบ (ลบ DB จริง)
-  async function deleteProduct(product_id) {
-    if (!window.confirm("ต้องการลบสินค้านี้ออกจากระบบถาวรใช่หรือไม่?")) return;
+
+  // ลบสินค้าออกจากระบบ (modal)
+  async function confirmDeleteProduct() {
+    if (!deleteTargetProduct) return;
     try {
-      const res = await fetch(`http://localhost:3000/api/admin_products/${product_id}`, {
-        method: "DELETE"
-      });
+      const res = await fetch(
+        `http://localhost:3000/api/admin_products/${deleteTargetProduct.product_id}`,
+        { method: "DELETE" }
+      );
       if (!res.ok) throw new Error("ลบสินค้าไม่สำเร็จ");
       await loadProducts();
+      setEditProduct(null);
+      setEditProductDraft(null);
+      setShowDeleteConfirmModal(false);
+      setDeleteTargetProduct(null);
     } catch (e) {
-      alert(e.message || "เกิดข้อผิดพลาด");
+      toast.error(e.message || "เกิดข้อผิดพลาด");
+      setShowDeleteConfirmModal(false);
     }
   }
 
-  // ฟังก์ชันซ่อนสินค้า (ไม่แสดงในหน้าขาย)
-  async function toggleHideProduct(product_id, is_hidden) {
-  const action = is_hidden ? "ต้องการแสดงสินค้านี้ในหน้าขายใช่หรือไม่?" : "ต้องการซ่อนสินค้านี้จากหน้าขายใช่หรือไม่?";
-  if (!window.confirm(action)) return;
-  try {
-    const res = await fetch(`http://localhost:3000/api/admin_products/${product_id}/hide`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ is_hidden: !is_hidden })
-    });
-    if (!res.ok) throw new Error(is_hidden ? "แสดงสินค้าไม่สำเร็จ" : "ซ่อนสินค้าไม่สำเร็จ");
+  // ซ่อน/แสดงสินค้า
+  async function confirmToggleHide() {
+    if (!hideTargetProduct) return;
+    const { product_id, is_hidden } = hideTargetProduct;
+    try {
+      const res = await fetch(
+        `http://localhost:3000/api/admin_products/${product_id}/hide`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ is_hidden: !is_hidden }),
+        }
+      );
+      if (!res.ok)
+        throw new Error(
+          is_hidden ? "แสดงสินค้าไม่สำเร็จ" : "ซ่อนสินค้าไม่สำเร็จ"
+        );
 
-    // ✅ แก้เฉพาะ product ตัวนั้นใน state
-    setProducts(prev =>
-      prev.map(p =>
-        p.product_id === product_id ? { ...p, is_hidden: !is_hidden } : p
-      )
-    );
-  } catch (e) {
-    alert(e.message || "เกิดข้อผิดพลาด");
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.product_id === product_id ? { ...p, is_hidden: !is_hidden } : p
+        )
+      );
+      setEditProduct((prev) =>
+        prev ? { ...prev, is_hidden: !is_hidden } : prev
+      );
+      setShowHideConfirmModal(false);
+      setHideTargetProduct(null);
+    } catch (e) {
+      toast.error(e.message || "เกิดข้อผิดพลาด");
+      setShowHideConfirmModal(false);
+    }
   }
-}
-
 
   // เพิ่มสินค้าใหม่
   async function handleAddProduct(e) {
     e.preventDefault();
-
     if (adding) return;
     setAdding(true);
-
     try {
-  const formData = new FormData();
-  formData.append("name", form.name);
-  formData.append("description", form.description);
-  formData.append("price", form.price);
-  formData.append("audience_id", Number(form.audience_id));
-  formData.append("category_id", Number(form.category_id));
-  formData.append("image", form.image);
-  // ส่งข้อมูล size_name/stock_size เป็น JSON string
-  formData.append("sizes", JSON.stringify(form.sizes));
+      const formData = new FormData();
+      formData.append("name", form.name);
+      formData.append("description", form.description);
+      formData.append("price", form.price);
+      formData.append("audience_id", Number(form.audience_id));
+      formData.append("category_id", Number(form.category_id));
+      formData.append("image", form.image);
+      formData.append("sizes", JSON.stringify(form.sizes));
 
       const res = await fetch("http://localhost:3000/api/admin_products", {
         method: "POST",
         body: formData,
       });
 
-      let data;
-      try {
-        data = await res.json();
-      } catch {
-        data = {};
-      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "เพิ่มสินค้าไม่สำเร็จ");
 
-      if (!res.ok) {
-        throw new Error(data.error || "เพิ่มสินค้าไม่สำเร็จ");
-      }
-
-      alert("✅ เพิ่มสินค้าสำเร็จ!");
+      toast.success("เพิ่มสินค้าสำเร็จ!");
       setForm({
         name: "",
         description: "",
@@ -162,7 +140,7 @@ export default function Products() {
         audience_id: "",
         category_id: "",
         sizes: [
-          { size_name: "freesize", stock: "" },
+          { size_name: "Freesize", stock: "" },
           { size_name: "L", stock: "" },
           { size_name: "M", stock: "" },
           { size_name: "S", stock: "" },
@@ -171,10 +149,88 @@ export default function Products() {
       setShowModal(false);
       await loadProducts();
     } catch (e) {
-      alert(e.message || "เกิดข้อผิดพลาด");
+      toast.error(e.message || "เกิดข้อผิดพลาด");
     } finally {
       setAdding(false);
     }
+  }
+
+  // ฟังก์ชันแก้ไขสินค้า (PATCH ข้อมูลทั่วไป + PATCH stock เฉพาะ size ที่เปลี่ยน)
+  async function handleEditProduct(e) {
+    e.preventDefault();
+    setShowConfirmModal(true);
+  }
+
+  async function confirmEditProduct() {
+    try {
+      // PATCH ข้อมูลทั่วไป
+      const res = await fetch(
+        `http://localhost:3000/api/admin_products/${editProduct.product_id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: editProductDraft.product_name,
+            description: editProductDraft.description,
+            price: editProductDraft.price,
+          }),
+        }
+      );
+      if (!res.ok) throw new Error("แก้ไขสินค้าไม่สำเร็จ");
+
+      // PATCH stock ทุก size ที่เปลี่ยน
+      const changedSizes = (editProductDraft.sizes || []).filter((sz, idx) => {
+        const oldSz = (editProduct.sizes || [])[idx];
+        return oldSz && String(oldSz.stock) !== String(sz.stock);
+      });
+      for (const sz of changedSizes) {
+        const delta =
+          Number(sz.stock) -
+          Number(
+            (editProduct.sizes || []).find((s) => s.size_name === sz.size_name)
+              ?.stock ?? 0
+          );
+        if (delta !== 0) {
+          const stockRes = await fetch(
+            `http://localhost:3000/api/admin_products/products/${editProduct.product_id}/stock`,
+            {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ size_name: sz.size_name, delta }),
+            }
+          );
+          const stockData = await stockRes.json();
+          if (!stockRes.ok)
+            throw new Error(
+              stockData.error || `ปรับ stock ${sz.size_name} ไม่สำเร็จ`
+            );
+        }
+      }
+
+      toast.success("บันทึกการแก้ไขเรียบร้อย!");
+      setEditProduct(null);
+      setEditProductDraft(null);
+      setShowConfirmModal(false);
+      loadProducts();
+    } catch (err) {
+      toast.error(err.message);
+      setShowConfirmModal(false);
+    }
+  }
+
+  // ฟังก์ชันปรับ stock size draft ใน modal edit
+  function adjustSizeStockDraft(size_name, delta) {
+    setEditProductDraft((prev) => {
+      if (!prev || !prev.sizes) return prev;
+      return {
+        ...prev,
+        sizes: prev.sizes.map((sz) =>
+          sz.size_name === size_name
+            ? { ...sz, stock: String(Math.max(0, Number(sz.stock) + delta)) }
+            : sz
+        ),
+      };
+    });
   }
 
   return (
@@ -183,7 +239,7 @@ export default function Products() {
       <main className="flex-1 p-4 overflow-auto">
         <h2 className="text-2xl font-semibold mb-4">Products</h2>
 
-        {/* ปุ่มเปิด Modal */}
+        {/* ปุ่มเพิ่มสินค้า */}
         <button
           className="mb-6 px-4 py-2 rounded bg-blue-600 text-white font-bold"
           onClick={() => setShowModal(true)}
@@ -198,7 +254,6 @@ export default function Products() {
               <button
                 className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-xl"
                 onClick={() => setShowModal(false)}
-                aria-label="close"
               >
                 ×
               </button>
@@ -253,12 +308,14 @@ export default function Products() {
                   />
                 </div>
                 <div>
-                  <label className="block mb-1 font-medium">ประเภทสินค้า (เสื้อ/กางเกง)</label>
+                  <label className="block mb-1 font-medium">ประเภทสินค้า</label>
                   <select
                     className="w-full border rounded px-3 py-2"
                     required
                     value={form.category_id}
-                    onChange={e => setForm(f => ({ ...f, category_id: e.target.value }))}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, category_id: e.target.value }))
+                    }
                   >
                     <option value="">เลือกประเภทสินค้า</option>
                     <option value="1">เสื้อ</option>
@@ -266,12 +323,16 @@ export default function Products() {
                   </select>
                 </div>
                 <div>
-                  <label className="block mb-1 font-medium">กลุ่มเป้าหมาย</label>
+                  <label className="block mb-1 font-medium">
+                    กลุ่มเป้าหมาย
+                  </label>
                   <select
                     className="w-full border rounded px-3 py-2"
                     required
                     value={form.audience_id}
-                    onChange={e => setForm(f => ({ ...f, audience_id: e.target.value }))}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, audience_id: e.target.value }))
+                    }
                   >
                     <option value="">เลือกกลุ่มเป้าหมาย</option>
                     <option value="1">ชาย</option>
@@ -279,12 +340,16 @@ export default function Products() {
                     <option value="3">เด็ก</option>
                   </select>
                 </div>
-                {/* เพิ่มฟิลด์กรอก stock แต่ละ size */}
                 <div>
-                  <label className="block mb-1 font-medium">Stock แต่ละไซต์</label>
+                  <label className="block mb-1 font-medium">
+                    Stock แต่ละไซต์
+                  </label>
                   <div className="grid grid-cols-2 gap-2">
                     {form.sizes.map((sz, idx) => (
-                      <div key={sz.size_name} className="flex items-center gap-2">
+                      <div
+                        key={sz.size_name}
+                        className="flex items-center gap-2"
+                      >
                         <span className="w-20">{sz.size_name}</span>
                         <input
                           type="number"
@@ -292,11 +357,13 @@ export default function Products() {
                           className="border rounded px-2 py-1 w-24"
                           placeholder={`Stock ${sz.size_name}`}
                           value={sz.stock}
-                          onChange={e => {
+                          onChange={(e) => {
                             const val = e.target.value;
-                            setForm(f => ({
+                            setForm((f) => ({
                               ...f,
-                              sizes: f.sizes.map((s, i) => i === idx ? { ...s, stock: val } : s)
+                              sizes: f.sizes.map((s, i) =>
+                                i === idx ? { ...s, stock: val } : s
+                              ),
                             }));
                           }}
                         />
@@ -318,73 +385,276 @@ export default function Products() {
           </div>
         )}
 
-        {/* ตารางแสดงสินค้าทั้งหมด */}
+        {/* Modal แก้ไขสินค้า */}
+        {editProduct && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md relative">
+              <button
+                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-xl"
+                onClick={() => {
+                  setEditProduct(null);
+                  setEditProductDraft(null);
+                  setShowConfirmModal(false);
+                }}
+              >
+                ×
+              </button>
+              <h3 className="text-xl font-bold mb-4">แก้ไขสินค้า</h3>
+              <form className="space-y-4" onSubmit={handleEditProduct}>
+                <div>
+                  <label className="block mb-1 font-medium">ชื่อสินค้า</label>
+                  <input
+                    type="text"
+                    className="w-full border rounded px-3 py-2"
+                    value={editProductDraft?.product_name ?? ""}
+                    onChange={(e) =>
+                      setEditProductDraft((p) => ({
+                        ...p,
+                        product_name: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1 font-medium">รายละเอียด</label>
+                  <textarea
+                    className="w-full border rounded px-3 py-2"
+                    value={editProductDraft?.description ?? ""}
+                    onChange={(e) =>
+                      setEditProductDraft((p) => ({
+                        ...p,
+                        description: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1 font-medium">ราคา</label>
+                  <input
+                    type="number"
+                    min={0}
+                    className="w-full border rounded px-3 py-2"
+                    value={editProductDraft?.price ?? ""}
+                    onChange={(e) =>
+                      setEditProductDraft((p) => ({
+                        ...p,
+                        price: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                {/* ปรับ stock size draft */}
+                <div>
+                  <label className="block mb-1 font-medium">
+                    ปรับ stock แต่ละไซต์
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {editProductDraft?.sizes &&
+                      editProductDraft.sizes.map((sz, idx) => (
+                        <div
+                          key={sz.size_name}
+                          className="flex items-center gap-2"
+                        >
+                          <span className="w-20">{sz.size_name}</span>
+                          <button
+                            type="button"
+                            className="px-2 py-1 bg-gray-200 rounded text-lg"
+                            onClick={() =>
+                              adjustSizeStockDraft(sz.size_name, -1)
+                            }
+                            disabled={adding || Number(sz.stock) <= 0}
+                          >
+                            -
+                          </button>
+                          <input
+                            type="number"
+                            min={0}
+                            className="border rounded px-2 py-1 w-16 text-center"
+                            value={sz.stock}
+                            readOnly
+                          />
+                          <button
+                            type="button"
+                            className="px-2 py-1 bg-gray-200 rounded text-lg"
+                            onClick={() =>
+                              adjustSizeStockDraft(sz.size_name, 1)
+                            }
+                            disabled={adding}
+                          >
+                            +
+                          </button>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+                <div className="flex justify-between mt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHideTargetProduct(editProduct);
+                      setShowHideConfirmModal(true);
+                    }}
+                    className={`px-3 py-2 rounded text-sm font-bold ${
+                      editProduct.is_hidden
+                        ? "bg-green-500 text-white"
+                        : "bg-yellow-400 text-black"
+                    }`}
+                  >
+                    {editProduct.is_hidden ? "แสดงสินค้า" : "ซ่อนสินค้า"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeleteTargetProduct(editProduct);
+                      setShowDeleteConfirmModal(true);
+                    }}
+                    className="px-3 py-2 bg-red-500 text-white rounded text-sm font-bold"
+                  >
+                    ลบสินค้า
+                  </button>
+              {/* Modal ยืนยันลบสินค้า */}
+              {showDeleteConfirmModal && deleteTargetProduct && (
+                <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                  <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-xs text-center">
+                    <h4 className="text-lg font-bold mb-4">ยืนยันการลบสินค้า</h4>
+                    <p className="mb-6">คุณต้องการลบสินค้านี้ออกจากระบบถาวรหรือไม่?</p>
+                    <div className="flex gap-4 justify-center">
+                      <button
+                        className="px-4 py-2 rounded bg-red-600 text-white font-bold"
+                        onClick={confirmDeleteProduct}
+                      >ตกลง</button>
+                      <button
+                        className="px-4 py-2 rounded bg-gray-300 text-gray-700 font-bold"
+                        onClick={() => {
+                          setShowDeleteConfirmModal(false);
+                          setDeleteTargetProduct(null);
+                        }}
+                      >ยกเลิก</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+                </div>
+                <button
+                  type="submit"
+                  className="mt-4 w-full px-4 py-2 bg-blue-600 text-white rounded font-bold"
+                >
+                  บันทึกการแก้ไข
+                </button>
+              </form>
+
+              {/* Modal ยืนยันซ่อน/แสดง */}
+              {showHideConfirmModal && hideTargetProduct && (
+                <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                  <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-xs text-center">
+                    <h4 className="text-lg font-bold mb-4">
+                      ยืนยันการซ่อน/แสดงสินค้า
+                    </h4>
+                    <p className="mb-6">
+                      คุณต้องการ {hideTargetProduct.is_hidden ? "แสดง" : "ซ่อน"}{" "}
+                      สินค้านี้หรือไม่?
+                    </p>
+                    <div className="flex gap-4 justify-center">
+                      <button
+                        className="px-4 py-2 rounded bg-blue-600 text-white font-bold"
+                        onClick={confirmToggleHide}
+                      >
+                        ตกลง
+                      </button>
+                      <button
+                        className="px-4 py-2 rounded bg-gray-300 text-gray-700 font-bold"
+                        onClick={() => {
+                          setShowHideConfirmModal(false);
+                          setHideTargetProduct(null);
+                        }}
+                      >
+                        ยกเลิก
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Modal ยืนยันบันทึกการแก้ไข */}
+              {showConfirmModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                  <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-xs text-center">
+                    <h4 className="text-lg font-bold mb-4">
+                      ยืนยันการบันทึกสินค้า
+                    </h4>
+                    <p className="mb-6">
+                      คุณต้องการบันทึกการแก้ไขสินค้านี้หรือไม่?
+                    </p>
+                    <div className="flex gap-4 justify-center">
+                      <button
+                        className="px-4 py-2 rounded bg-blue-600 text-white font-bold"
+                        onClick={confirmEditProduct}
+                      >
+                        ตกลง
+                      </button>
+                      <button
+                        className="px-4 py-2 rounded bg-gray-300 text-gray-700 font-bold"
+                        onClick={() => setShowConfirmModal(false)}
+                      >
+                        ยกเลิก
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ตารางแสดงสินค้า */}
         {loading ? (
           <p>กำลังโหลด...</p>
         ) : err ? (
           <p className="text-red-600">{err}</p>
         ) : products.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border">
-              <thead className="bg-gray-100">
+          <div className="overflow-y-auto max-h-[70vh] rounded-lg shadow">
+            <table className="w-full border-collapse">
+              <thead className="bg-gray-200 sticky top-0 z-10">
                 <tr>
-                  <th className="py-2 px-4 border-b">รูปภาพ</th>
-                  <th className="py-2 px-4 border-b">ชื่อสินค้า</th>
-                  <th className="py-2 px-4 border-b">รายละเอียด</th>
-                  <th className="py-2 px-4 border-b">ราคา</th>
-                  <th className="py-2 px-4 border-b">จำนวนคงเหลือ (Stock)</th>
+                  <th className="py-3 px-4 text-left">รูปภาพ</th>
+                  <th className="py-3 px-4 text-left">ชื่อสินค้า</th>
+                  <th className="py-3 px-4 text-left">รายละเอียด</th>
+                  <th className="py-3 px-4 text-left">ราคา</th>
+                  <th className="py-3 px-4 text-left">คงเหลือ</th>
                 </tr>
               </thead>
               <tbody>
                 {products.map((p) => (
-                  <tr key={p.product_id}>
-                    <td className="py-2 px-4 border-b">
-                      {p.image_url && (
-                        <img
-                          src={
-                            p.image_url.startsWith("http")
-                              ? p.image_url
-                              : `http://localhost:3000${p.image_url}`
-                          }
-                          alt={p.product_name}
-                          className="h-16 w-16 object-cover rounded"
-                        />
-                      )}
+                  <tr
+                    key={p.product_id}
+                    className={`border-b transition-colors ${
+                      p.is_hidden ? "bg-yellow-100" : "hover:bg-gray-50"
+                    }`}
+                  >
+                    <td className="py-2 px-4">
+                      <img
+                        src={p.image_url}
+                        alt={p.product_name}
+                        className="w-16 h-16 object-cover rounded"
+                      />
                     </td>
-                    <td className="py-2 px-4 border-b">{p.product_name}</td>
-                    <td className="py-2 px-4 border-b">{p.description}</td>
-                    <td className="py-2 px-4 border-b">{p.price}</td>
-                    <td className="py-2 px-4 border-b text-center align-middle">
-                      <div className="flex items-center justify-center gap-2">
+                    <td className="py-2 px-4">{p.product_name}</td>
+                    <td className="py-2 px-4">{p.description}</td>
+                    <td className="py-2 px-4">{p.price}</td>
+                    <td className="py-2 px-4">
+                      <div className="flex items-center justify-between">
+                        <span>{p.stock ?? "-"}</span>
                         <button
-                          className="px-2 py-1 bg-gray-200 rounded text-lg font-bold"
-                          onClick={() => updateStock(p.product_id, -1)}
-                          disabled={adding || p.stock <= 0}
+                          onClick={() => {
+                            setEditProduct(p);
+                            setEditProductDraft(JSON.parse(JSON.stringify(p)));
+                          }}
+                          className="ml-2 text-gray-600 hover:text-gray-900 text-2xl"
+                          title="แก้ไขสินค้า"
                         >
-                          -
+                          ☰
                         </button>
-                        <span className="min-w-[24px] text-center">
-                          {p.stock ?? "-"}
-                        </span>
-                        <button
-                          className="px-2 py-1 bg-gray-200 rounded text-lg font-bold"
-                          onClick={() => updateStock(p.product_id, 1)}
-                          disabled={adding}
-                        >
-                          +
-                        </button>
-                      </div>
-                      <div className="flex gap-2 mt-2 justify-center">
-                        <button
-                          className="px-2 py-1 bg-red-500 text-white rounded text-sm"
-                          onClick={() => deleteProduct(p.product_id)}
-                          disabled={adding}
-                        >ลบออกจากระบบ</button>
-                        <button
-                          className={`px-2 py-1 rounded text-sm ${p.is_hidden ? "bg-green-500 text-white" : "bg-yellow-400 text-black"}`}
-                          onClick={() => toggleHideProduct(p.product_id, p.is_hidden)}
-                          disabled={adding}
-                          >{p.is_hidden ? "แสดงสินค้า" : "ซ่อนสินค้า"}</button>
                       </div>
                     </td>
                   </tr>
