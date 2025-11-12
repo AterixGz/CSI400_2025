@@ -6,13 +6,15 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     // Basic stats without revenue calculations for now
-    const stats = await pool.query(`
-      SELECT 
-        (SELECT COUNT(*) FROM users) as total_users,
-        (SELECT COUNT(*) FROM products) as total_products,
-        (SELECT COUNT(*) FROM categories) as total_categories,
-        (SELECT COUNT(*) FROM products WHERE stock <= 1) as out_of_stock_products
-    `);
+   const stats = await pool.query(`
+  SELECT 
+    (SELECT COUNT(*) FROM users) as total_users,
+    (SELECT COUNT(*) FROM products) as total_products,
+    (SELECT COUNT(*) FROM categories) as total_categories,
+    (SELECT COUNT(*) FROM product_sizes WHERE stock <= 0) as out_of_stock_products
+`);
+
+
 
     // Monthly activity (products added per month)
    const monthlyActivity = await pool.query(`
@@ -39,6 +41,9 @@ const categories = await pool.query(`
   ORDER BY total_sales DESC
   LIMIT 7
 `);
+
+// ดึงจำนวนสินค้าที่หมดสต็อก (stock = 0)
+
 
 
     // Low stock products (stock < 2)
@@ -67,13 +72,17 @@ const lowStockProducts = await pool.query(`
   LIMIT 5
 `);
 
-    res.json({
-      stats: stats.rows[0],
-      monthlyActivity: monthlyActivity.rows,
-      categories: categories.rows,
-      topProducts: topProducts.rows,
-      lowStockProducts: lowStockProducts.rows
-    });
+ res.json({
+  stats: {
+    ...stats.rows[0],
+    out_of_stock_sizes: Number(stats.rows[0].out_of_stock_products)
+  },
+  monthlyActivity: monthlyActivity.rows,
+  categories: categories.rows,
+  topProducts: topProducts.rows,
+  lowStockProducts: lowStockProducts.rows,
+});
+
 
   } catch (err) {
     console.error('Dashboard error:', err);

@@ -5,7 +5,9 @@ import { Search, Users, Shield, MoreHorizontal } from "lucide-react";
 export default function Members() {
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
-  const token = localStorage.getItem("token"); // สมมติคุณเก็บ token ไว้ที่ localStorage
+  const token = localStorage.getItem("token");
+
+  const roleMap = { 2: "Staff", 3: "Manager" }; // map role_id → role_name
 
   useEffect(() => {
     async function fetchAdmins() {
@@ -26,30 +28,34 @@ export default function Members() {
     fetchAdmins();
   }, [token]);
 
-  // ฟังก์ชันเปลี่ยน role
+  // เปลี่ยน role
   const changeRole = async (userId, newRoleId) => {
-  try {
-    const res = await fetch(`http://localhost:3000/api/admin/users/${userId}/role`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ role_id: newRoleId }), // ต้องส่ง role_id
-    });
-    const data = await res.json();
-    if (data.success) {
-      setAdmins((cur) =>
-        cur.map((u) => (u.user_id === userId ? data.user : u))
-      );
+    try {
+      const res = await fetch(`http://localhost:3000/api/admin/users/${userId}/role`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ role_id: newRoleId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAdmins((cur) =>
+          cur.map((u) => (u.user_id === userId ? data.user : u))
+        );
+      }
+    } catch (err) {
+      console.error("Failed to update role:", err);
     }
-  } catch (err) {
-    console.error("Failed to update role:", err);
-  }
-};
-
+  };
 
   if (loading) return <div>Loading...</div>;
+
+  // สถิติ
+  const totalAdmins = admins.length;
+  const totalStaff = admins.filter((u) => u.role_id === 2).length;
+  const totalManagers = admins.filter((u) => u.role_id === 3).length;
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -58,6 +64,46 @@ export default function Members() {
         <div className="max-w-[1600px] mx-auto">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">Admin Management</h1>
 
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="shadow-md p-6 rounded-xl">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-black">Total Admins</span>
+                <Users className="h-6 w-6 text-black" />
+              </div>
+              <div className="text-4xl font-bold mb-2">{totalAdmins}</div>
+              <div className="text-orange-500 text-sm">↗ +2 this month</div>
+            </div>
+
+            <div className="shadow-md p-6 rounded-xl">
+              <div className="flex items-center justify-between mb-4">
+                <span className="">Staff</span>
+                <Users className="h-6 w-6" />
+              </div>
+              <div className="text-4xl font-bold mb-2">{totalStaff}</div>
+              <div className="text-orange-500 text-sm">↗ updated</div>
+            </div>
+
+            <div className="shadow-md p-6 rounded-xl">
+              <div className="flex items-center justify-between mb-4">
+                <span className="">Managers</span>
+                <Shield className="h-6 w-6" />
+              </div>
+              <div className="text-4xl font-bold mb-2">{totalManagers}</div>
+              <div className="text-sm">Can manage staff</div>
+            </div>
+
+            <div className="shadow-md p-6 rounded-xl">
+              <div className="flex items-center justify-between mb-4">
+                <span className="">Avg. Session</span>
+                <Users className="h-6 w-6" />
+              </div>
+              <div className="text-4xl font-bold mb-2">4.2h</div>
+              <div className="text-orange-500 text-sm">↗ +0.5h</div>
+            </div>
+          </div>
+
+          {/* Admin Table */}
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
@@ -71,22 +117,17 @@ export default function Members() {
               <tbody className="divide-y divide-gray-200">
                 {admins.map((admin) => (
                   <tr key={admin.user_id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      {admin.first_name} {admin.last_name}
-                    </td>
+                    <td className="px-6 py-4">{admin.first_name} {admin.last_name}</td>
                     <td className="px-6 py-4">{admin.email}</td>
                     <td className="px-6 py-4">{admin.role_name}</td>
                     <td className="px-6 py-4">
                       <select
-                        value={admin.role_name}
-                         onChange={(e) => {
-    const newRoleId = e.target.value === "staff" ? 2 : 3; // map role_name → role_id
-    changeRole(admin.user_id, newRoleId);
-  }}
-  className="border border-gray-200 rounded px-2 py-1"
->
-  <option value="staff">Staff</option>
-  <option value="manager">Manager</option>
+                        value={admin.role_id}
+                        onChange={(e) => changeRole(admin.user_id, Number(e.target.value))}
+                        className="border border-gray-200 rounded px-2 py-1"
+                      >
+                        <option value={2}>Staff</option>
+                        <option value={3}>Manager</option>
                       </select>
                     </td>
                   </tr>

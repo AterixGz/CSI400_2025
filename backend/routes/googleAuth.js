@@ -37,6 +37,14 @@ passport.use(new GoogleStrategy({
     } else {
       dbUser = userCheck.rows[0];
     }
+    // ✅ ดึง role_name จากตาราง roles
+        const roleQuery = `
+          SELECT role_name FROM roles WHERE role_id = $1
+        `;
+        const roleResult = await db.query(roleQuery, [dbUser.role_id]);
+        const role_name = roleResult.rows[0]?.role_name || 'user';
+
+        dbUser.role_name = role_name;
   // Pass dbUser to req.user
   return done(null, dbUser);
   } catch (err) {
@@ -67,7 +75,7 @@ router.get('/auth/google/callback',
     let token = '';
     if (dbUser) {
       token = jwt.sign(
-        { user_id: dbUser.user_id, email: dbUser.email, role: dbUser.role },
+        { user_id: dbUser.user_id, email: dbUser.email, role: dbUser.role ,role_name: dbUser.role_name,},
         process.env.JWT_SECRET,
         { expiresIn: '7d' }
       );

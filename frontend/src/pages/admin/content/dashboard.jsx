@@ -44,7 +44,12 @@ const Dashboard = () => {
     };
 
     fetchDashboard();
+      const intervalId = setInterval(fetchDashboard, 30000);
+
+  // ทำความสะอาด interval ตอน component unmount
+  return () => clearInterval(intervalId);
   }, []);
+ 
 
   if (loading) return <div className="flex-1 flex items-center justify-center">Loading...</div>;
   if (error) return <div className="flex-1 flex items-center justify-center text-red-500">Error: {error}</div>;
@@ -88,14 +93,15 @@ const categoryData = (categories || []).map((cat, i) => ({
               <BookOpen className="w-8 h-8 text-blue-600" />
             </div>
             <div className="text-3xl font-bold text-gray-900">{stats?.total_categories || 0}</div>
-            <div className="text-sm text-gray-600">Categories</div>
+            <div className="text-sm text-gray-600">Product Categories</div>
           </div>
 
           <div className="bg-white p-4 rounded-xl border border-gray-200">
             <div className="flex items-center justify-between mb-2">
               <Image className="w-8 h-8 text-red-600" />
             </div>
-            <div className="text-3xl font-bold text-gray-900">{stats?.out_of_stock_products || 0}</div>
+            <div className="text-3xl font-bold text-gray-900">{stats?.out_of_stock_sizes || 0}</div>
+
             <div className="text-sm text-gray-600">out of stock</div>
           </div>
         </div>
@@ -112,7 +118,7 @@ const categoryData = (categories || []).map((cat, i) => ({
                   <XAxis dataKey="month" />
                   <YAxis  />
                   <Tooltip 
-      formatter={(value) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)}
+      formatter={(value) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(value)}
       labelFormatter={(label) => `Month: ${label}`}
     />
                    <Line type="monotone" dataKey="total_sales" stroke="#10B981" />
@@ -132,7 +138,7 @@ const categoryData = (categories || []).map((cat, i) => ({
   
   <YAxis />
   <Tooltip 
-    formatter={(value) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)}
+    formatter={(value) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(value)}
     labelFormatter={(label) => `Category: ${label}`}
   />
   <Bar dataKey="value" radius={[4,4,0,0]}>
