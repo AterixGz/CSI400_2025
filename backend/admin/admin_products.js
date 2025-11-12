@@ -147,8 +147,32 @@ router.patch("/:product_id", upload.single("image"), async (req, res) => {
         category_id && category_id !== "" ? Number(category_id) : old.category_id,
     };
 
-    // ถ้ามีรูปใหม่ → ใช้ของใหม่แทน
+    // ถ้ามีรูปใหม่ → ใช้ของใหม่แทน และลบรูปเก่าออกจาก Cloudinary
     if (req.file) {
+      // ลบรูปเก่าออกจาก Cloudinary
+      try {
+        // ดึง public_id จาก URL เดิม (image_url)
+        // รูปแบบ URL: https://res.cloudinary.com/<cloud_name>/image/upload/v<version>/<folder>/<public_id>.<ext>
+        // ต้องดึง <folder>/<public_id> จาก path โดยข้าม /v123456/
+        const url = old.image_url;
+        // ตัด query string ออก (ถ้ามี)
+        const cleanUrl = url.split('?')[0];
+        // หา /upload/ แล้วตัดส่วนหลัง
+        const uploadIdx = cleanUrl.indexOf('/upload/');
+        let publicId = null;
+        if (uploadIdx !== -1) {
+          let afterUpload = cleanUrl.substring(uploadIdx + '/upload/'.length);
+          // ถ้ามี /v123456/ ให้ตัดออก
+          afterUpload = afterUpload.replace(/^v[0-9]+\//, '');
+          // ตัดนามสกุลไฟล์ออก
+          publicId = afterUpload.replace(/\.[^/.]+$/, '');
+        }
+        if (publicId) {
+          await cloudinary.uploader.destroy(publicId);
+        }
+      } catch (err) {
+        console.error("❌ ลบรูปเก่าออกจาก Cloudinary ไม่สำเร็จ:", err);
+      }
       updated.image_url = req.file.path || req.file.url || req.file.filename;
     }
 
