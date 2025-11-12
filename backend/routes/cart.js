@@ -40,11 +40,21 @@ router.get("/", verifyToken, async (req, res) => {
   if (!userId) return res.status(401).json({ error: "Unauthorized" });
   if (!pool) return res.status(503).json({ error: "DB not available" });
 
-  try {
+    try {
     const sql = `
       SELECT c.cart_id, c.product_id, c.quantity, c.added_at,
              c.size, c.selected,
-             p.name AS product_name, p.price, p.stock, p.image_url, p.description
+             p.name AS product_name, p.price, p.stock, p.image_url, p.description,
+             -- try to read size-level stock if a matching product_sizes row exists
+             (
+               SELECT ps.stock FROM product_sizes ps
+               WHERE ps.product_id = p.product_id
+                 AND (
+                   (ps.size_id IS NOT NULL AND ps.size_id::text = c.size)
+                   OR (ps.size_name IS NOT NULL AND ps.size_name = c.size)
+                 )
+               LIMIT 1
+             ) AS size_stock
       FROM cart c
       JOIN products p ON p.product_id = c.product_id
       WHERE c.user_id = $1
@@ -62,6 +72,7 @@ router.get("/", verifyToken, async (req, res) => {
       description: r.description,
       added_at: r.added_at,
       stock: r.stock ?? null,
+      size_stock: r.size_stock ?? null,
       selected: r.selected ?? false
     }));
     res.json({ items });
@@ -80,17 +91,39 @@ router.post("/items", verifyToken, async (req, res) => {
   if (!product_id) return res.status(400).json({ error: "โปรดระบุสินค้า" });
   const qty = Math.max(1, parseInt(quantity, 10));
   try {
-    const product = await pool.query(
-      "SELECT stock FROM products WHERE product_id = $1",
-      [product_id]
-    );
-    if (!product.rows[0]) {
-      return res.status(404).json({ error: "ไม่พบสินค้า" });
-    }
-    const stock = product.rows[0].stock;
-    if (stock != null && stock < qty) {
-      return res.status(400).json({ error: "สินค้าเหลือในสต็อกไม่เพียงพอ", available: stock });
-    }
+      // Check size-level stock first (if size provided), otherwise product stock
+      let stock = null;
+      if (size) {
+        // try match by size_id numeric or by size_name
+        if (Number.isInteger(size) || (typeof size === 'string' && /^\d+$/.test(size))) {
+          const sizeId = Number(size);
+          const res = await pool.query(
+            "SELECT stock FROM product_sizes WHERE size_id = $1 AND product_id = $2",
+            [sizeId, product_id]
+          );
+          if (res.rows[0]) stock = res.rows[0].stock;
+        }
+        if (stock == null) {
+          const res2 = await pool.query(
+            "SELECT stock FROM product_sizes WHERE product_id = $1 AND size_name = $2 LIMIT 1",
+            [product_id, String(size)]
+          );
+          if (res2.rows[0]) stock = res2.rows[0].stock;
+        }
+      }
+
+      if (stock == null) {
+        const product = await pool.query(
+          "SELECT stock FROM products WHERE product_id = $1",
+          [product_id]
+        );
+        if (!product.rows[0]) return res.status(404).json({ error: "ไม่พบสินค้า" });
+        stock = product.rows[0].stock;
+      }
+
+      if (stock != null && stock < qty) {
+        return res.status(400).json({ error: "สินค้าเหลือในสต็อกไม่เพียงพอ", available: stock });
+      }
     // consider size as part of uniqueness: same product with different sizes are separate cart lines
     const existing = await pool.query(
       "SELECT cart_id, quantity FROM cart WHERE user_id = $1 AND product_id = $2 AND (size IS NOT DISTINCT FROM $3)",
@@ -135,6 +168,30 @@ router.patch("/items/:cart_id", verifyToken, async (req, res) => {
     return res.status(400).json({ error: "จำนวนต้องเป็นจำนวนเต็มบวก" });
   }
   try {
+    // Before updating, check available stock for this cart item (size-level first)
+    const cartRow = await pool.query("SELECT product_id, size FROM cart WHERE cart_id = $1 AND user_id = $2", [cart_id, userId]);
+    if (!cartRow.rows[0]) return res.status(404).json({ error: "ไม่พบรายการในตะกร้า" });
+    const { product_id: pid, size: csize } = cartRow.rows[0];
+    let stock = null;
+    if (csize) {
+      if (Number.isInteger(csize) || (typeof csize === 'string' && /^\d+$/.test(csize))) {
+        const sizeId = Number(csize);
+        const r = await pool.query("SELECT stock FROM product_sizes WHERE size_id = $1 AND product_id = $2", [sizeId, pid]);
+        if (r.rows[0]) stock = r.rows[0].stock;
+      }
+      if (stock == null) {
+        const r2 = await pool.query("SELECT stock FROM product_sizes WHERE product_id = $1 AND size_name = $2 LIMIT 1", [pid, String(csize)]);
+        if (r2.rows[0]) stock = r2.rows[0].stock;
+      }
+    }
+    if (stock == null) {
+      const pr = await pool.query("SELECT stock FROM products WHERE product_id = $1", [pid]);
+      stock = pr.rows[0] ? pr.rows[0].stock : null;
+    }
+    if (stock != null && quantity > stock) {
+      return res.status(400).json({ error: 'จำนวนสินค้ามากกว่าสต็อกที่มี', available: stock });
+    }
+
     const result = await pool.query(
       "UPDATE cart SET quantity = $1 WHERE cart_id = $2 AND user_id = $3 RETURNING cart_id, quantity",
       [quantity, cart_id, userId]

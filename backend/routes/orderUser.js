@@ -65,12 +65,40 @@ router.post("/", verifyToken, async (req, res) => {
       );
 
       // 3. Update product stock (if needed)
-      await pool.query(
-        `UPDATE products 
-         SET stock = stock - $1 
-         WHERE product_id = $2 AND stock IS NOT NULL`,
-        [item.qty, item.product_id]
-      );
+      // Prefer decrementing size-level stock if size information exists
+      const qty = Number(item.qty || 1);
+      let updated = 0;
+      try {
+        if (item.size) {
+          // If size looks like an id (numeric), try to decrement by size_id
+          if (Number.isInteger(item.size) || (typeof item.size === 'string' && /^\d+$/.test(item.size))) {
+            const sizeId = Number(item.size);
+            const res = await pool.query(
+              `UPDATE product_sizes SET stock = stock - $1 WHERE size_id = $2 AND stock IS NOT NULL`,
+              [qty, sizeId]
+            );
+            updated = res.rowCount || 0;
+          } else {
+            // Otherwise try to match by product_id + size_name
+            const res = await pool.query(
+              `UPDATE product_sizes SET stock = stock - $1 WHERE product_id = $2 AND size_name = $3 AND stock IS NOT NULL`,
+              [qty, item.product_id, String(item.size)]
+            );
+            updated = res.rowCount || 0;
+          }
+        }
+      } catch (sizeErr) {
+        console.warn('Failed to update product_sizes stock, falling back to products:', sizeErr);
+        updated = 0;
+      }
+
+      // If we didn't update a size row, fall back to the product-level stock column
+      if (!updated) {
+        await pool.query(
+          `UPDATE products SET stock = stock - $1 WHERE product_id = $2 AND stock IS NOT NULL`,
+          [qty, item.product_id]
+        );
+      }
     }
 
     // 4. Create order address (match DB schema: include user_id and Thai address fields)

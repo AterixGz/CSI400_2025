@@ -8,6 +8,7 @@ const baht = (n) => `฿${n.toLocaleString("th-TH")}`;
 const API_BASE = import.meta.env.VITE_API_BASE || window.__API_BASE__ || "http://localhost:3000";
 
 function CartItem({ item, onChangeQty, onRemove, loading, selected, onSelect }) {
+  const available = item.size_stock ?? item.stock ?? null;
   return (
     <div className="flex items-center gap-4 border rounded-2xl p-4 bg-white">
       <input
@@ -20,11 +21,24 @@ function CartItem({ item, onChangeQty, onRemove, loading, selected, onSelect }) 
       <div className="flex-1">
         <div className="font-bold text-lg">{item.name}</div>
         {/* เอาระบบสีออก */}
-        <div className="text-slate-600 text-sm mt-1">ไซส์: {item.size} &nbsp; </div> 
+        <div className="text-slate-600 text-sm mt-1">
+          ไซส์: {item.size} &nbsp; 
+          {available != null && (
+            <span className={`text-xs ${available < 5 ? 'text-orange-500' : 'text-slate-500'}`}>
+              คงเหลือ: {available}
+            </span>
+          )}
+        </div>
         <div className="mt-3 flex items-center gap-3">
           <button disabled={loading} onClick={() => onChangeQty(item.id, Math.max(1, item.qty - 1))} className="w-8 h-8 rounded-md border bg-white">−</button>
           <div className="w-8 text-center">{item.qty}</div>
-          <button disabled={loading} onClick={() => onChangeQty(item.id, item.qty + 1)} className="w-8 h-8 rounded-md border bg-white">+</button>
+          <button
+            disabled={loading || (available != null && item.qty >= available)}
+            onClick={() => onChangeQty(item.id, item.qty + 1)}
+            className="w-8 h-8 rounded-md border bg-white"
+          >
+            +
+          </button>
         </div>
       </div>
       <div className="text-right">
@@ -67,7 +81,7 @@ export default function CartPage() {
           } else {
             setError(data.error || "โหลดตะกร้าไม่สำเร็จ");
           }
-        } catch (e) {
+        } catch {
           setError("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
         }
       } else {
@@ -100,6 +114,14 @@ export default function CartPage() {
     if (token) {
       // PATCH API
       try {
+        // client-side guard: check available stock from item metadata
+        const current = items.find(it => it.id === id);
+        const available = current ? (current.size_stock ?? current.stock ?? null) : null;
+        if (available != null && qty > available) {
+          setError('จำนวนที่เลือกมากกว่าสินค้าคงเหลือ');
+          setLoading(false);
+          return;
+        }
         const res = await fetch(`${API_BASE}/cart/items/${id}`, {
           method: "PATCH",
           headers: {
@@ -115,7 +137,7 @@ export default function CartPage() {
         } else {
           setError(data.error || "แก้ไขจำนวนไม่สำเร็จ");
         }
-      } catch (e) {
+      } catch {
         setError("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
       }
     } else {
@@ -146,7 +168,7 @@ export default function CartPage() {
         } else {
           setError(data.error || "ลบสินค้าไม่สำเร็จ");
         }
-      } catch (e) {
+      } catch {
         setError("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
       }
     } else {
@@ -159,60 +181,7 @@ export default function CartPage() {
   };
 
   // Add item handler (for demo, not shown in UI)
-  const addItem = async (product) => {
-    setLoading(true);
-    setError("");
-    let updated = false;
-    if (token) {
-      try {
-        const res = await fetch(`${API_BASE}/cart/items`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ 
-            product_id: product.product_id || product.id, 
-            quantity: 1,
-            size: product.size || null
-          }),
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          // reload cart
-          const res2 = await fetch(`${API_BASE}/cart`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          const data2 = await res2.json();
-          setItems(data2.items || []);
-          updated = true;
-        } else {
-          setError(data.error || "เพิ่มสินค้าไม่สำเร็จ");
-        }
-      } catch (e) {
-        setError("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
-      }
-    } else {
-      // guest: localStorage
-      setItems((cur) => {
-        const found = cur.find((it) => 
-          it.id === product.id && it.size === (product.size || null)
-        );
-        if (found) {
-          return cur.map((it) => 
-            (it.id === product.id && it.size === (product.size || null)) 
-              ? { ...it, qty: it.qty + 1 } 
-              : it
-          );
-        } else {
-          return [...cur, { ...product, qty: 1 }];
-        }
-      });
-      updated = true;
-    }
-    setLoading(false);
-    if (updated) window.dispatchEvent(new Event("cart:updated"));
-  };
+  // addItem helper removed (not used in UI)
 
   const selectedItemsData = items.filter(it => selectedItems.includes(it.id));
   const subtotal = selectedItemsData.reduce((s, it) => s + (it.price || 0) * (it.qty || 1), 0);
@@ -305,9 +274,9 @@ export default function CartPage() {
                         } else {
                           setError(data.error || "ไม่สามารถอัปเดตสถานะการเลือกได้");
                         }
-                      } catch (e) {
-                        setError("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
-                      }
+                      } catch {
+                      setError("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
+                    }
                     } else {
                       setSelectedItems(prev => 
                         checked 
@@ -348,7 +317,7 @@ export default function CartPage() {
                       } else {
                         setError(data.error || "ไม่สามารถลบสินค้าที่ชำระเงินแล้ว");
                       }
-                    } catch (e) {
+                    } catch {
                       setError("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
                     }
                   }
