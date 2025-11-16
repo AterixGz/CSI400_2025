@@ -67,8 +67,6 @@ router.get('/auth/google',
 router.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/' }),
   async (req, res) => {
-    // Debug log for callback
-    console.log('Google OAuth callback hit');
     // req.user is now dbUser from done() above
     const dbUser = req.user;
     // สร้าง JWT token แบบเดียวกับ login ปกติ

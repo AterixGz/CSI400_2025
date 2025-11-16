@@ -42,8 +42,6 @@ router.post("/", upload.single("image"), async (req, res) => {
     }
     // ตรวจสอบ property ที่ Cloudinary คืนมา
     const image_url = req.file.path || req.file.url || req.file.filename;
-    console.log("✅ Cloudinary file:", req.file);
-    console.log("✅ image_url ที่จะบันทึก:", image_url);
 
     // เพิ่มสินค้าใหม่
     const result = await pool.query(

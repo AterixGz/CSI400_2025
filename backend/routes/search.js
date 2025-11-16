@@ -12,8 +12,6 @@ router.get("/products", async (req, res) => {
   }
 
   try {
-    console.log('Searching for:', q); // Debug log
-
     const query = `
       SELECT 
         p.product_id, p.name AS product_name, p.description,
@@ -31,9 +29,6 @@ router.get("/products", async (req, res) => {
         p.created_at DESC
       LIMIT 10
     `;
-    
-    console.log('SQL Query:', query); // Debug log
-    console.log('Search pattern:', `%${q}%`); // Debug log
     
     const { rows } = await pool.query(query, [`%${q}%`]);
     

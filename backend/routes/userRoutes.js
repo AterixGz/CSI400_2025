@@ -153,7 +153,9 @@ router.put("/:id", async (req, res) => {
           }
         }
 
-        console.log('Avatar uploaded:', { filePath, uploadData, publicUrl });
+        // Avatar uploaded (details omitted in logs)
+        
+        // update user profile image URL
         finalProfileImageUrl = publicUrl;
       } catch (uErr) {
         console.error('Upload exception', uErr);
@@ -161,7 +163,6 @@ router.put("/:id", async (req, res) => {
       }
     }
 
-  console.log('About to update user', id, 'with profile_image_url=', finalProfileImageUrl);
   const result = await pool.query(
   `UPDATE users SET 
     email=$1, phone_number=$2, first_name=$3, last_name=$4,

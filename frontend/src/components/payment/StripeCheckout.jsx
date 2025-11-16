@@ -116,7 +116,7 @@ function CheckoutForm({ amount, items, address, onSuccess, onCancel }) {
             if (!res.ok) {
               console.warn('ไม่สามารถลบสินค้าที่เลือกได้:', data.error || res.statusText);
             } else {
-              console.log(data.message); // แสดงผลการลบในคอนโซล
+              // Clear cart successful
             }
           } catch (err) {
             console.warn('ไม่สามารถลบสินค้าที่เลือกได้ (network):', err);

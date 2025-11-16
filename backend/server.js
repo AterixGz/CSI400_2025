@@ -1,8 +1,6 @@
 // server.js
 import express from 'express';
-import fs from 'fs';
-import path, { dirname } from 'path';
-import { fileURLToPath } from 'url';
+import path from 'path';
 import passport from 'passport';
 import session from 'express-session';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
@@ -21,7 +19,6 @@ import clearCartRouter from './routes/clearCart.js';
 import addressRouter from './routes/address.js';
 import favoriteRouter from './routes/favorite.js';
 import productAdminRouter from "./admin/admin_products.js";
-import categoriesAdminRouter from "./admin/admin_categories.js";
 import orderUserRouter from './routes/orderUser.js';
 import dashboardRouter from './routes/dashboard.js';
 import uploadRoutes from "./routes/upload.js";
@@ -30,14 +27,6 @@ import ordersAdminRouter from './admin/admin_orders.js';
 import { checkRole } from "./middlewares/checkRole.js";
 import adminUsersRouter from "./routes/adminUsers.js";
 dotenv.config();
-
-
-
-
-const router = express.Router();
-
-
-
 
 
 
@@ -57,13 +46,9 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use(cors({ origin: true }));
+app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
 // Middleware สำหรับแปลง body เป็น JSON
 app.use(express.json());
-app.use(cors({
-  origin: 'http://localhost:5173',
-  credentials: true
-}));
 
 
 passport.serializeUser((user, done) => {
@@ -89,14 +74,6 @@ app.post('/api/visit', async (req, res) => {
     console.error(err);
     res.status(500).json({ success: false, error: err.message });
   }
-});
-// ทุก route ของ admin
-router.use("/admin", checkRole(["staff", "manager", "Admin"]), adminRoutes);
-
-// ตัวอย่าง API admin
-router.get("/admin/users", async (req, res) => {
-  const result = await pool.query("SELECT * FROM users ORDER BY user_id ASC");
-  res.json(result.rows);
 });
 
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
@@ -152,9 +129,6 @@ app.use("/api/users", usersRouter);
 app.use("/api/admin/users", adminUsersRouter);
 // ใช้งาน Product Admin routes
 app.use("/api/admin_products", productAdminRouter);
-
-// ใช้งาน Categories Admin routes
-app.use("/api/admin_categories", categoriesAdminRouter);
 
 // ใช้งาน Admin Dashboard routes
 app.use('/api/dashboard', dashboardRouter);

@@ -266,7 +266,6 @@ export default function ProductsPage({ onAdd, favorites = [], onFavorite }) {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          console.log("navigate to detail id:", p.id);
                           navigate(`/products/${p.id}`);
                         }}
                         className="mt-3 w-full px-4 py-2 rounded-xl border border-slate-200 bg-white font-bold text-slate-800 hover:bg-slate-50"

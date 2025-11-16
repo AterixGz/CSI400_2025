@@ -92,7 +92,6 @@ export default function ProfilePage() {
         );
 
         const dbResult = await resDb.json();
-        console.log(dbResult);
 
         // 3️⃣ Update UI และ localStorage
         setProfilePreview(dbResult.profile_image_url);
@@ -115,7 +114,6 @@ export default function ProfilePage() {
 
   const handleUpdateProfile = async (updatedData) => {
     try {
-      console.log("Updating profile:", updatedData);
       setUser((prev) => ({
         ...prev,
         ...updatedData,

@@ -73,7 +73,7 @@ useEffect(() => {
 
   fetch('/api/visit', { method: 'POST' })
     .then(res => res.json())
-    .then(data => console.log('Visit recorded:', data))
+    .then(data => {/* visit recorded */})
     .catch(err => console.error(err));
 }, []);
 

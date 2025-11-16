@@ -9,9 +9,7 @@ export default function Products() {
   const [err, setErr] = useState("");
   const [adding, setAdding] = useState(false);
   const [editProduct, setEditProduct] = useState(null);
-  const [editProductDraft, setEditProductDraft] = useState(null); // เก็บสินค้าที่แก้ไข (draft)
-  const [editingProduct, setEditingProduct] = useState(null); // เก็บสินค้าที่กำลังแก้
-  const [sizes, setSizes] = useState([]); // เก็บข้อมูลไซส์ของสินค้าที่แก้ไข
+  const [editProductDraft, setEditProductDraft] = useState(null);
   const [showHideConfirmModal, setShowHideConfirmModal] = useState(false);
   const [hideTargetProduct, setHideTargetProduct] = useState(null);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);

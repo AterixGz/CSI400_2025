@@ -35,7 +35,7 @@ router.post("/profile", upload.single("image"), async (req, res) => {
     if (oldPublicId) {
       try {
         await cloudinary.uploader.destroy(oldPublicId);
-        console.log('ลบรูปเก่าใน Cloudinary:', oldPublicId);
+        // Old Cloudinary image removed
       } catch (err) {
         console.warn('ลบรูปเก่าไม่สำเร็จ:', oldPublicId, err.message);
       }

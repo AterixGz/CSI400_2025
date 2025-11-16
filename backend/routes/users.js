@@ -6,7 +6,6 @@ const router = express.Router();
 router.patch("/:id/avatar", async (req, res) => {
   const { id } = req.params;
   const { profile_image_url, profile_image_public_id } = req.body;
-  console.log('PATCH /:id/avatar', { id, profile_image_url, profile_image_public_id });
   if (!id || id === 'undefined' || isNaN(Number(id))) {
     return res.status(400).json({ error: 'user id ไม่ถูกต้อง' });
   }

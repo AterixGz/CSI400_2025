@@ -85,8 +85,6 @@ export default function AddressProfile() {
         return;
       }
 
-      console.log('Adding address with token:', token);
-
       const response = await fetch('http://localhost:3000/api/addresses', {
         method: 'POST',
         headers: {

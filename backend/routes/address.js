@@ -20,7 +20,6 @@ const verifyToken = (req, res, next) => {
     // Accept common token claim names: id, user_id, userId
     const userId = decoded.id || decoded.user_id || decoded.userId;
     if (!userId) {
-      console.log('Decoded token missing user id claim:', decoded);
       return res.status(401).json({ error: 'Invalid token format: no user id' });
     }
     // console.log('Decoded token:', decoded);

@@ -108,7 +108,6 @@ router.post('/webhook', express.raw({type: 'application/json'}), async (req, res
             cartItems,
             paymentIntent.amount / 100
           );
-          console.log('Order created:', orderId);
         }
       } catch (error) {
         console.error('Error creating order:', error);
@@ -116,10 +115,9 @@ router.post('/webhook', express.raw({type: 'application/json'}), async (req, res
       break;
     case 'payment_intent.payment_failed':
       // Handle failed payment
-      console.log('Payment failed:', event.data.object.id);
       break;
     default:
-      console.log(`Unhandled event type ${event.type}`);
+      // Unhandled event type
   }
 
   res.json({ received: true });

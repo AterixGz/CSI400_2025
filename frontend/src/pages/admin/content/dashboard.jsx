@@ -36,7 +36,6 @@ const Dashboard = () => {
         const res = await fetch('/api/dashboard');
         if (!res.ok) throw new Error('Failed to fetch dashboard data');
         const json = await res.json();
-         console.log(json); 
         setData(json);
       } catch (err) {
         console.error('Failed to fetch dashboard:', err);
