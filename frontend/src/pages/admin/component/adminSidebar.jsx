@@ -37,13 +37,17 @@ export default function AdminSidebar() {
     }
   }, []);
   const sidebarItems = [
-  { icon: Home, label: 'Dashboard', path: '/admin/dashboard', count: '' },
+    ...(user?.role_name === 'manager'
+      ? [{ icon: Home, label: 'Dashboard', path: '/admin/dashboard' }]
+      : []),
   // { icon: BarChart3, label: 'Analytics', path: '/admin/analytics' },
   // { icon: Users, label: 'Organization', path: '/admin/organization' },
   // { icon: FolderOpen, label: 'Projects', path: '/admin/projects', count: '12' },
-  { icon: Package, label: 'Products', path: '/admin/products' },
+  ...(user?.role_name === 'manager'
+      ? [{ icon: Package, label: 'Products', path: '/admin/products' }]
+      : []),
   { icon: ShoppingCart, label: 'Orders', path: '/admin/orders', count: '' },
-  { icon: Users, label: 'Customers', path: '/admin/customers' },
+  // { icon: Users, label: 'Customers', path: '/admin/customers' },
   // { icon: DollarSign, label: 'Transactions', path: '/admin/transactions' },
   // { icon: FileText, label: 'Invoices', path: '/admin/invoices', count: '' },
   // { icon: CreditCard, label: 'Payments', path: '/admin/payments' },

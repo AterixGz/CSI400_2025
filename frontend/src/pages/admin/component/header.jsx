@@ -90,7 +90,7 @@ function UserInfo() {
   }, []);
 
   const fullName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() : 'John Doe';
-  const roleLabel = user ? (user.role || 'User') : 'Administrator';
+  const roleLabel = user ? (user.role_name || 'User') : 'Administrator';
   const initials = user
     ? ((user.first_name && user.first_name[0]) || '') + ((user.last_name && user.last_name[0]) || '')
     : 'JD';
