@@ -11,7 +11,6 @@ export default function SearchBox() {
   const navigate = useNavigate();
   // ตรวจสอบ API_BASE
   const API_BASE = import.meta.env.VITE_API_BASE || window.__API_BASE__ || "http://localhost:3000";
-  console.log('API_BASE:', API_BASE); // Debug log
 
   // Click outside to close
   useEffect(() => {
@@ -35,8 +34,6 @@ export default function SearchBox() {
     const timeoutId = setTimeout(async () => {
       setLoading(true);
       try {
-        console.log('Searching at URL:', `${API_BASE}/api/search/products?q=${encodeURIComponent(query)}`); // Debug log
-        
         const res = await fetch(
           `${API_BASE}/api/search/products?q=${encodeURIComponent(query)}`,
           { signal: controller.signal }
@@ -47,8 +44,6 @@ export default function SearchBox() {
         }
         
         const data = await res.json();
-        console.log('Search results:', data); // Debug log
-        
         if (Array.isArray(data)) {
           setResults(data);
         } else {

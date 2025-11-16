@@ -44,22 +44,7 @@ export function isTokenExpired(token) {
 
 export async function verifyTokenWithServer(token) {
   if (!token) return false;
-  const endpoints = ["/verify-token", "/auth/verify", "/verify"];
-  for (const ep of endpoints) {
-    try {
-      const res = await fetch(BASE + ep, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ token }),
-      });
-      if (res.status === 200) return true;
-      if (res.status === 401) return false;
-      // try next endpoint on other statuses
-    } catch {
-      // network error -> continue trying
-    }
-  }
-  // if server verification endpoints not available, fall back to client-side check
+  // Fall back to client-side check only (no server endpoint available)
   return !isTokenExpired(token);
 }
 
@@ -70,7 +55,7 @@ export function logout() {
   window.dispatchEvent(new Event("authChange"));
 }
 
-export function setupAuthWatcher({ intervalSec = 60 } = {}) {
+export function setupAuthWatcher({ intervalSec = 5 } = {}) {
   // check immediately and then set interval
   async function check() {
     const token = getToken();
