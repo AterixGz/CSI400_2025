@@ -38,7 +38,7 @@ router.post("/", async (req, res) => {
         role_id: user.role_id, 
         role_name: user.role_name 
        },
-      process.env.JWT_SECRET || "changeme",
+      process.env.JWT_SECRET || "JWT_SECRET_KEY",
       { expiresIn: "24h" }
     );
     // ส่งข้อมูล user เฉพาะ field ที่จำเป็น

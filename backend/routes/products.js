@@ -32,7 +32,7 @@ router.get("/", async (req, res) => {
         p.price, p.compare_at, p.stock, p.image_url, p.created_at,
         c.category_id, c.name AS category_name,
         a.audience_id, a.name AS audience_name,
-        ARRAY_AGG(ps.size_name ORDER BY ps.size_id) AS sizes
+        JSON_AGG(JSON_BUILD_OBJECT('size_name', ps.size_name, 'stock', ps.stock) ORDER BY ps.size_id) FILTER (WHERE ps.size_name IS NOT NULL) AS sizes
       FROM products p
       JOIN categories c ON p.category_id = c.category_id
       LEFT JOIN audiences a ON p.audience_id = a.audience_id
@@ -62,7 +62,7 @@ router.get("/:id", async (req, res) => {
         p.price, p.compare_at, p.stock, p.image_url, p.created_at,
         c.category_id, c.name AS category_name,
         a.audience_id, a.name AS audience_name,
-        ARRAY_AGG(ps.size_name ORDER BY ps.size_id) AS sizes
+        JSON_AGG(JSON_BUILD_OBJECT('size_name', ps.size_name, 'stock', ps.stock) ORDER BY ps.size_id) FILTER (WHERE ps.size_name IS NOT NULL) AS sizes
       FROM products p
       JOIN categories c ON p.category_id = c.category_id
       LEFT JOIN audiences a ON p.audience_id = a.audience_id

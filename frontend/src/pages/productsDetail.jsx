@@ -206,7 +206,10 @@ export default function ProductDetailPage({
         if (alive) {
           setProduct(p);
           setMainImage(p.image ?? null);
-          setSize(p.sizes?.[0] ?? null);
+          // Extract first size properly (handle both string and object formats)
+          const firstSize = p.sizes?.[0];
+          const sizeValue = typeof firstSize === "string" ? firstSize : firstSize?.size_name;
+          setSize(sizeValue ?? null);
           setIsFav((favorites || []).some((f) => f.id === p.id));
         }
 
@@ -311,35 +314,34 @@ export default function ProductDetailPage({
           </div>
 
           <p className="mt-4 text-slate-700">{product.description || "รายละเอียดสินค้าแบบย่อ..."}</p>
-
-          {/* <div className="mt-4">
-            <div className="text-sm text-slate-600 mb-2">สี:</div>
-            <div className="flex items-center gap-2">
-              {(product.colors ?? ["#ffffff"]).map((c, i) => (
-                <button
-                  key={i}
-                  title={c}
-                  className="w-7 h-7 rounded-full border border-slate-300"
-                  style={{ background: c }}
-                  onClick={() => {}}
-                />
-              ))}
-            </div>
-          </div> */}
-
           {product.sizes && (
             <div className="mt-4">
               <div className="text-sm text-slate-600 mb-2">ไซส์</div>
-              <div className="flex items-center gap-2">
-                {product.sizes.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setSize(s)}
-                    className={`px-3 py-2 rounded-lg border ${size === s ? "bg-rose-600 text-white" : "bg-white text-slate-700"}`}
-                  >
-                    {s}
-                  </button>
-                ))}
+              <div className="flex items-center gap-2 flex-wrap">
+                {product.sizes.map((s, i) => {
+                  const sizeValue = typeof s === "string" ? s : s.size_name;
+                  const sizeStock = typeof s === "string" ? null : (s.stock ?? 0);
+                  const isOutOfStock = sizeStock !== null && sizeStock <= 0;
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => !isOutOfStock && setSize(sizeValue)}
+                      disabled={isOutOfStock}
+                      className={`px-3 py-2 rounded-lg border flex flex-col items-center transition-colors ${
+                        size === sizeValue 
+                          ? "bg-rose-600 text-white" 
+                          : isOutOfStock
+                          ? "bg-slate-100 text-slate-400 border-slate-300 cursor-not-allowed"
+                          : "bg-white text-slate-700 hover:border-rose-400"
+                      }`}
+                    >
+                      <span>{sizeValue}</span>
+                      <span className={`text-xs mt-0.5 ${size === sizeValue ? "text-rose-100" : isOutOfStock ? "text-slate-400" : "text-slate-500"}`}>
+                        {isOutOfStock ? "หมด" : `เหลือ ${sizeStock ?? 0}`}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -387,25 +389,34 @@ export default function ProductDetailPage({
         <div className="flex">
           <button onClick={() => setActiveTab("detail")} className={`flex-1 py-3 text-sm ${activeTab === "detail" ? "font-semibold" : "text-slate-500"}`}>รายละเอียด</button>
           <button onClick={() => setActiveTab("reviews")} className={`flex-1 py-3 text-sm ${activeTab === "reviews" ? "font-semibold" : "text-slate-500"}`}>รีวิว ({product.reviews ?? 0})</button>
-          <button onClick={() => setActiveTab("care")} className={`flex-1 py-3 text-sm ${activeTab === "care" ? "font-semibold" : "text-slate-500"}`}>วิธีดูแล</button>
         </div>
         <div className="p-6">
           {activeTab === "detail" && (
-            <div className="text-slate-700">
-              <ul className="list-disc pl-5 space-y-2">
-                {(product.features ?? [
-                  "ผ้าคอตตอน 100% คุณภาพพรีเมียม",
-                  "ผ่านการรับรองมาตรฐาน OEKO-TEX",
-                  "ระบายอากาศได้ดี ไม่อับชื้น",
-                  "ทนทานต่อการซัก ไม่หด ไม่ซีด",
-                ]).map((t, i) => <li key={i}>{t}</li>)}
-              </ul>
+            <div className="text-slate-700 space-y-4">
+              <div>
+                <h4 className="font-semibold mb-2">รายละเอียดสินค้า</h4>
+                <p className="whitespace-pre-wrap">{product.description || "ไม่มีรายละเอียด"}</p>
+              </div>
+              {product.features && product.features.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-2">คุณสมบัติ</h4>
+                  <ul className="list-disc pl-5 space-y-1">
+                    {product.features.map((t, i) => <li key={i}>{t}</li>)}
+                  </ul>
+                </div>
+              )}
+              {product.sizes && product.sizes.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-2">ไซส์ที่มี</h4>
+                  <p>{product.sizes.map(s => typeof s === "string" ? s : s.size_name).join(", ")}</p>
+                </div>
+              )}
             </div>
           )}
           {activeTab === "reviews" && (
             <div className="text-slate-700">
               <p className="mb-3">คะแนนเฉลี่ย: ⭐ {stars(product.rating ?? 0)} ({product.reviews ?? 0} รีวิว)</p>
-              <p className="text-slate-500">ตัวอย่างรีวิวจะแสดงที่นี่ (mock)</p>
+              <p className="text-slate-500">{(product.reviews ?? 0) > 0 ? "รีวิวจะแสดงที่นี่" : "ยังไม่มีรีวิวสำหรับสินค้านี้"}</p>
             </div>
           )}
           {activeTab === "care" && (
