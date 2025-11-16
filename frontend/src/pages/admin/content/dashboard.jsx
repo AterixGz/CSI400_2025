@@ -26,7 +26,9 @@ const Dashboard = () => {
     topProducts: [],
     lowStockProducts: []
   });
-  
+
+
+
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -193,7 +195,7 @@ const categoryData = (categories || []).map((cat, i) => ({
                 <div
                   style={{
                     background: 'white',
-                    border: '1px solid #ccc',
+                    border: '1px solid #a27979ff',
                     padding: '8px 12px',
                     borderRadius: '8px',
                     boxShadow: '0 2px 6px rgba(0,0,0,0.1)',

@@ -1,5 +1,7 @@
+// backend/routes/adminUsers.js
 import express from "express";
 import db from "../db.js";
+import bcrypt from "bcrypt";
 
 const router = express.Router();
 
@@ -48,4 +50,41 @@ router.patch("/:id/role", async (req, res) => {
   }
 });
 
+// POST /api/admin/users
+// สร้าง staff หรือ manager
+router.post("/", async (req, res) => {
+  const { first_name, last_name, email, password, role_id } = req.body;
+  if (!first_name || !last_name || !email || !password || !role_id) {
+    return res.status(400).json({ success: false, message: "Missing required fields" });
+  }
+
+  try {
+    // hash password
+    const password_hash = await bcrypt.hash(password, 10);
+
+    // insert user ใหม่
+    const result = await db.query(
+      `INSERT INTO users (first_name, last_name, email, password_hash, role_id, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, now(), now())
+       RETURNING user_id, first_name, last_name, email, role_id`,
+      [first_name, last_name, email, password_hash, role_id]
+    );
+
+    const newUser = result.rows[0];
+
+    // ดึง role_name
+    const roleRes = await db.query(
+      `SELECT role_name FROM roles WHERE role_id = $1`,
+      [role_id]
+    );
+    newUser.role_name = roleRes.rows[0].role_name;
+
+    res.json({ success: true, user: newUser });
+  } catch (err) {
+    console.error("Failed to create user:", err);
+    res.status(500).json({ success: false, message: "Failed to create user" });
+  }
+});
+
 export default router;
+

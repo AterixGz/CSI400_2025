@@ -74,7 +74,7 @@ passport.deserializeUser((user, done) => {
 });
 
 // ทุก route ของ admin
-router.use("/admin", checkRole(["staff", "manager"]));
+router.use("/admin", checkRole(["staff", "manager", "Admin"]), adminRoutes);
 
 // ตัวอย่าง API admin
 router.get("/admin/users", async (req, res) => {

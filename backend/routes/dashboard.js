@@ -8,7 +8,7 @@ router.get('/', async (req, res) => {
     // Basic stats without revenue calculations for now
    const stats = await pool.query(`
   SELECT 
-    (SELECT COUNT(*) FROM users) as total_users,
+    (SELECT COUNT(*) FROM users WHERE role_id = 1 ) as total_users,
     (SELECT COUNT(*) FROM products) as total_products,
     (SELECT COUNT(*) FROM categories) as total_categories,
     (SELECT COUNT(*) FROM product_sizes WHERE stock <= 0) as out_of_stock_products
