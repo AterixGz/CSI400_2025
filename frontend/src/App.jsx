@@ -67,6 +67,17 @@ export default function App() {
     }
     loadFavorites();
   }, [token]);
+// บันทึกการเข้าชมเว็บไซต์
+useEffect(() => {
+  if (sessionStorage.getItem('hasVisited')) return;
+  sessionStorage.setItem('hasVisited', 'true');
+
+  fetch('/api/visit', { method: 'POST' })
+    .then(res => res.json())
+    .then(data => console.log('Visit recorded:', data))
+    .catch(err => console.error(err));
+}, []);
+
 
   // ฟังก์ชัน favorite sync backend
   async function handleFavorite(item) {
@@ -110,6 +121,7 @@ export default function App() {
       return PRODUCTS.filter((p) => p.category === "acc");
     return PRODUCTS.filter((p) => p.category === activeCat);
   }, [activeCat]);
+
 
   return (
     <div className="text-slate-900 bg-white">

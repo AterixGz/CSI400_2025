@@ -12,10 +12,14 @@ router.get('/', async (req, res) => {
     (SELECT COUNT(*) FROM products) as total_products,
     (SELECT COUNT(*) FROM categories) as total_categories,
     (SELECT COUNT(*) FROM product_sizes WHERE stock <= 0) as out_of_stock_products
+    
 `);
 
 
-
+const totalVisitors = await pool.query(`
+  SELECT COALESCE(SUM(visits), 0) AS total_visitors 
+  FROM website_visits;
+`);
     // Monthly activity (products added per month)
    const monthlyActivity = await pool.query(`
   SELECT 
@@ -75,7 +79,8 @@ const lowStockProducts = await pool.query(`
  res.json({
   stats: {
     ...stats.rows[0],
-    out_of_stock_sizes: Number(stats.rows[0].out_of_stock_products)
+    out_of_stock_sizes: Number(stats.rows[0].out_of_stock_products),
+     total_visitors: Number(totalVisitors.rows[0].total_visitors)
   },
   monthlyActivity: monthlyActivity.rows,
   categories: categories.rows,

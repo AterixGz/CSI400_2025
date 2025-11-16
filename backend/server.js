@@ -73,6 +73,23 @@ passport.deserializeUser((user, done) => {
   done(null, user);
 });
 
+// API สำหรับนับผู้เข้าชม
+app.post('/api/visit', async (req, res) => {
+  try {
+    const result = await db.query(`
+      INSERT INTO website_visits(visit_date, visits)
+      VALUES (CURRENT_DATE, 1)
+      ON CONFLICT (visit_date)
+      DO UPDATE SET visits = website_visits.visits + 1
+      RETURNING *;
+    `);
+
+    res.json({ success: true, visit: result.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 // ทุก route ของ admin
 router.use("/admin", checkRole(["staff", "manager", "Admin"]), adminRoutes);
 

@@ -36,6 +36,7 @@ const Dashboard = () => {
         const res = await fetch('/api/dashboard');
         if (!res.ok) throw new Error('Failed to fetch dashboard data');
         const json = await res.json();
+         console.log(json); 
         setData(json);
       } catch (err) {
         console.error('Failed to fetch dashboard:', err);
@@ -90,40 +91,53 @@ const lowStockData = (data.lowStockProducts || []).map(item => ({
 
       <main className="flex-1 p-4 overflow-hidden">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white p-4 rounded-xl border border-gray-200">
-            <div className="flex items-center justify-between mb-2">
-              <Users className="w-8 h-8 text-blue-600" />
-            </div>
-            <div className="text-3xl font-bold text-gray-900">{stats?.total_users || 0}</div>
-            <div className="text-sm text-gray-600">Total Users</div>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+  {/* Total Users */}
+  <div className="bg-white p-4 rounded-xl border border-gray-200">
+    <div className="flex items-center justify-between mb-2">
+      <Users className="w-8 h-8 text-blue-600" />
+    </div>
+    <div className="text-3xl font-bold text-gray-900">{stats?.total_users || 0}</div>
+    <div className="text-sm text-gray-600">Total Users</div>
+  </div>
 
-          <div className="bg-white p-4 rounded-xl border border-gray-200">
-            <div className="flex items-center justify-between mb-2">
-              <FileText className="w-8 h-8 text-blue-600" />
-            </div>
-            <div className="text-3xl font-bold text-gray-900">{stats?.total_products || 0}</div>
-            <div className="text-sm text-gray-600">Total Products</div>
-          </div>
+  {/* Total Products */}
+  <div className="bg-white p-4 rounded-xl border border-gray-200">
+    <div className="flex items-center justify-between mb-2">
+      <FileText className="w-8 h-8 text-blue-600" />
+    </div>
+    <div className="text-3xl font-bold text-gray-900">{stats?.total_products || 0}</div>
+    <div className="text-sm text-gray-600">Total Products</div>
+  </div>
 
-          <div className="bg-white p-4 rounded-xl border border-gray-200">
-            <div className="flex items-center justify-between mb-2">
-              <BookOpen className="w-8 h-8 text-blue-600" />
-            </div>
-            <div className="text-3xl font-bold text-gray-900">{stats?.total_categories || 0}</div>
-            <div className="text-sm text-gray-600">Product Categories</div>
-          </div>
+  {/* Product Categories */}
+  <div className="bg-white p-4 rounded-xl border border-gray-200">
+    <div className="flex items-center justify-between mb-2">
+      <BookOpen className="w-8 h-8 text-blue-600" />
+    </div>
+    <div className="text-3xl font-bold text-gray-900">{stats?.total_categories || 0}</div>
+    <div className="text-sm text-gray-600">Product Categories</div>
+  </div>
 
-          <div className="bg-white p-4 rounded-xl border border-gray-200">
-            <div className="flex items-center justify-between mb-2">
-              <Image className="w-8 h-8 text-red-600" />
-            </div>
-            <div className="text-3xl font-bold text-gray-900">{stats?.out_of_stock_sizes || 0}</div>
+  {/* Out of Stock */}
+  <div className="bg-white p-4 rounded-xl border border-gray-200">
+    <div className="flex items-center justify-between mb-2">
+      <Image className="w-8 h-8 text-red-600" />
+    </div>
+    <div className="text-3xl font-bold text-gray-900">{stats?.out_of_stock_sizes || 0}</div>
+    <div className="text-sm text-gray-600">Out of Stock</div>
+  </div>
 
-            <div className="text-sm text-gray-600">out of stock</div>
-          </div>
-        </div>
+  {/* Total Visitors */}
+  <div className="bg-white p-4 rounded-xl border border-gray-200">
+    <div className="flex items-center justify-between mb-2">
+      <Eye className="w-8 h-8 text-green-600" />
+    </div>
+    <div className="text-3xl font-bold text-gray-900">{stats?.total_visitors || 0}</div>
+    <div className="text-sm text-gray-600">Total Visitors</div>
+  </div>
+</div>
+
 
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
