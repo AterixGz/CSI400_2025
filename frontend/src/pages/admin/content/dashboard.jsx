@@ -65,7 +65,24 @@ const categoryData = (categories || []).map((cat, i) => ({
   value: Number(cat.total_sales), // ยอดขายรวม
   color: colors[i % colors.length]
 }));
+// กำหนดสีสำหรับแต่ละ size
+const sizeColors = {
+  S: '#21c8dbff',
+  M: '#10B981',
+  L: '#F59E0B',
+  FreeSize: '#EF4444',
+  'Freesize': '#EF4444', // กัน case ต่างกัน
+  XL: '#8B5CF6',
+  XXL: '#EC4899'
+};
 
+// map lowStockData
+const lowStockData = (data.lowStockProducts || []).map(item => ({
+  ...item,
+  stock: Number(item.stock),
+  displayName: `${item.product_name} (${item.size_name})`,
+  color: sizeColors[item.size_name] || '#6cbe28ff'  // default color ถ้าไม่มี
+}));
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -164,10 +181,12 @@ const categoryData = (categories || []).map((cat, i) => ({
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={topProducts}>
-                <XAxis dataKey="name" />
+                <XAxis dataKey="name" 
+                  tick={{ fontSize: 15 }} // ลดขนาด font
+                  />
                 <YAxis allowDecimals={false}   // ❌ ไม่ให้มีทศนิยม
                 />
-                <Tooltip formatter={(value) => value} labelFormatter={(label) => `Product: ${label}`} />
+                <Tooltip formatter={(value) => value} labelFormatter={(label) => `Product: ${label}` } />
                 <Bar dataKey="total_sold" fill="#6cbe28ff" radius={[4,4,0,0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -180,53 +199,35 @@ const categoryData = (categories || []).map((cat, i) => ({
             <h3 className="text-lg font-semibold text-gray-900">Low Stock Products</h3>
           </div>
           <div className="h-56">
-             <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={lowStockProducts}>
-        <XAxis dataKey="product_name" />
-        <YAxis 
-          allowDecimals={false}   // ❌ ไม่ให้มีทศนิยม
-          domain={[0, 'auto']}   // ✅ ให้เริ่มจาก 0 เสมอ
-        />
-        <Tooltip
-          content={({ active, payload }) => {
-            if (active && payload && payload.length) {
-              const { product_name, size_name, stock } = payload[0].payload;
-              return (
-                <div
-                  style={{
-                    background: 'white',
-                    border: '1px solid #a27979ff',
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-                  }}
-                >
-                  <p style={{ margin: 0, fontWeight: 'bold' }}>{product_name}</p>
-                  <p style={{ margin: 0 }}>Size: {size_name}</p>
-                  <p
-                    style={{
-                      margin: 0,
-                      color: stock < 2 ? '#f44d00ff' : '#dfce35ff',
-                      fontWeight: '500',
-                    }}
-                  >
-                    คงเหลือ: {stock} ชิ้น
-                  </p>
-                </div>
-              );
-            }
-            return null;
-          }}
-        />
-        <Bar 
-          dataKey="stock" 
-          fill="#197ba2ff" 
-          radius={[4, 4, 0, 0]} 
-          isAnimationActive={true}
-          minPointSize={4}   // ✅ ให้แท่งที่มีค่า 0 ยังคงมองเห็นเล็กๆ
-        />
-      </BarChart>
-    </ResponsiveContainer>
+            <ResponsiveContainer width="100%" height="100%">
+  <BarChart data={lowStockData}>
+    <XAxis dataKey="displayName" />
+    <YAxis allowDecimals={false} domain={[0, 'auto']} />
+    <Tooltip
+      content={({ active, payload }) => {
+        if (active && payload && payload.length) {
+          const { product_name, size_name, stock } = payload[0].payload;
+          return (
+            <div style={{ background: 'white', border: '1px solid #a27979ff', padding: '8px 12px', borderRadius: '8px', boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}>
+              <p style={{ margin: 0, fontWeight: 'bold' }}>{product_name}</p>
+              <p style={{ margin: 0 }}>Size: {size_name}</p>
+              <p style={{ margin: 0, color: stock < 2 ? '#f44d00ff' : '#dfce35ff', fontWeight: '500' }}>
+                คงเหลือ: {stock} ชิ้น
+              </p>
+            </div>
+          );
+        }
+        return null;
+      }}
+    />
+    <Bar dataKey="stock" radius={[4,4,0,0]} minPointSize={4}>
+      {lowStockData.map((entry, index) => (
+        <Cell key={`cell-${index}`} fill={entry.color} />
+      ))}
+    </Bar>
+  </BarChart>
+</ResponsiveContainer>
+
           </div>
         </div>
       </div>
