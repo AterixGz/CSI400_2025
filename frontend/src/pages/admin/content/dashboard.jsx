@@ -27,9 +27,21 @@ const Dashboard = () => {
     lowStockProducts: []
   });
 
+  const [user, setUser] = useState(() => {
+    try {
+      const raw = localStorage.getItem("user");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
 
-
-
+  // redirect ถ้าไม่ใช่ manager
+  useEffect(() => {
+    if (!user || user.role_name !== "manager") {
+      navigate("/admin/orders"); // staff หรือ user ที่ไม่ใช่ manager ไป /orders
+    }
+  }, [user, navigate]);
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
@@ -52,6 +64,9 @@ const Dashboard = () => {
   return () => clearInterval(intervalId);
   }, []);
  
+
+
+
 
   if (loading) return <div className="flex-1 flex items-center justify-center">Loading...</div>;
   if (error) return <div className="flex-1 flex items-center justify-center text-red-500">Error: {error}</div>;
