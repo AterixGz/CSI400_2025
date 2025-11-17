@@ -12,10 +12,10 @@ import {
 } from 'recharts';
 import { FileText, CreditCard, BookOpen, Image, Eye, Users, ChevronDown, Plus } from 'lucide-react';
 import Header from '../component/header';
-
-// ...existing imports...
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
+  const navigate = useNavigate(); // เพิ่มบรรทัดนี้
   const [loading, setLoading] = useState(true);
   
   const [error, setError] = useState(null);
