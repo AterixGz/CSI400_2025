@@ -1,3 +1,50 @@
+/**
+ * @swagger
+ * tags:
+ *   name: Upload
+ *   description: API สำหรับอัปโหลดรูปโปรไฟล์ผู้ใช้ โดยใช้ Cloudinary เป็น storage
+ */
+
+/**
+ * @swagger
+ * /api/upload/profile:
+ *   post:
+ *     summary: อัปโหลดรูปโปรไฟล์ผู้ใช้
+ *     description: ใช้สำหรับอัปโหลดรูปโปรไฟล์ใหม่ และลบรูปเก่าออกจาก Cloudinary หากมี โดยรับไฟล์ผ่าน multipart/form-data
+ *     tags: [Upload]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *                 description: ไฟล์รูปโปรไฟล์ใหม่
+ *               old_public_id:
+ *                 type: string
+ *                 description: public_id ของรูปเก่า (ถ้ามี จะลบรูปเก่าออกจาก Cloudinary)
+ *     responses:
+ *       200:
+ *         description: อัปโหลดสำเร็จ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 url:
+ *                   type: string
+ *                 public_id:
+ *                   type: string
+ *       400:
+ *         description: ไม่พบไฟล์
+ *       500:
+ *         description: เกิดข้อผิดพลาดในการอัปโหลด
+ */
 import pool from "../db.js";
 import express from "express";
 import multer from "multer";

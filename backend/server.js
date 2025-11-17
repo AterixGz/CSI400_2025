@@ -1,3 +1,4 @@
+import swaggerRouter from './swagger.js';
 // server.js
 import express from 'express';
 import path from 'path';
@@ -11,7 +12,7 @@ import productsRouter from "./routes/products.js";
 import searchRouter from "./routes/search.js";
 import cors from 'cors';
 import dotenv from 'dotenv';
-import adminRoutes from './routes/Admin.js';
+import adminRoutes from './routes/product_admin.js';
 import googleAuthRouter from './routes/googleAuth.js';
 import cartRouter from './routes/cart.js';
 import stripeRouter from './routes/stripe.js';
@@ -67,88 +68,90 @@ app.post('/api/visit', async (req, res) => {
       ON CONFLICT (visit_date)
       DO UPDATE SET visits = website_visits.visits + 1
       RETURNING *;
-    `);
-
-    res.json({ success: true, visit: result.rows[0] });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
-
-// เพิ่ม API สำหรับ Login
-app.use("/login", loginRouter);
-
-// เพิ่ม API สำหรับ Register
-app.use("/register", registerRouter);
-
-// เพิ่ม API สำหรับ User routes
-app.use("/api/users", userRoutes);
-
-// ใช้งาน route /api/products
-app.use("/api/products", productsRouter);
-
-// ใช้งาน Search routes
-app.use("/api/search", searchRouter);
-
-// ใช้งาน Google Auth routes
-app.use(googleAuthRouter);
-
-// ใช้งาน Cart routes
-app.use('/cart', cartRouter);
-
-// ใช้งาน Clear Cart routes
-app.use('/api/clear-cart', clearCartRouter);
-
-// ใช้งาน Favorite routes
-app.use('/api/favorite', favoriteRouter);
-
-// ใช้งาน Stripe routes
-app.use('/api/stripe', stripeRouter);
-
-// ใช้งาน Address routes
-app.use('/api/addresses', addressRouter);
-
-// ใช้งาน Order User routes
-app.use('/api/orders/user', orderUserRouter);
-
-// ใช้งาน Admin routes
-app.use("/api/admin", adminRoutes);
-
-// ใช้งาน Upload routes
-app.use("/api/upload", uploadRoutes);
-
-// ใช้งาน Users routes
-app.use("/api/users", usersRouter);
-
-
-// ============ admin ============
-// ใช้งาน Admin Users routes
-app.use("/api/admin/users", adminUsersRouter);
-// ใช้งาน Product Admin routes
-app.use("/api/admin_products", productAdminRouter);
-
-// ใช้งาน Admin Dashboard routes
-app.use('/api/dashboard', dashboardRouter);
-// ใช้งาน Orders Admin routes
-app.use("/api/admin/orders", ordersAdminRouter);
-
-
-
-// ตัวอย่าง test query จาก DB
-app.get('/test-db', async (req, res) => {
-  try {
-    // use wrapper's query (will throw if pool not available)
-    const result = await db.query('SELECT NOW()');
-    res.json({ time: result.rows[0] });
-  } catch (err) {
-    console.error('test-db error:', err.message || err);
-    res.status(503).json({ error: 'DB not available', message: err.message });
-  }
-});
-
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+      `);
+      
+      res.json({ success: true, visit: result.rows[0] });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+  
+  app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+  
+  // เพิ่ม API สำหรับ Login
+  app.use("/login", loginRouter);
+  
+  // เพิ่ม API สำหรับ Register
+  app.use("/register", registerRouter);
+  
+  // เพิ่ม API สำหรับ User routes
+  app.use("/api/users", userRoutes);
+  
+  // ใช้งาน route /api/products
+  app.use("/api/products", productsRouter);
+  
+  // ใช้งาน Search routes
+  app.use("/api/search", searchRouter);
+  
+  // ใช้งาน Google Auth routes
+  app.use(googleAuthRouter);
+  
+  // ใช้งาน Cart routes
+  app.use('/cart', cartRouter);
+  
+  // ใช้งาน Clear Cart routes
+  app.use('/api/clear-cart', clearCartRouter);
+  
+  // ใช้งาน Favorite routes
+  app.use('/api/favorite', favoriteRouter);
+  
+  // ใช้งาน Stripe routes
+  app.use('/api/stripe', stripeRouter);
+  
+  // ใช้งาน Address routes
+  app.use('/api/addresses', addressRouter);
+  
+  // ใช้งาน Order User routes
+  app.use('/api/orders/user', orderUserRouter);
+  
+  // ใช้งาน Admin routes
+  app.use("/api/admin", adminRoutes);
+  
+  // ใช้งาน Upload routes
+  app.use("/api/upload", uploadRoutes);
+  
+  // ใช้งาน Users routes
+  app.use("/api/users", usersRouter);
+  
+  
+  // ============ admin ============
+  // ใช้งาน Admin Users routes
+  app.use("/api/admin/users", adminUsersRouter);
+  // ใช้งาน Product Admin routes
+  app.use("/api/admin_products", productAdminRouter);
+  
+  // ใช้งาน Admin Dashboard routes
+  app.use('/api/dashboard', dashboardRouter);
+  // ใช้งาน Orders Admin routes
+  app.use("/api/admin/orders", ordersAdminRouter);
+  
+  // Swagger API Docs
+  app.use(swaggerRouter);
+  
+  
+  // ตัวอย่าง test query จาก DB
+  app.get('/test-db', async (req, res) => {
+    try {
+      // use wrapper's query (will throw if pool not available)
+      const result = await db.query('SELECT NOW()');
+      res.json({ time: result.rows[0] });
+    } catch (err) {
+      console.error('test-db error:', err.message || err);
+      res.status(503).json({ error: 'DB not available', message: err.message });
+    }
+  });
+  
+  app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
 });

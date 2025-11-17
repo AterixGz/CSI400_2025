@@ -1,3 +1,71 @@
+/**
+ * @swagger
+ * tags:
+ *   name: Stripe
+ *   description: API สำหรับการชำระเงินผ่าน Stripe เช่น สร้าง Payment Intent และรับ Webhook
+ */
+
+/**
+ * @swagger
+ * /api/stripe/create-payment-intent:
+ *   post:
+ *     summary: สร้าง Payment Intent สำหรับการชำระเงิน
+ *     description: ใช้สำหรับสร้าง Payment Intent เพื่อรับ clientSecret สำหรับการชำระเงินผ่าน Stripe ในฝั่ง frontend
+ *     tags: [Stripe]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               amount:
+ *                 type: number
+ *                 description: จำนวนเงินที่ต้องการชำระ (บาท)
+ *               items:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                 description: รายการสินค้าในออเดอร์
+ *     responses:
+ *       200:
+ *         description: ส่ง clientSecret สำหรับใช้กับ Stripe
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 clientSecret:
+ *                   type: string
+ *       500:
+ *         description: เกิดข้อผิดพลาดในการสร้าง Payment Intent
+ */
+/**
+ * @swagger
+ * /api/stripe/webhook:
+ *   post:
+ *     summary: Stripe Webhook สำหรับรับสถานะการชำระเงิน
+ *     description: ใช้สำหรับรับ event จาก Stripe เมื่อมีการชำระเงินสำเร็จหรือไม่สำเร็จ เช่น สร้างออเดอร์หลังชำระเงิน
+ *     tags: [Stripe]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: รับ event สำเร็จ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 received:
+ *                   type: boolean
+ *       400:
+ *         description: Webhook Error
+ */
 import express from 'express';
 import Stripe from 'stripe';
 import dotenv from 'dotenv';

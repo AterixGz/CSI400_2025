@@ -1,3 +1,97 @@
+/**
+ * @swagger
+ * tags:
+ *   name: Favorite
+ *   description: API สำหรับจัดการสินค้าที่ผู้ใช้กด Favorite (ต้องใช้ JWT)
+ */
+
+/**
+ * @swagger
+ * /api/favorite:
+ *   post:
+ *     summary: เพิ่มสินค้าเข้า Favorite
+ *     description: ใช้สำหรับเพิ่มสินค้าลงในรายการ Favorite ของผู้ใช้ ต้องส่ง JWT Token
+ *     tags: [Favorite]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               product_id:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: เพิ่มสำเร็จ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *       400:
+ *         description: Missing user_id or product_id
+ *       500:
+ *         description: error
+ */
+/**
+ * @swagger
+ * /api/favorite/{product_id}:
+ *   delete:
+ *     summary: ลบสินค้าออกจาก Favorite
+ *     description: ใช้สำหรับลบสินค้าจากรายการ Favorite ของผู้ใช้ ต้องส่ง JWT Token
+ *     tags: [Favorite]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: product_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: รหัสสินค้า
+ *     responses:
+ *       200:
+ *         description: ลบสำเร็จ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *       400:
+ *         description: Missing user_id
+ *       500:
+ *         description: error
+ */
+/**
+ * @swagger
+ * /api/favorite:
+ *   get:
+ *     summary: ดูรายการสินค้า Favorite ของผู้ใช้
+ *     description: ใช้สำหรับดึงรายการสินค้าที่ผู้ใช้กด Favorite ต้องส่ง JWT Token
+ *     tags: [Favorite]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: รายการสินค้า Favorite
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *       400:
+ *         description: Missing user_id
+ *       500:
+ *         description: error
+ */
 import express from 'express';
 import db from '../db.js';
 import jwt from 'jsonwebtoken';

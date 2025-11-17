@@ -1,3 +1,244 @@
+/**
+ * @swagger
+ * tags:
+ *   name: AdminProducts
+ *   description: API สำหรับแอดมินจัดการสินค้า เช่น เพิ่ม, แก้ไข, ลบ, ซ่อน, อัปโหลดรูป, ปรับ stock, และดึงสินค้าทั้งหมด
+ */
+
+/**
+ * @swagger
+ * /api/admin_products:
+ *   post:
+ *     summary: เพิ่มสินค้าใหม่และอัปโหลดรูปไป Cloudinary
+ *     description: ใช้สำหรับเพิ่มสินค้าใหม่และอัปโหลดรูปภาพไปยัง Cloudinary พร้อมข้อมูลไซซ์
+ *     tags: [AdminProducts]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               price:
+ *                 type: number
+ *               audience_id:
+ *                 type: integer
+ *               category_id:
+ *                 type: integer
+ *               sizes:
+ *                 type: string
+ *                 description: JSON string ของ array [{size_name, stock}]
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: เพิ่มสินค้าสำเร็จ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 product_id:
+ *                   type: integer
+ *                 image_url:
+ *                   type: string
+ *       400:
+ *         description: ข้อมูลไม่ครบหรือไม่มีไฟล์
+ *       500:
+ *         description: error
+ */
+/**
+ * @swagger
+ * /api/admin_products/products/{product_id}/stock:
+ *   patch:
+ *     summary: ปรับ stock เฉพาะ size ใน product_sizes
+ *     description: ใช้สำหรับปรับ stock ของสินค้าเฉพาะไซซ์
+ *     tags: [AdminProducts]
+ *     parameters:
+ *       - in: path
+ *         name: product_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: รหัสสินค้า
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               size_name:
+ *                 type: string
+ *               delta:
+ *                 type: number
+ *                 description: จำนวนที่ต้องการเพิ่ม/ลด
+ *     responses:
+ *       200:
+ *         description: ปรับ stock สำเร็จ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 stock:
+ *                   type: integer
+ *       400:
+ *         description: ข้อมูลไม่ถูกต้อง
+ *       404:
+ *         description: ไม่พบ size หรือสินค้า
+ *       500:
+ *         description: error
+ */
+/**
+ * @swagger
+ * /api/admin_products/{product_id}:
+ *   delete:
+ *     summary: ลบสินค้าออกจากระบบ
+ *     description: ใช้สำหรับลบสินค้าออกจากระบบ (DB จริง)
+ *     tags: [AdminProducts]
+ *     parameters:
+ *       - in: path
+ *         name: product_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: รหัสสินค้า
+ *     responses:
+ *       200:
+ *         description: ลบสินค้าสำเร็จ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *       404:
+ *         description: ไม่พบสินค้า
+ *       500:
+ *         description: error
+ */
+/**
+ * @swagger
+ * /api/admin_products/{product_id}/hide:
+ *   patch:
+ *     summary: ซ่อนสินค้า (is_hidden=true)
+ *     description: ใช้สำหรับซ่อนสินค้าจากการแสดงผล (is_hidden=true)
+ *     tags: [AdminProducts]
+ *     parameters:
+ *       - in: path
+ *         name: product_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: รหัสสินค้า
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               is_hidden:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: ซ่อนสินค้าสำเร็จ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *       500:
+ *         description: error
+ */
+/**
+ * @swagger
+ * /api/admin_products/{product_id}:
+ *   patch:
+ *     summary: แก้ไขข้อมูลสินค้า (รวมรูป, รายละเอียด, size)
+ *     description: ใช้สำหรับแก้ไขข้อมูลสินค้า เช่น รูป, รายละเอียด, size
+ *     tags: [AdminProducts]
+ *     parameters:
+ *       - in: path
+ *         name: product_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: รหัสสินค้า
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               price:
+ *                 type: number
+ *               audience_id:
+ *                 type: integer
+ *               category_id:
+ *                 type: integer
+ *               sizes:
+ *                 type: string
+ *                 description: JSON string ของ array [{size_name, stock}]
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: แก้ไขสินค้าสำเร็จ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 image_url:
+ *                   type: string
+ *       400:
+ *         description: ข้อมูลไซต์สินค้าไม่ถูกต้อง
+ *       404:
+ *         description: ไม่พบสินค้า
+ *       500:
+ *         description: error
+ */
+/**
+ * @swagger
+ * /api/admin_products/all:
+ *   get:
+ *     summary: ดึงสินค้าทั้งหมด (รวมที่ซ่อนอยู่)
+ *     description: ใช้สำหรับดึงสินค้าทั้งหมดในระบบ (รวมสินค้าที่ถูกซ่อน)
+ *     tags: [AdminProducts]
+ *     responses:
+ *       200:
+ *         description: รายการสินค้าทั้งหมด
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *       500:
+ *         description: error
+ */
 import express from "express";
 import pool from "../db.js";
 import multer from "multer";

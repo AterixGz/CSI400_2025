@@ -1,3 +1,109 @@
+/**
+ * @swagger
+ * tags:
+ *   name: Products
+ *   description: API สำหรับดึงข้อมูลสินค้าและรายละเอียดสินค้า
+ */
+
+/**
+ * @swagger
+ * /api/products:
+ *   get:
+ *     summary: ดึงสินค้าทั้งหมด
+ *     description: ใช้สำหรับดึงรายการสินค้าทั้งหมด พร้อมข้อมูลหมวดหมู่ กลุ่มเป้าหมาย และไซซ์สินค้า สามารถกรองและเรียงลำดับได้
+ *     tags: [Products]
+ *     parameters:
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *           enum: [price-asc, price_asc, price-desc, price_desc]
+ *         description: เรียงลำดับราคาสินค้า
+ *       - in: query
+ *         name: audience
+ *         schema:
+ *           type: string
+ *         description: กรองสินค้าตามกลุ่มเป้าหมาย (เช่น Men, Women, Kids)
+ *     responses:
+ *       200:
+ *         description: รายการสินค้าทั้งหมด
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Product'
+ *       500:
+ *         description: failed
+ */
+/**
+ * @swagger
+ * /api/products/{id}:
+ *   get:
+ *     summary: ดึงรายละเอียดสินค้าเดียว
+ *     description: ใช้สำหรับดึงรายละเอียดสินค้าแต่ละชิ้น พร้อมข้อมูลไซซ์ หมวดหมู่ และกลุ่มเป้าหมาย
+ *     tags: [Products]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: รหัสสินค้า
+ *     responses:
+ *       200:
+ *         description: ข้อมูลสินค้ารายการเดียว
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Product'
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: failed
+ */
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Product:
+ *       type: object
+ *       properties:
+ *         product_id:
+ *           type: integer
+ *         product_name:
+ *           type: string
+ *         description:
+ *           type: string
+ *         price:
+ *           type: number
+ *         compare_at:
+ *           type: number
+ *         stock:
+ *           type: integer
+ *         image_url:
+ *           type: string
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *         category_id:
+ *           type: integer
+ *         category_name:
+ *           type: string
+ *         audience_id:
+ *           type: integer
+ *         audience_name:
+ *           type: string
+ *         sizes:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               size_name:
+ *                 type: string
+ *               stock:
+ *                 type: integer
+ */
 import express from "express";
 import pool from "../db.js";
 

@@ -1,3 +1,27 @@
+/**
+ * @swagger
+ * /login:
+ *   post:
+ *     summary: Login ผู้ใช้
+ *     tags:
+ *       - Auth
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Login สำเร็จ
+ *       401:
+ *         description: Login ไม่สำเร็จ
+ */
 import dotenv from "dotenv";
 import bcrypt from "bcrypt";
 dotenv.config();

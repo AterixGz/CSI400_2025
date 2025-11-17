@@ -1,3 +1,29 @@
+/**
+ * @swagger
+ * /register:
+ *   post:
+ *     summary: สมัครสมาชิก
+ *     tags:
+ *       - Auth
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               name:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: สมัครสมาชิกสำเร็จ
+ *       400:
+ *         description: ข้อมูลไม่ถูกต้อง
+ */
 import express from "express";
 import bcrypt from "bcrypt";
 import pool from "../db.js";

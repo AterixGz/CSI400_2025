@@ -1,3 +1,46 @@
+/**
+ * @swagger
+ * tags:
+ *   name: Dashboard
+ *   description: API สำหรับดึงข้อมูลสถิติและภาพรวมของระบบ เช่น ยอดขาย ผู้ใช้ สินค้า และกิจกรรมรายเดือน
+ */
+
+/**
+ * @swagger
+ * /api/dashboard:
+ *   get:
+ *     summary: ดึงข้อมูลสถิติและภาพรวมของระบบ
+ *     description: ใช้สำหรับดึงข้อมูล dashboard เช่น จำนวนผู้ใช้, สินค้า, ยอดขายรายเดือน, สินค้าขายดี, สินค้าคงคลังต่ำ ฯลฯ
+ *     tags: [Dashboard]
+ *     responses:
+ *       200:
+ *         description: ข้อมูล dashboard
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 stats:
+ *                   type: object
+ *                 monthlyActivity:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 categories:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 topProducts:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 lowStockProducts:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       500:
+ *         description: error
+ */
 import express from 'express';
 import pool from '../db.js';
 

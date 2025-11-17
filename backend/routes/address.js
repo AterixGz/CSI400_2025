@@ -1,3 +1,144 @@
+/**
+ * @swagger
+ * tags:
+ *   name: Address
+ *   description: API สำหรับจัดการที่อยู่ของผู้ใช้ (ต้องใช้ JWT)
+ */
+
+/**
+ * @swagger
+ * /api/addresses:
+ *   get:
+ *     summary: ดูรายการที่อยู่ของผู้ใช้
+ *     description: ใช้สำหรับดึงรายการที่อยู่ทั้งหมดของผู้ใช้ที่เข้าสู่ระบบ
+ *     tags: [Address]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: รายการที่อยู่
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *       401:
+ *         description: No token provided
+ *       500:
+ *         description: Failed to fetch addresses
+ */
+/**
+ * @swagger
+ * /api/addresses:
+ *   post:
+ *     summary: เพิ่มที่อยู่ใหม่
+ *     description: ใช้สำหรับเพิ่มที่อยู่ใหม่ให้กับผู้ใช้ที่เข้าสู่ระบบ
+ *     tags: [Address]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               full_name:
+ *                 type: string
+ *               phone_number:
+ *                 type: string
+ *               address_line1:
+ *                 type: string
+ *               address_line2:
+ *                 type: string
+ *               subdistrict:
+ *                 type: string
+ *               district:
+ *                 type: string
+ *               province:
+ *                 type: string
+ *               postal_code:
+ *                 type: string
+ *               is_default:
+ *                 type: boolean
+ *     responses:
+ *       201:
+ *         description: เพิ่มที่อยู่สำเร็จ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       400:
+ *         description: Missing required fields
+ *       401:
+ *         description: No token provided
+ *       500:
+ *         description: Failed to add address
+ */
+/**
+ * @swagger
+ * /api/addresses/{id}/set-default:
+ *   post:
+ *     summary: ตั้งค่าที่อยู่เป็นค่าเริ่มต้น
+ *     description: ใช้สำหรับตั้งค่าที่อยู่ที่เลือกเป็น default ของผู้ใช้
+ *     tags: [Address]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: รหัสที่อยู่
+ *     responses:
+ *       200:
+ *         description: ตั้งค่าที่อยู่เป็น default สำเร็จ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       401:
+ *         description: No token provided
+ *       404:
+ *         description: Address not found
+ *       500:
+ *         description: Failed to set default address
+ */
+/**
+ * @swagger
+ * /api/addresses/{id}:
+ *   delete:
+ *     summary: ลบที่อยู่
+ *     description: ใช้สำหรับลบที่อยู่ของผู้ใช้ที่เข้าสู่ระบบ
+ *     tags: [Address]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: รหัสที่อยู่
+ *     responses:
+ *       200:
+ *         description: ลบที่อยู่สำเร็จ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       401:
+ *         description: No token provided
+ *       404:
+ *         description: Address not found
+ *       500:
+ *         description: Failed to delete address
+ */
 import express from 'express';
 import db from '../db.js';
 import jwt from 'jsonwebtoken';

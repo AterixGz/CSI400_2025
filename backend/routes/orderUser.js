@@ -1,3 +1,144 @@
+/**
+ * @swagger
+ * tags:
+ *   name: Orders
+ *   description: API สำหรับผู้ใช้ในการสร้างและดูคำสั่งซื้อของตนเอง
+ */
+
+/**
+ * @swagger
+ * /api/orders:
+ *   post:
+ *     summary: สร้างคำสั่งซื้อใหม่หลังชำระเงิน
+ *     description: ใช้สำหรับสร้างคำสั่งซื้อใหม่หลังจากชำระเงินสำเร็จ โดยต้องส่ง JWT Token ใน header
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               items:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     product_id:
+ *                       type: integer
+ *                     qty:
+ *                       type: integer
+ *                     price:
+ *                       type: number
+ *                     size:
+ *                       type: string
+ *               address:
+ *                 type: object
+ *                 properties:
+ *                   full_name:
+ *                     type: string
+ *                   phone_number:
+ *                     type: string
+ *                   address_line1:
+ *                     type: string
+ *                   address_line2:
+ *                     type: string
+ *                   subdistrict:
+ *                     type: string
+ *                   district:
+ *                     type: string
+ *                   province:
+ *                     type: string
+ *                   postal_code:
+ *                     type: string
+ *                   country:
+ *                     type: string
+ *                   note:
+ *                     type: string
+ *               total_amount:
+ *                 type: number
+ *               shipping_fee:
+ *                 type: number
+ *               payment_intent_id:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: สร้างคำสั่งซื้อสำเร็จ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 order:
+ *                   type: object
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: ไม่สามารถสร้างคำสั่งซื้อได้
+ */
+/**
+ * @swagger
+ * /api/orders:
+ *   get:
+ *     summary: ดูรายการคำสั่งซื้อของผู้ใช้
+ *     description: ใช้สำหรับดึงรายการคำสั่งซื้อทั้งหมดของผู้ใช้ที่เข้าสู่ระบบ
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: รายการคำสั่งซื้อของผู้ใช้
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 orders:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: ไม่สามารถดึงข้อมูลคำสั่งซื้อได้
+ */
+/**
+ * @swagger
+ * /api/orders/{order_id}:
+ *   get:
+ *     summary: ดูรายละเอียดคำสั่งซื้อ
+ *     description: ใช้สำหรับดึงรายละเอียดคำสั่งซื้อแต่ละรายการของผู้ใช้ที่เข้าสู่ระบบ
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: order_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: รหัสคำสั่งซื้อ
+ *     responses:
+ *       200:
+ *         description: ข้อมูลคำสั่งซื้อ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 order:
+ *                   type: object
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: ไม่พบคำสั่งซื้อ
+ *       500:
+ *         description: ไม่สามารถดึงข้อมูลคำสั่งซื้อได้
+ */
 import express from "express";
 import jwt from "jsonwebtoken";
 import pool from "../db.js";

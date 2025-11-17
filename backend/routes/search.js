@@ -1,3 +1,62 @@
+/**
+ * @swagger
+ * tags:
+ *   name: Search
+ *   description: API สำหรับค้นหาสินค้าด้วย keyword
+ */
+
+/**
+ * @swagger
+ * /api/search/products:
+ *   get:
+ *     summary: ค้นหาสินค้าด้วย keyword
+ *     description: ใช้สำหรับค้นหาสินค้าจากชื่อหรือคำอธิบาย โดยส่ง keyword ผ่าน query string (q)
+ *     tags: [Search]
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: คำค้นหาสินค้า
+ *     responses:
+ *       200:
+ *         description: รายการสินค้าที่ค้นพบ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   product_id:
+ *                     type: integer
+ *                   product_name:
+ *                     type: string
+ *                   description:
+ *                     type: string
+ *                   price:
+ *                     type: number
+ *                   compare_at:
+ *                     type: number
+ *                   stock:
+ *                     type: integer
+ *                   image_url:
+ *                     type: string
+ *                   created_at:
+ *                     type: string
+ *                     format: date-time
+ *                   category_id:
+ *                     type: integer
+ *                   category_name:
+ *                     type: string
+ *                   audience_id:
+ *                     type: integer
+ *                   audience_name:
+ *                     type: string
+ *       500:
+ *         description: failed to search products
+ */
 // routes/search.js
 import express from "express";
 import pool from "../db.js";

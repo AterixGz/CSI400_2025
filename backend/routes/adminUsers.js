@@ -1,3 +1,115 @@
+/**
+ * @swagger
+ * tags:
+ *   name: AdminUsers
+ *   description: API สำหรับแอดมินจัดการผู้ใช้ที่เป็น staff หรือ manager
+ */
+
+/**
+ * @swagger
+ * /api/admin/users:
+ *   get:
+ *     summary: ดูรายชื่อ staff และ manager
+ *     description: ใช้สำหรับดึงรายชื่อผู้ใช้ที่มี role เป็น staff หรือ manager
+ *     tags: [AdminUsers]
+ *     responses:
+ *       200:
+ *         description: รายชื่อผู้ใช้
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 users:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       500:
+ *         description: Failed to fetch users
+ */
+/**
+ * @swagger
+ * /api/admin/users/{id}/role:
+ *   patch:
+ *     summary: เปลี่ยน role ของผู้ใช้
+ *     description: ใช้สำหรับเปลี่ยน role_id ของผู้ใช้และคืนค่า role_name ใหม่
+ *     tags: [AdminUsers]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: รหัสผู้ใช้
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               role_id:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: เปลี่ยน role สำเร็จ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 user:
+ *                   type: object
+ *       400:
+ *         description: role_id required
+ *       500:
+ *         description: Failed to update role
+ */
+/**
+ * @swagger
+ * /api/admin/users:
+ *   post:
+ *     summary: สร้าง staff หรือ manager
+ *     description: ใช้สำหรับสร้างผู้ใช้ใหม่ที่มี role เป็น staff หรือ manager
+ *     tags: [AdminUsers]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               first_name:
+ *                 type: string
+ *               last_name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               role_id:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: สร้างผู้ใช้สำเร็จ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 user:
+ *                   type: object
+ *       400:
+ *         description: Missing required fields
+ *       500:
+ *         description: Failed to create user
+ */
 // backend/routes/adminUsers.js
 import express from "express";
 import db from "../db.js";

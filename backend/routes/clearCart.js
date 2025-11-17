@@ -1,3 +1,34 @@
+/**
+ * @swagger
+ * tags:
+ *   name: ClearCart
+ *   description: API สำหรับลบสินค้าทั้งหมดในตะกร้าของผู้ใช้ (ต้องใช้ JWT)
+ */
+
+/**
+ * @swagger
+ * /api/clear-cart:
+ *   delete:
+ *     summary: ลบสินค้าทั้งหมดในตะกร้าของผู้ใช้
+ *     description: ใช้สำหรับลบสินค้าทั้งหมดในตะกร้าของผู้ใช้ที่เข้าสู่ระบบ ต้องส่ง JWT Token
+ *     tags: [ClearCart]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: ลบสำเร็จ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *       401:
+ *         description: No token or Invalid token
+ *       500:
+ *         description: DB error
+ */
 import express from "express";
 import jwt from "jsonwebtoken";
 import pool from "../db.js";

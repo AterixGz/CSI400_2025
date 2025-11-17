@@ -1,3 +1,49 @@
+/**
+ * @swagger
+ * /api/users/{id}/avatar:
+ *   patch:
+ *     summary: อัปเดตรูปโปรไฟล์ผู้ใช้
+ *     tags:
+ *       - Users
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: รหัสผู้ใช้
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               profile_image_url:
+ *                 type: string
+ *               profile_image_public_id:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: อัปเดตรูปโปรไฟล์เรียบร้อย
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 profile_image_url:
+ *                   type: string
+ *                 profile_image_public_id:
+ *                   type: string
+ *                 user:
+ *                   type: object
+ *       400:
+ *         description: user id ไม่ถูกต้อง
+ *       500:
+ *         description: อัปเดตรูปไม่สำเร็จ
+ */
 import express from "express";
 import db from "../db.js";
 const router = express.Router();

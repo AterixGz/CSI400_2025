@@ -22,6 +22,30 @@ const router = express.Router();
 // ✅ Get all users
 router.get("/", async (req, res) => {
   try {
+/**
+ * @swagger
+ * tags:
+ *   name: Users
+ *   description: API สำหรับจัดการข้อมูลผู้ใช้ เช่น ดูข้อมูล สร้าง แก้ไข และลบผู้ใช้
+ */
+
+/**
+ * @swagger
+ * /api/users:
+ *   get:
+ *     summary: ดึงข้อมูลผู้ใช้ทั้งหมด
+ *     description: ใช้สำหรับเพื่อดูข้อมูลของผู้ใช้ทั้งหมดในระบบ
+ *     tags: [Users]
+ *     responses:
+ *       200:
+ *         description: รายชื่อผู้ใช้ทั้งหมด
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/User'
+ */
     const result = await pool.query("SELECT * FROM users ORDER BY user_id ASC");
     res.json(result.rows);
   } catch (err) {
@@ -32,6 +56,30 @@ router.get("/", async (req, res) => {
 // ✅ Get user by id
 router.get("/:id", async (req, res) => {
   try {
+/**
+ * @swagger
+ * /api/users/{id}:
+ *   get:
+ *     summary: ดึงข้อมูลผู้ใช้ตามรหัส
+ *     description: ใช้สำหรับดูรายละเอียดของผู้ใช้แต่ละคน เช่นในหน้าโปรไฟล์หรือแอดมินตรวจสอบข้อมูล
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: รหัสผู้ใช้
+ *     responses:
+ *       200:
+ *         description: ข้อมูลผู้ใช้
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       404:
+ *         description: ไม่พบผู้ใช้
+ */
     const { id } = req.params;
     const result = await pool.query("SELECT * FROM users WHERE user_id = $1", [id]);
     if (result.rows.length === 0) return res.status(404).json({ error: "User not found" });
@@ -44,6 +92,29 @@ router.get("/:id", async (req, res) => {
 // ✅ Create user
 
 router.post("/", async (req, res) => {
+/**
+ * @swagger
+ * /api/users:
+ *   post:
+ *     summary: สร้างผู้ใช้ใหม่
+ *     description: ใช้สำหรับสมัครสมาชิกหรือเพิ่มผู้ใช้ใหม่เข้าสู่ระบบ
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UserInput'
+ *     responses:
+ *       201:
+ *         description: สร้างผู้ใช้สำเร็จ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       400:
+ *         description: ข้อมูลไม่ครบถ้วน
+ */
   try {
     const {
       email,
@@ -92,6 +163,36 @@ router.post("/", async (req, res) => {
 
 // ✅ Update user
 router.put("/:id", async (req, res) => {
+/**
+ * @swagger
+ * /api/users/{id}:
+ *   put:
+ *     summary: แก้ไขข้อมูลผู้ใช้
+ *     description: ใช้สำหรับอัปเดตข้อมูลผู้ใช้ เช่น เปลี่ยนชื่อ อีเมล รูปโปรไฟล์ หรือข้อมูลอื่น ๆ
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: รหัสผู้ใช้
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UserInput'
+ *     responses:
+ *       200:
+ *         description: อัปเดตข้อมูลผู้ใช้สำเร็จ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       404:
+ *         description: ไม่พบผู้ใช้
+ */
   try {
     const { id } = req.params;
     const {
@@ -182,6 +283,33 @@ router.put("/:id", async (req, res) => {
 
 // ✅ Delete user
 router.delete("/:id", async (req, res) => {
+/**
+ * @swagger
+ * /api/users/{id}:
+ *   delete:
+ *     summary: ลบผู้ใช้
+ *     description: ใช้สำหรับลบผู้ใช้ออกจากระบบ เช่นในกรณีที่ผู้ใช้ต้องการลบบัญชีหรือแอดมินต้องการลบ
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: รหัสผู้ใช้
+ *     responses:
+ *       200:
+ *         description: ลบผู้ใช้สำเร็จ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       404:
+ *         description: ไม่พบผู้ใช้
+ */
   try {
     const { id } = req.params;
     const result = await pool.query("DELETE FROM users WHERE user_id=$1 RETURNING *", [id]);
@@ -192,4 +320,63 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     User:
+ *       type: object
+ *       properties:
+ *         user_id:
+ *           type: integer
+ *         email:
+ *           type: string
+ *         phone_number:
+ *           type: string
+ *         first_name:
+ *           type: string
+ *         last_name:
+ *           type: string
+ *         date_of_birth:
+ *           type: string
+ *           format: date
+ *         profile_image_url:
+ *           type: string
+ *         role:
+ *           type: string
+ *         gender:
+ *           type: string
+ *         is_verified:
+ *           type: boolean
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ *     UserInput:
+ *       type: object
+ *       properties:
+ *         email:
+ *           type: string
+ *         password:
+ *           type: string
+ *         phone_number:
+ *           type: string
+ *         first_name:
+ *           type: string
+ *         last_name:
+ *           type: string
+ *         date_of_birth:
+ *           type: string
+ *           format: date
+ *         profile_image_url:
+ *           type: string
+ *         role:
+ *           type: string
+ *         gender:
+ *           type: string
+ *         is_verified:
+ *           type: boolean
+ */
 export default router;

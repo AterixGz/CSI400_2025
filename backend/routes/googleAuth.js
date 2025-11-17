@@ -1,3 +1,33 @@
+/**
+ * @swagger
+ * tags:
+ *   name: GoogleAuth
+ *   description: API สำหรับ Login ด้วย Google OAuth
+ */
+
+/**
+ * @swagger
+ * /auth/google:
+ *   get:
+ *     summary: เริ่มต้น Login ด้วย Google OAuth
+ *     description: Redirect ผู้ใช้ไปหน้า Login ของ Google เพื่อขอสิทธิ์เข้าถึงข้อมูลโปรไฟล์และอีเมล
+ *     tags: [GoogleAuth]
+ *     responses:
+ *       302:
+ *         description: Redirect ไปยัง Google OAuth
+ */
+
+/**
+ * @swagger
+ * /auth/google/callback:
+ *   get:
+ *     summary: Callback หลัง Login ด้วย Google สำเร็จ
+ *     description: Endpoint สำหรับรับข้อมูลผู้ใช้จาก Google และสร้าง JWT Token ส่งกลับไปยัง frontend
+ *     tags: [GoogleAuth]
+ *     responses:
+ *       302:
+ *         description: Redirect ไปยัง frontend พร้อม token และข้อมูลผู้ใช้
+ */
 
 import express from 'express';
 import passport from 'passport';

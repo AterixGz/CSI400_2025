@@ -1,3 +1,234 @@
+/**
+ * @swagger
+ * tags:
+ *   name: Cart
+ *   description: API สำหรับจัดการตะกร้าสินค้าของผู้ใช้ (ต้องใช้ JWT)
+ */
+
+/**
+ * @swagger
+ * /cart:
+ *   get:
+ *     summary: ดูรายการสินค้าในตะกร้าของผู้ใช้
+ *     description: ใช้สำหรับดึงรายการสินค้าในตะกร้าของผู้ใช้ที่เข้าสู่ระบบ
+ *     tags: [Cart]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: รายการสินค้าในตะกร้า
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 items:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: ไม่สามารถดึงข้อมูลตะกร้าได้
+ */
+/**
+ * @swagger
+ * /cart/items:
+ *   post:
+ *     summary: เพิ่มสินค้าเข้าตะกร้า
+ *     description: ใช้สำหรับเพิ่มสินค้าใหม่เข้าตะกร้าของผู้ใช้
+ *     tags: [Cart]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               product_id:
+ *                 type: integer
+ *               quantity:
+ *                 type: integer
+ *               size:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: เพิ่มสินค้าสำเร็จ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 item:
+ *                   type: object
+ *       400:
+ *         description: โปรดระบุสินค้า หรือ สินค้าเหลือในสต็อกไม่เพียงพอ
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: ไม่สามารถเพิ่มสินค้าลงตะกร้าได้
+ */
+/**
+ * @swagger
+ * /cart/items/{cart_id}:
+ *   patch:
+ *     summary: แก้ไขจำนวนสินค้าในตะกร้า
+ *     description: ใช้สำหรับแก้ไขจำนวนสินค้าในรายการตะกร้า
+ *     tags: [Cart]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: cart_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: รหัสรายการในตะกร้า
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               quantity:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: แก้ไขจำนวนสินค้าสำเร็จ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 item:
+ *                   type: object
+ *       400:
+ *         description: จำนวนต้องเป็นจำนวนเต็มบวก หรือ จำนวนสินค้ามากกว่าสต็อกที่มี
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: ไม่พบรายการในตะกร้า
+ *       500:
+ *         description: ไม่สามารถแก้ไขจำนวนสินค้าได้
+ */
+/**
+ * @swagger
+ * /cart/items/{cart_id}/select:
+ *   patch:
+ *     summary: อัปเดตสถานะการเลือกสินค้าในตะกร้า
+ *     description: ใช้สำหรับเลือกหรือยกเลิกการเลือกสินค้าในตะกร้า
+ *     tags: [Cart]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: cart_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: รหัสรายการในตะกร้า
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               selected:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: อัปเดตสถานะการเลือกสำเร็จ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 item:
+ *                   type: object
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: ไม่พบรายการในตะกร้า
+ *       500:
+ *         description: ไม่สามารถอัปเดตสถานะการเลือกได้
+ */
+/**
+ * @swagger
+ * /cart/items/{cart_id}:
+ *   delete:
+ *     summary: ลบสินค้าออกจากตะกร้า
+ *     description: ใช้สำหรับลบสินค้าออกจากตะกร้าของผู้ใช้
+ *     tags: [Cart]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: cart_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: รหัสรายการในตะกร้า
+ *     responses:
+ *       200:
+ *         description: ลบสินค้าสำเร็จ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: ไม่พบรายการในตะกร้า
+ *       500:
+ *         description: ไม่สามารถลบสินค้าออกจากตะกร้าได้
+ */
+/**
+ * @swagger
+ * /cart/selected:
+ *   delete:
+ *     summary: ลบสินค้าที่เลือกออกจากตะกร้าหลังชำระเงิน
+ *     description: ใช้สำหรับลบสินค้าที่เลือกออกจากตะกร้าหลังชำระเงิน
+ *     tags: [Cart]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: ลบสินค้าที่เลือกสำเร็จ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 deletedIds:
+ *                   type: array
+ *                   items:
+ *                     type: integer
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: ไม่พบรายการที่เลือกในตะกร้า
+ *       500:
+ *         description: ไม่สามารถลบสินค้าที่เลือกออกจากตะกร้าได้
+ */
 import express from "express";
 import jwt from "jsonwebtoken";
 import pool from "../db.js";

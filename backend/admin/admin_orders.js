@@ -1,3 +1,99 @@
+/**
+ * @swagger
+ * tags:
+ *   name: AdminOrders
+ *   description: API สำหรับแอดมินดูและจัดการคำสั่งซื้อทั้งหมด
+ */
+
+/**
+ * @swagger
+ * /api/admin/orders:
+ *   get:
+ *     summary: ดูรายการคำสั่งซื้อทั้งหมด
+ *     description: ใช้สำหรับดึงรายการคำสั่งซื้อทั้งหมดในระบบ พร้อมข้อมูลผู้ใช้และสถานะ
+ *     tags: [AdminOrders]
+ *     responses:
+ *       200:
+ *         description: รายการคำสั่งซื้อทั้งหมด
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 orders:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       500:
+ *         description: ไม่สามารถดึงข้อมูลคำสั่งซื้อได้
+ */
+/**
+ * @swagger
+ * /api/admin/orders/{id}/status:
+ *   put:
+ *     summary: อัพเดทสถานะการจัดส่งของคำสั่งซื้อ
+ *     description: ใช้สำหรับอัพเดทสถานะการจัดส่งของคำสั่งซื้อ เช่น shipped, delivered
+ *     tags: [AdminOrders]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: รหัสคำสั่งซื้อ
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: อัพเดทสถานะสำเร็จ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *       500:
+ *         description: ไม่สามารถอัพเดทสถานะคำสั่งซื้อได้
+ */
+/**
+ * @swagger
+ * /api/admin/orders/{id}:
+ *   get:
+ *     summary: ดูรายละเอียดคำสั่งซื้อ
+ *     description: ใช้สำหรับดึงรายละเอียดคำสั่งซื้อ เช่น รายการสินค้าและที่อยู่จัดส่ง
+ *     tags: [AdminOrders]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: รหัสคำสั่งซื้อ
+ *     responses:
+ *       200:
+ *         description: ข้อมูลรายละเอียดคำสั่งซื้อ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 items:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 address:
+ *                   type: object
+ *       500:
+ *         description: ไม่สามารถดึงข้อมูลรายละเอียดคำสั่งซื้อได้
+ */
 import express from "express";
 import pool from "../db.js";
 
