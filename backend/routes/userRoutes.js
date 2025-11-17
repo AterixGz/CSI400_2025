@@ -53,113 +53,41 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ✅ Get user by id
-router.get("/:id", async (req, res) => {
-  try {
-/**
- * @swagger
- * /api/users/{id}:
- *   get:
- *     summary: ดึงข้อมูลผู้ใช้ตามรหัส
- *     description: ใช้สำหรับดูรายละเอียดของผู้ใช้แต่ละคน เช่นในหน้าโปรไฟล์หรือแอดมินตรวจสอบข้อมูล
- *     tags: [Users]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: รหัสผู้ใช้
- *     responses:
- *       200:
- *         description: ข้อมูลผู้ใช้
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/User'
- *       404:
- *         description: ไม่พบผู้ใช้
- */
-    const { id } = req.params;
-    const result = await pool.query("SELECT * FROM users WHERE user_id = $1", [id]);
-    if (result.rows.length === 0) return res.status(404).json({ error: "User not found" });
-    res.json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// ✅ Create user
-
-router.post("/", async (req, res) => {
-/**
- * @swagger
- * /api/users:
- *   post:
- *     summary: สร้างผู้ใช้ใหม่
- *     description: ใช้สำหรับสมัครสมาชิกหรือเพิ่มผู้ใช้ใหม่เข้าสู่ระบบ
- *     tags: [Users]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/UserInput'
- *     responses:
- *       201:
- *         description: สร้างผู้ใช้สำเร็จ
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/User'
- *       400:
- *         description: ข้อมูลไม่ครบถ้วน
- */
-  try {
-    const {
-      email,
-      phone_number,
-      first_name,
-      last_name,
-      date_of_birth,
-      profile_image_url,
-      role = "user",
-      gender,
-      password, // รับ password แบบ plain text
-    } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ error: "email and password are required" });
-    }
-
-    // Hash password
-    const password_hash = await bcrypt.hash(password, 10);
-
-    const result = await pool.query(
-      `INSERT INTO users 
-        (email, phone_number, first_name, last_name, date_of_birth, profile_image_url, role, gender, password_hash, created_at, updated_at, is_verified) 
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, NOW(), NOW(), $10) 
-       RETURNING *`,
-      [
-        email,
-        phone_number || null,
-        first_name || null,
-        last_name || null,
-        date_of_birth || null,
-        profile_image_url || null,
-        role,
-        gender || null,
-        password_hash,
-        false // is_verified
-      ]
-    );
-
-    res.status(201).json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
+// // ✅ Get user by id
+// router.get("/:id", async (req, res) => {
+//   try {
+// /**
+//  * @swagger
+//  * /api/users/{id}:
+//  *   get:
+//  *     summary: ดึงข้อมูลผู้ใช้ตามรหัส
+//  *     description: ใช้สำหรับดูรายละเอียดของผู้ใช้แต่ละคน เช่นในหน้าโปรไฟล์หรือแอดมินตรวจสอบข้อมูล
+//  *     tags: [Users]
+//  *     parameters:
+//  *       - in: path
+//  *         name: id
+//  *         required: true
+//  *         schema:
+//  *           type: integer
+//  *         description: รหัสผู้ใช้
+//  *     responses:
+//  *       200:
+//  *         description: ข้อมูลผู้ใช้
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               $ref: '#/components/schemas/User'
+//  *       404:
+//  *         description: ไม่พบผู้ใช้
+//  */
+//     const { id } = req.params;
+//     const result = await pool.query("SELECT * FROM users WHERE user_id = $1", [id]);
+//     if (result.rows.length === 0) return res.status(404).json({ error: "User not found" });
+//     res.json(result.rows[0]);
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// });
 
 // ✅ Update user
 router.put("/:id", async (req, res) => {

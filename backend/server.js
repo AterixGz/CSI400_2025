@@ -16,7 +16,6 @@ import adminRoutes from './routes/product_admin.js';
 import googleAuthRouter from './routes/googleAuth.js';
 import cartRouter from './routes/cart.js';
 import stripeRouter from './routes/stripe.js';
-import clearCartRouter from './routes/clearCart.js';
 import addressRouter from './routes/address.js';
 import favoriteRouter from './routes/favorite.js';
 import productAdminRouter from "./admin/admin_products.js";
@@ -99,10 +98,7 @@ app.post('/api/visit', async (req, res) => {
   
   // ใช้งาน Cart routes
   app.use('/cart', cartRouter);
-  
-  // ใช้งาน Clear Cart routes
-  app.use('/api/clear-cart', clearCartRouter);
-  
+
   // ใช้งาน Favorite routes
   app.use('/api/favorite', favoriteRouter);
   
