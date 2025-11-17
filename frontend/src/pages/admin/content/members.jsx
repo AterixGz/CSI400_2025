@@ -181,7 +181,7 @@ export default function Members() {
   if (!keyInput) return; // ถ้าไม่กรอกก็ไม่ทำอะไร
 
   // เช็ค key
-  const ADMIN_KEY = "ADMIN"; // เปลี่ยนเป็น key จริงของคุณ
+  const ADMIN_KEY = import.meta.env.VITE_ADMIN_KEY; 
   if (keyInput !== ADMIN_KEY) {
     Swal.fire({
       icon: 'error',
@@ -281,7 +281,10 @@ export default function Members() {
           {/* Create Button */}
           <button
             className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl shadow-lg font-medium transform hover:scale-105 transition-all duration-300 flex items-center gap-2 mb-6"
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => {
+              setNewUser({ first_name: "", last_name: "", email: "", password: "", role_id: 2 });
+              setIsModalOpen(true);
+            }}
           >
             <Users className="h-5 w-5" />
             Create Staff / Manager
