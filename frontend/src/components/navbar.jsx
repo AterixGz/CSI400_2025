@@ -283,7 +283,7 @@ export default function Nav({
       }
     }}
   >
-    {user.role_name === "manager" ? "Dashboard" : "Orders"}
+    {user.role_name === "manager" ? "Admin" : "Staff"}
   </button>
 )}
 

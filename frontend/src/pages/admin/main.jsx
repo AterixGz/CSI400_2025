@@ -1,5 +1,6 @@
 import React from 'react';
 import { Routes, Route, Outlet, Navigate } from 'react-router-dom';
+import AdminRoute from './component/AdminRoute';
 import AdminSidebar from './component/adminSidebar';
 import Dashboard from './content/dashboard';
 import Analytics from './content/analytics';
@@ -26,21 +27,23 @@ function AdminShell() {
 
 export default function AdminLayout() {
   return (
-    <Routes>
-      <Route path="/" element={<AdminShell />}>
-        <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="analytics" element={<Analytics />} />
-        <Route path="organization" element={<Organization />} />
-        <Route path="projects" element={<Projects />} />
-        <Route path="products" element={<Products />} />
-        <Route path="orders" element={<Orders />} />
-        <Route path="customers" element={<Customers />} />
-        <Route path="transactions" element={<Transactions />} />
-        <Route path="invoices" element={<Invoices />} />
-        <Route path="payments" element={<Payments />} />
-        <Route path="members" element={<Members />} />
-      </Route>
-    </Routes>
+    <AdminRoute>
+      <Routes>
+        <Route path="/" element={<AdminShell />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="analytics" element={<Analytics />} />
+          <Route path="organization" element={<Organization />} />
+          <Route path="projects" element={<Projects />} />
+          <Route path="products" element={<Products />} />
+          <Route path="orders" element={<Orders />} />
+          <Route path="customers" element={<Customers />} />
+          <Route path="transactions" element={<Transactions />} />
+          <Route path="invoices" element={<Invoices />} />
+          <Route path="payments" element={<Payments />} />
+          <Route path="members" element={<Members />} />
+        </Route>
+      </Routes>
+    </AdminRoute>
   );
 }

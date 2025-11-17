@@ -39,9 +39,10 @@ const Dashboard = () => {
   // redirect ถ้าไม่ใช่ manager
   useEffect(() => {
     if (!user || user.role_name !== "manager") {
-      navigate("/admin/orders"); // staff หรือ user ที่ไม่ใช่ manager ไป /orders
+      navigate("/profile"); // staff หรือ user ที่ไม่ใช่ manager ไป /orders
     }
   }, [user, navigate]);
+  
   useEffect(() => {
     const fetchDashboard = async () => {
       try {

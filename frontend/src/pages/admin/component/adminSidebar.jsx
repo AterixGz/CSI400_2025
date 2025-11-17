@@ -46,8 +46,10 @@ export default function AdminSidebar() {
   ...(user?.role_name === 'manager'
       ? [{ icon: Package, label: 'Products', path: '/admin/products' }]
       : []),
-  { icon: ShoppingCart, label: 'Orders', path: '/admin/orders', count: '' },
-  // { icon: Users, label: 'Customers', path: '/admin/customers' },
+  ...(user?.role_name === 'manager' || user?.role_name === 'staff'
+      ? [{ icon: ShoppingCart, label: 'Orders', path: '/admin/orders' }]
+      : []),
+      // { icon: Users, label: 'Customers', path: '/admin/customers' },
   // { icon: DollarSign, label: 'Transactions', path: '/admin/transactions' },
   // { icon: FileText, label: 'Invoices', path: '/admin/invoices', count: '' },
   // { icon: CreditCard, label: 'Payments', path: '/admin/payments' },

@@ -50,9 +50,9 @@ router.post("/", async (req, res) => {
   // Hash password with bcrypt
   const saltRounds = 10;
   const hashedPassword = await bcrypt.hash(password, saltRounds);
-  // เพิ่ม user ใหม่
-  const insertQuery = `INSERT INTO users (first_name, last_name, password_hash, phone_number, role, email, is_verified, created_at, date_of_birth, gender) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`;
-  const values = [username, lastname, hashedPassword, number, role || "user", email, false, new Date(), birthdate, gender];
+  // เพิ่ม user ใหม่ with role_id = 1 (user)
+  const insertQuery = `INSERT INTO users (first_name, last_name, password_hash, phone_number, role_id, email, is_verified, created_at, date_of_birth, gender) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`;
+  const values = [username, lastname, hashedPassword, number, 1, email, false, new Date(), birthdate, gender];
   const result = await pool.query(insertQuery, values);
   const newUser = result.rows[0];
   // เพิ่ม field profile_image_url และ profile_image_public_id ถ้ายังไม่มี
