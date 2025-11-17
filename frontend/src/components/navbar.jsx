@@ -61,6 +61,7 @@ export default function Nav({
       .catch(() => setCartCount(0));
   }
 
+  
   useEffect(() => {
     updateCartCount();
     window.addEventListener("storage", updateCartCount);
@@ -270,13 +271,20 @@ export default function Nav({
             </span>
           </Link>
           {/* ปุ่ม Admin */}
-{user && ["admin", "manager", "staff"].includes(user.role_name) && (
-  <Link
-    to="/admin/dashboard"
+{/* ปุ่ม Admin / Manager / Staff */}
+{user && ["manager", "staff"].includes(user.role_name) && (
+  <button
     className="p-2 hover:text-slate-900 text-sm font-semibold"
+    onClick={() => {
+      if (user.role_name === "manager") {
+        navigate("/admin/dashboard"); // Manager → Dashboard
+      } else if (user.role_name === "staff") {
+        navigate("/admin/orders"); // Staff → Orders
+      }
+    }}
   >
-    Admin
-  </Link>
+    {user.role_name === "manager" ? "Dashboard" : "Orders"}
+  </button>
 )}
 
 

@@ -198,5 +198,29 @@ router.post("/", async (req, res) => {
   }
 });
 
+// DELETE user (เฉพาะ staff)
+router.delete("/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const user = await db.query(`SELECT role_id FROM users WHERE user_id = $1`, [id]);
+if (!user.rows[0]) return res.status(404).json({ success: false, message: "User not found" });
+
+// ห้ามลบ Manager
+if (user.rows[0].role_id === 3) {
+  return res.status(403).json({ success: false, message: "Cannot delete a manager" });
+}
+
+// ลบ Staff
+await db.query(`DELETE FROM users WHERE user_id = $1`, [id]);
+res.json({ success: true, message: "Staff deleted successfully" });
+    await db.query(`DELETE FROM users WHERE user_id = $1`, [id]);
+    res.json({ success: true, message: "User deleted successfully" });
+  } catch (err) {
+    console.error("Failed to delete user:", err);
+    res.status(500).json({ success: false, message: "Failed to delete user" });
+  }
+});
+
+
 export default router;
 
