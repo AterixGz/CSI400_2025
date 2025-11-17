@@ -223,7 +223,9 @@ export default function Members() {
 };
 
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div className="flex items-center justify-center h-screen">
+    <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600"></div>
+  </div>;
 
   const totalAdmins = admins.length;
   const totalStaff = admins.filter((u) =>Number(u.role_id) === 2 ).length;
@@ -232,159 +234,233 @@ export default function Members() {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <Header />
-      <main className="flex-1 p-6 overflow-auto bg-gray-50">
+      <main className="flex-1 p-6 overflow-auto bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="max-w-[1600px] mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Admin Management</h1>
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">Admin Management</h1>
+            <p className="text-gray-600">จัดการผู้ดูแลระบบและพนักงานของคุณ</p>
+          </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
 
-            <div className="shadow-md p-6 rounded-xl">
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg p-6 rounded-2xl text-white transform hover:scale-105 transition-transform duration-300">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-black">Total Admins</span>
-                <Users className="h-6 w-6 text-black" />
+                <span className="text-blue-100 font-medium">Total Admins</span>
+                <div className="bg-white bg-opacity-20 p-3 rounded-xl">
+                  <Users className="h-6 w-6 text-white" />
+                </div>
               </div>
-              <div className="text-4xl font-bold mb-2">{totalAdmins}</div>
-             
+              <div className="text-5xl font-bold mb-2">{totalAdmins}</div>
+              <div className="text-blue-100 text-sm">ผู้ดูแลระบบทั้งหมด</div>
             </div>
 
-            <div className="shadow-md p-6 rounded-xl">
+            <div className="bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg p-6 rounded-2xl text-white transform hover:scale-105 transition-transform duration-300">
               <div className="flex items-center justify-between mb-4">
-                <span>Staff</span>
-                <Users className="h-6 w-6" />
+                <span className="text-orange-100 font-medium">Staff</span>
+                <div className="bg-white bg-opacity-20 p-3 rounded-xl">
+                  <Users className="h-6 w-6 text-white" />
+                </div>
               </div>
-              <div className="text-4xl font-bold mb-2">{totalStaff}</div>
-              <div className="text-orange-500 text-sm">จำนวนพนักงาน</div>
+              <div className="text-5xl font-bold mb-2">{totalStaff}</div>
+              <div className="text-orange-100 text-sm">จำนวนพนักงาน</div>
             </div>
 
-            <div className="shadow-md p-6 rounded-xl">
+            <div className="bg-gradient-to-br from-amber-500 via-yellow-500 to-orange-500 shadow-lg p-6 rounded-2xl text-white transform hover:scale-105 transition-transform duration-300">
               <div className="flex items-center justify-between mb-4">
-                <span>Managers</span>
-                <Shield className="h-6 w-6" />
+                <span className="text-yellow-50 font-medium">Managers</span>
+                <div className="bg-white bg-opacity-20 p-3 rounded-xl">
+                  <Shield className="h-6 w-6 text-white" />
+                </div>
               </div>
-              <div className="text-4xl font-bold mb-2">{totalManagers}</div>
-              <div className="text-orange-500 text-sm">จำนวนผู้จัดการศูงสุด 3 คน</div>
+              <div className="text-5xl font-bold mb-2">{totalManagers}/3</div>
+              <div className="text-yellow-50 text-sm">จำนวนผู้จัดการสูงสุด 3 คน</div>
             </div>
           </div>
 
           {/* Create Button */}
           <button
-            className="bg-blue-600 text-white px-4 py-2 rounded mb-4"
+            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl shadow-lg font-medium transform hover:scale-105 transition-all duration-300 flex items-center gap-2 mb-6"
             onClick={() => setIsModalOpen(true)}
           >
-            + Create Staff
+            <Users className="h-5 w-5" />
+            Create Staff / Manager
           </button>
 
           {/* Modal */}
           {isModalOpen && (
-            <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center">
-              <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-                <h2 className="text-xl font-bold mb-4">Create Staff / Manager</h2>
-                <div className="grid grid-cols-1 gap-2">
-                  <input
+            <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center backdrop-blur-sm">
+              <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md transform transition-all">
+                <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2">
+                  <Users className="h-6 w-6 text-blue-600" />
+                  Create Staff / Manager
+                </h2>
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                    <input
                       type="text"
-                      placeholder="First Name"
-                      className="border rounded px-2 py-1"
+                      placeholder="Enter first name"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       value={newUser.first_name}
                       required
                       onChange={(e) => setNewUser({ ...newUser, first_name: e.target.value })}
                     />
-                  <input type="text" placeholder="Last Name" className="border rounded px-2 py-1"
-                    value={newUser.last_name} required onChange={(e) => setNewUser({ ...newUser, last_name: e.target.value })} />
-                  <input
-                    type="email"
-                    placeholder="Email"
-                    className="border rounded px-2 py-1"
-                    value={newUser.email}
-                    required
-                    onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                  />
-                  <input
-                    type="password"
-                    placeholder="Password"
-                    className="border rounded px-2 py-1"
-                    value={newUser.password}
-                    required
-                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                  />
-                  <select
-                    className="border rounded px-2 py-1"
-                    value={newUser.role_id}
-                    onChange={(e) => setNewUser({ ...newUser, role_id: Number(e.target.value) })}
-                  >
-                    <option value={2}>Staff</option>
-                    <option value={3} disabled={totalManagers >= 3}>Manager (Limit: 3)</option>
-                  </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                    <input
+                      type="text"
+                      placeholder="Enter last name"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      value={newUser.last_name}
+                      required
+                      onChange={(e) => setNewUser({ ...newUser, last_name: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input
+                      type="email"
+                      placeholder="example@gmail.com"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      value={newUser.email}
+                      required
+                      onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input
+                      type="password"
+                      placeholder="Enter password"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      value={newUser.password}
+                      required
+                      onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                    <select
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      value={newUser.role_id}
+                      onChange={(e) => setNewUser({ ...newUser, role_id: Number(e.target.value) })}
+                    >
+                      <option value={2}>Staff</option>
+                      <option value={3} disabled={totalManagers >= 3}>Manager (Limit: 3)</option>
+                    </select>
+                  </div>
                 </div>
 
-                <div className="flex justify-end gap-2 mt-4">
-                  <button className="px-4 py-2 bg-gray-300 rounded" onClick={() => setIsModalOpen(false)}>Cancel</button>
-                  <button className="px-4 py-2 bg-blue-600 text-white rounded" onClick={createUser}>Create</button>
+                <div className="flex justify-end gap-3 mt-6">
+                  <button 
+                    className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors duration-200"
+                    onClick={() => setIsModalOpen(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-medium shadow-lg transition-all duration-200"
+                    onClick={createUser}
+                  >
+                    Create
+                  </button>
                 </div>
               </div>
             </div>
           )}
 
           {/* Admin Table */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mt-6">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="text-left px-6 py-4">Name</th>
-                  <th className="text-left px-6 py-4">Email</th>
-                  <th className="text-left px-6 py-4">Role</th>
-                  <th className="text-left px-6 py-4">Actions</th>
-                  
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {admins.map((admin) => (
-                  <tr key={admin.user_id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">{admin.first_name} {admin.last_name}</td>
-                    <td className="px-6 py-4">{admin.email}</td>
-                    <td className="px-6 py-4">{admin.role_name}</td>
-                    <td className="px-6 py-4">
-
-  <div className="flex items-center gap-2">
-
-    {/* Change Role */}
-    <select
-      value={admin.role_id}
-      onChange={(e) =>
-        changeRole(
-          admin.user_id,
-          Number(e.target.value),
-          `${admin.first_name} ${admin.last_name}`
-        )
-      }
-      className="border border-gray-300 rounded px-2 py-1 hover:border-blue-500"
-    >
-      <option value={2}>Staff</option>
-      <option
-        value={3}
-        disabled={totalManagers >= 3 && admin.role_id !== 3}
-      >
-        Manager
-      </option>
-    </select>
-
-    {/* Delete Button: แสดงเฉพาะ Staff */}
-    {Number(admin.role_id) === 2 && (
-      <button
-        className="text-red-600 ml-10 hover:text-red-800 px-3 py-1 border border-red-600 rounded hover:bg-red-50 transition duration-300 ease-in-out"
-        onClick={() => deleteUser(admin.user_id, admin.role_id)}
-      >
-        Delete
-      </button>
-    )}
-  </div>
-</td>
-
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden mt-8">
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-800">Admin List</h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Name</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Email</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Role</th>
+                    <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Actions</th>
                   </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {admins.map((admin) => {
+                    const firstName = admin.first_name || '';
+                    const lastName = admin.last_name || '';
+                    const initials = (firstName[0] || '') + (lastName[0] || '');
+                    
+                    return (
+                    <tr key={admin.user_id} className="hover:bg-blue-50 transition-colors duration-150">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          {admin.profile_image_url ? (
+                            <img 
+                              src={admin.profile_image_url} 
+                              alt={`${firstName} ${lastName}`}
+                              className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-sm">
+                              {initials || '?'}
+                            </div>
+                          )}
+                          <span className="font-medium text-gray-900">{firstName} {lastName}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-gray-600">{admin.email}</td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
+                          admin.role_id === 3 
+                            ? 'bg-gradient-to-r from-red-600 to-red-700 text-white border border-red-800 shadow-md' 
+                            : 'bg-orange-100 text-orange-700'
+                        }`}>
+                          {admin.role_id === 3 ? <Shield className="h-3 w-3 mr-1" /> : <Users className="h-3 w-3 mr-1" />}
+                          {admin.role_name}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          {/* Change Role */}
+                          <select
+                            value={admin.role_id}
+                            onChange={(e) =>
+                              changeRole(
+                                admin.user_id,
+                                Number(e.target.value),
+                                `${admin.first_name} ${admin.last_name}`
+                              )
+                            }
+                            className="border border-gray-300 rounded-lg px-3 py-2 hover:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+                          >
+                            <option value={2}>Staff</option>
+                            <option
+                              value={3}
+                              disabled={totalManagers >= 3 && admin.role_id !== 3}
+                            >
+                              Manager
+                            </option>
+                          </select>
 
-                ))}
-              </tbody>
-            </table>
+                          {/* Delete Button: แสดงเฉพาะ Staff */}
+                          {Number(admin.role_id) === 2 && (
+                            <button
+                              className="text-red-600 hover:text-white hover:bg-red-600 px-4 py-2 border border-red-600 rounded-lg transition-all duration-200 text-sm font-medium"
+                              onClick={() => deleteUser(admin.user_id, admin.role_id)}
+                            >
+                              Delete
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
 
         </div>
