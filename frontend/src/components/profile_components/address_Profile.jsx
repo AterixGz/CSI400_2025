@@ -29,6 +29,9 @@ export default function AddressProfile() {
     phone: ''
   });
 
+    // Phone validation state
+    const [phoneError, setPhoneError] = useState('');
+
   const handleAddNew = () => {
     setIsAddingNew(true);
   };
@@ -78,6 +81,15 @@ export default function AddressProfile() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Validate phone number: only digits, length 10, starts with 0
+    const phone = newAddress.phone;
+    if (!/^0\d{9}$/.test(phone)) {
+      setPhoneError('เบอร์โทรต้องเป็นตัวเลข 10 หลัก และขึ้นต้นด้วย 0');
+      toast.error('เบอร์โทรต้องเป็นตัวเลข 10 หลัก และขึ้นต้นด้วย 0');
+      return;
+    } else {
+      setPhoneError('');
+    }
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -235,10 +247,27 @@ export default function AddressProfile() {
                 <input
                   type="tel"
                   required
+                  maxLength={10}
+                  pattern="0[0-9]{9}"
                   value={newAddress.phone}
-                  onChange={e => setNewAddress(prev => ({ ...prev, phone: e.target.value }))}
+                  onChange={e => {
+                    // Only allow digits
+                    const val = e.target.value.replace(/[^\d]/g, '');
+                    setNewAddress(prev => ({ ...prev, phone: val }));
+                    // Live validation
+                    if (val.length === 10 && /^0\d{9}$/.test(val)) {
+                      setPhoneError('');
+                    } else if (val.length > 0) {
+                      setPhoneError('เบอร์โทรต้องเป็นตัวเลข 10 หลัก และขึ้นต้นด้วย 0');
+                    } else {
+                      setPhoneError('');
+                    }
+                  }}
                   className="w-full px-3 py-2 border rounded-md"
                 />
+                {phoneError && (
+                  <div className="text-xs text-red-600 mt-1">{phoneError}</div>
+                )}
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-slate-700 mb-1">Address</label>
@@ -312,6 +341,7 @@ export default function AddressProfile() {
               <button
                 type="submit"
                 className="px-4 py-2 text-sm bg-slate-900 text-white rounded-md hover:bg-slate-800"
+                disabled={!!phoneError}
               >
                 Save Address
               </button>

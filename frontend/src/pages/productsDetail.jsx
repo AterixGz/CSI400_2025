@@ -51,6 +51,7 @@ function adaptProduct(row) {
 export default function ProductDetailPage({
   onAdd = () => {},
   favorites = [],
+  onFavorite = () => {},
 }) {
   const { id } = useParams();              // "id" จาก URL (string)
   const numericId = useMemo(() => Number(id), [id]);
@@ -98,7 +99,9 @@ export default function ProductDetailPage({
         try {
           const err = await res.json();
           errMsg = err.error || errMsg;
-        } catch {}
+        } catch (e) {
+          console.warn('failed to fetch related products', e);
+        }
         throw new Error(errMsg);
       }
       setIsFav((v) => !v);
@@ -109,6 +112,9 @@ export default function ProductDetailPage({
   }
 
   const [related, setRelated] = useState([]);
+  const [reviewsList, setReviewsList] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewsError, setReviewsError] = useState("");
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
 
@@ -225,6 +231,25 @@ export default function ProductDetailPage({
               .slice(0, 4);
             if (alive) setRelated(rel);
           }
+          // load reviews for this product
+          try {
+            setReviewsLoading(true);
+            setReviewsError("");
+            const r2 = await fetch(`/api/reviews/${p.id}`);
+            if (r2.ok) {
+              const json = await r2.json();
+              if (alive) setReviewsList(json.reviews || []);
+            } else {
+              // don't treat as fatal; just show empty
+              const err = await r2.json().catch(() => ({}));
+              if (alive) setReviewsError(err.error || "ไม่สามารถโหลดรีวิวได้");
+            }
+          } catch (e) {
+            console.error("load reviews error", e);
+            if (alive) setReviewsError("ไม่สามารถโหลดรีวิวได้");
+          } finally {
+            if (alive) setReviewsLoading(false);
+          }
         }
       } catch (e) {
         console.error(e);
@@ -243,6 +268,49 @@ export default function ProductDetailPage({
 
     return () => { alive = false; };
   }, [numericId, favorites]);
+
+  // Listen for reviews update events (e.g., after user posts/edits a review elsewhere)
+  useEffect(() => {
+    if (!product) return;
+    let alive = true;
+    const handler = async () => {
+      setReviewsLoading(true);
+      setReviewsError("");
+      try {
+        const r2 = await fetch(`/api/reviews/${product.id}`);
+        if (r2.ok) {
+          const json = await r2.json();
+          if (alive) setReviewsList(json.reviews || []);
+        } else {
+          const err = await r2.json().catch(() => ({}));
+          if (alive) setReviewsError(err.error || "ไม่สามารถโหลดรีวิวได้");
+        }
+      } catch (e) {
+        console.error("refresh reviews error", e);
+        if (alive) setReviewsError("ไม่สามารถโหลดรีวิวได้");
+      } finally {
+        if (alive) setReviewsLoading(false);
+      }
+    };
+
+    window.addEventListener('reviews:updated', handler);
+    return () => { alive = false; window.removeEventListener('reviews:updated', handler); };
+  }, [product]);
+
+  // Derived values from reviews fetched from the DB. Use DB values when available,
+  // otherwise fall back to `product` fields (which may come from product API cache).
+  const reviewCount = useMemo(() => {
+    if (Array.isArray(reviewsList) && reviewsList.length > 0) return reviewsList.length;
+    return product?.reviews ?? 0;
+  }, [reviewsList, product]);
+
+  const reviewAverage = useMemo(() => {
+    if (Array.isArray(reviewsList) && reviewsList.length > 0) {
+      const sum = reviewsList.reduce((s, r) => s + (Number(r.rating) || 0), 0);
+      return Number((sum / reviewsList.length).toFixed(1));
+    }
+    return Number(product?.rating ?? 0);
+  }, [reviewsList, product]);
 
   // ---------- loading / error ----------
   if (loading) {
@@ -296,8 +364,8 @@ export default function ProductDetailPage({
         <div>
           <h1 className="text-2xl font-extrabold">{product.name}</h1>
           <div className="mt-2 flex items-center gap-3">
-            <div className="text-yellow-500 font-semibold">⭐ {stars(product.rating ?? 0)}</div>
-            <div className="text-sm text-slate-500">({product.reviews ?? 0} รีวิว)</div>
+            <div className="text-yellow-500 font-semibold">⭐ {stars(reviewAverage ?? 0)}</div>
+            <div className="text-sm text-slate-500">({reviewCount} รีวิว)</div>
             {product.isSale && (
               <span className="ml-2 text-xs bg-red-500 text-white px-2 py-1 rounded">
                 ลด {Math.round(((product.compareAt ?? product.price) - product.price) / (product.compareAt ?? product.price) * 100)}%
@@ -388,7 +456,7 @@ export default function ProductDetailPage({
       <div className="mt-8 bg-white rounded-xl border">
         <div className="flex">
           <button onClick={() => setActiveTab("detail")} className={`flex-1 py-3 text-sm ${activeTab === "detail" ? "font-semibold" : "text-slate-500"}`}>รายละเอียด</button>
-          <button onClick={() => setActiveTab("reviews")} className={`flex-1 py-3 text-sm ${activeTab === "reviews" ? "font-semibold" : "text-slate-500"}`}>รีวิว ({product.reviews ?? 0})</button>
+          <button onClick={() => setActiveTab("reviews")} className={`flex-1 py-3 text-sm ${activeTab === "reviews" ? "font-semibold" : "text-slate-500"}`}>รีวิว ({reviewCount})</button>
         </div>
         <div className="p-6">
           {activeTab === "detail" && (
@@ -415,8 +483,28 @@ export default function ProductDetailPage({
           )}
           {activeTab === "reviews" && (
             <div className="text-slate-700">
-              <p className="mb-3">คะแนนเฉลี่ย: ⭐ {stars(product.rating ?? 0)} ({product.reviews ?? 0} รีวิว)</p>
-              <p className="text-slate-500">{(product.reviews ?? 0) > 0 ? "รีวิวจะแสดงที่นี่" : "ยังไม่มีรีวิวสำหรับสินค้านี้"}</p>
+              <p className="mb-3">คะแนนเฉลี่ย: ⭐ {stars(reviewAverage ?? 0)} ({reviewCount} รีวิว)</p>
+              {reviewsLoading && <p className="text-slate-500">กำลังโหลดรีวิว...</p>}
+              {!reviewsLoading && reviewsError && <p className="text-rose-600">{reviewsError}</p>}
+              {!reviewsLoading && !reviewsError && (reviewsList || []).length === 0 && (
+                <p className="text-slate-500">ยังไม่มีรีวิวสำหรับสินค้านี้</p>
+              )}
+              {!reviewsLoading && !reviewsError && (reviewsList || []).length > 0 && (
+                <div className="space-y-4">
+                  {(reviewsList || []).map((r) => (
+                    <div key={r.review_id} className="border rounded-lg p-4 bg-white">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="font-medium">{r.username || r.user_id}</div>
+                          <div className="text-yellow-500">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</div>
+                        </div>
+                        <div className="text-sm text-slate-500">{new Date(r.created_at).toLocaleDateString('th-TH')}</div>
+                      </div>
+                      {r.comment && <div className="mt-2 text-slate-700">{r.comment}</div>}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
           {activeTab === "care" && (

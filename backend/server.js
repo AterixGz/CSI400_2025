@@ -17,6 +17,7 @@ import googleAuthRouter from './routes/googleAuth.js';
 import cartRouter from './routes/cart.js';
 import stripeRouter from './routes/stripe.js';
 import addressRouter from './routes/address.js';
+import productReviewRouter from './routes/product_review_user.js';
 import favoriteRouter from './routes/favorite.js';
 import productAdminRouter from "./admin/admin_products.js";
 import orderUserRouter from './routes/orderUser.js';
@@ -105,8 +106,12 @@ app.post('/api/visit', async (req, res) => {
   // ใช้งาน Stripe routes
   app.use('/api/stripe', stripeRouter);
   
+
   // ใช้งาน Address routes
   app.use('/api/addresses', addressRouter);
+
+  // ใช้งาน Product Review routes
+  app.use('/api/reviews', productReviewRouter);
   
   // ใช้งาน Order User routes
   app.use('/api/orders/user', orderUserRouter);

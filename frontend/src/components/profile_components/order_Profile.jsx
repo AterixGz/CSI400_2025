@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "react-hot-toast";
 
 export default function OrderProfile() {
   const [orders, setOrders] = useState([]);
@@ -6,6 +7,124 @@ export default function OrderProfile() {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+
+    // Review modal state
+    const [showReviewModal, setShowReviewModal] = useState(false);
+    const [reviewProductId, setReviewProductId] = useState(null);
+    const [reviewRating, setReviewRating] = useState(5);
+    const [reviewComment, setReviewComment] = useState("");
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewError, setReviewError] = useState("");
+  const [existingReviewId, setExistingReviewId] = useState(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
+
+    async function openReviewModal(productId) {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("กรุณาเข้าสู่ระบบก่อนรีวิวสินค้า");
+        // redirect to login
+        window.location.href = "/login";
+        return;
+      }
+
+      setReviewProductId(productId);
+      setShowReviewModal(true);
+      setReviewLoading(true);
+      setReviewError("");
+      setExistingReviewId(null);
+      setReviewRating(5);
+      setReviewComment("");
+
+      try {
+        const base = import.meta.env.VITE_API_BASE || "http://localhost:3000";
+        const res = await fetch(`${base}/api/reviews/${productId}`);
+        if (!res.ok) {
+          // Not fatal: keep modal open for new review
+          return;
+        }
+        const data = await res.json().catch(() => ({}));
+        const reviews = data.reviews || [];
+        // try to get current user id from localStorage
+        const raw = localStorage.getItem("user");
+        const currentUser = raw ? JSON.parse(raw) : null;
+        const myId = currentUser?.user_id;
+        if (myId) {
+          const myReview = reviews.find((r) => Number(r.user_id) === Number(myId));
+          if (myReview) {
+            setExistingReviewId(myReview.review_id);
+            setReviewRating(Number(myReview.rating) || 5);
+            setReviewComment(myReview.comment || "");
+          }
+        }
+      } catch (e) {
+        console.warn('failed to load user review', e);
+      } finally {
+        setReviewLoading(false);
+      }
+    }
+    function closeReviewModal() {
+      setShowReviewModal(false);
+      setReviewProductId(null);
+      setReviewRating(5);
+      setReviewComment("");
+      setReviewError("");
+    }
+
+    async function submitReview() {
+      if (!reviewProductId) return;
+      if (reviewRating < 1 || reviewRating > 5) {
+        setReviewError("กรุณาให้คะแนน 1-5 ดาว");
+        return;
+      }
+      if (!reviewComment.trim()) {
+        setReviewError("กรุณาเขียนรีวิว");
+        return;
+      }
+      setReviewSubmitting(true);
+      setReviewError("");
+      try {
+        const token = localStorage.getItem("token");
+        const base = import.meta.env.VITE_API_BASE || "http://localhost:3000";
+        let res;
+        if (existingReviewId) {
+          // update existing review
+          res = await fetch(`${base}/api/reviews/${existingReviewId}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ rating: reviewRating, comment: reviewComment }),
+          });
+        } else {
+          // create new review
+          res = await fetch(`${base}/api/reviews`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ product_id: reviewProductId, rating: reviewRating, comment: reviewComment }),
+          });
+        }
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.details || err.error || "เกิดข้อผิดพลาด");
+        }
+
+        closeReviewModal();
+        toast.success(existingReviewId ? "แก้ไขรีวิวเรียบร้อย" : "ส่งรีวิวเรียบร้อย");
+        // notify other parts of the app to refresh reviews
+        window.dispatchEvent(new Event('reviews:updated'));
+      } catch (e) {
+        setReviewError(e.message || "เกิดข้อผิดพลาด");
+      } finally {
+        setReviewSubmitting(false);
+      }
+    }
+
+
 
   useEffect(() => {
     async function fetchOrders() {
@@ -26,7 +145,7 @@ export default function OrderProfile() {
             id: o.order_id,
             date: o.created_at ? new Date(o.created_at).toLocaleDateString("th-TH", { year: "numeric", month: "long", day: "numeric" }) : "",
             status: o.status, // เก็บค่า status แบบดั้งเดิมไว้สำหรับการกรอง
-            statusLabel: mapStatus(o.status), // เพิ่ม statusLabel สำหรับการแสดงผล
+            statusLabel: getStatusInfo(o.status).label, // เพิ่ม statusLabel สำหรับการแสดงผล
             total: o.total_amount,
             items: (o.items || []).map((it, idx) => ({
               id: it.product_id || idx,
@@ -86,9 +205,6 @@ export default function OrderProfile() {
     };
   }
 
-  function mapStatus(status) {
-    return getStatusInfo(status).label;
-  }
 
   const statusLabel = {
     [SHIPPING_STATUS.PENDING]: "รอดำเนินการ",
@@ -210,13 +326,78 @@ export default function OrderProfile() {
               {/* Tracking info can be added here if backend provides it */}
 
               <div className="mt-6 flex items-center gap-3">
-                <button className="px-4 py-2 border rounded-md text-sm bg-white">ดูใบเสร็จ</button>
-                <button className="px-4 py-2 border rounded-md text-sm bg-white">คืนสินค้า</button>
-                <button className="px-4 py-2 border rounded-md text-sm bg-white">รีวิวสินค้า</button>
+                {/* <button className="px-4 py-2 border rounded-md text-sm bg-white">ดูใบเสร็จ</button>
+                <button className="px-4 py-2 border rounded-md text-sm bg-white">คืนสินค้า</button> */}
+                {o.items.map((it) => (
+                  <button
+                    key={it.id}
+                    className="px-4 py-2 border rounded-md text-sm bg-white"
+                    onClick={() => openReviewModal(it.id)}
+                  >
+                    รีวิวสินค้า
+                  </button>
+                ))}
               </div>
             </div>
           </div>
         ))}
+          {/* Review Modal */}
+          {showReviewModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+              <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md relative">
+                <button
+                  className="absolute top-2 right-2 text-slate-400 hover:text-slate-700"
+                  onClick={closeReviewModal}
+                  disabled={reviewSubmitting}
+                  aria-label="ปิด"
+                >×</button>
+                <h2 className="text-lg font-bold mb-4">รีวิวสินค้า</h2>
+                  {reviewLoading ? (
+                    <div className="mb-4 text-sm text-slate-500">กำลังโหลดรีวิวของคุณ...</div>
+                  ) : (
+                    <div className="mb-4">
+                  <label className="block text-sm font-medium mb-2">ให้คะแนน</label>
+                  <div className="flex gap-1">
+                    {[1,2,3,4,5].map(star => (
+                      <button
+                        key={star}
+                        type="button"
+                        className={`text-2xl ${reviewRating >= star ? 'text-yellow-400' : 'text-gray-300'}`}
+                        onClick={() => setReviewRating(star)}
+                          disabled={reviewSubmitting || reviewLoading}
+                        aria-label={`ให้คะแนน ${star} ดาว`}
+                      >★</button>
+                    ))}
+                  </div>
+                    </div>
+                  )}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-2">รีวิวสินค้า</label>
+                  <textarea
+                    className="w-full border rounded-md px-3 py-2"
+                    rows={4}
+                    value={reviewComment}
+                    onChange={e => setReviewComment(e.target.value)}
+                    disabled={reviewSubmitting}
+                    placeholder="เขียนรีวิวสินค้า..."
+                  />
+                </div>
+                {reviewError && <div className="text-red-600 text-sm mb-2">{reviewError}</div>}
+                <div className="flex justify-end gap-2">
+                  <button
+                    className="px-4 py-2 border rounded-md text-sm bg-slate-50"
+                    onClick={closeReviewModal}
+                    disabled={reviewSubmitting || reviewLoading}
+                  >ยกเลิก</button>
+                  <button
+                    className="px-4 py-2 rounded-md text-sm bg-slate-900 text-white hover:bg-slate-800"
+                    onClick={submitReview}
+                    disabled={reviewSubmitting || reviewLoading}
+                  >{reviewSubmitting ? "กำลังส่ง..." : "ส่งรีวิว"}</button>
+                </div>
+              </div>
+            </div>
+          )}
       </div>
     </div>
   );
