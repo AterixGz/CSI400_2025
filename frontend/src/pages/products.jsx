@@ -66,10 +66,7 @@ export default function ProductsPage({ onAdd, favorites = [], onFavorite }) {
   const [err, setErr] = useState("");
   const navigate = useNavigate();
   const token = getToken();
-  const API_BASE =
-    import.meta.env.VITE_API_BASE ||
-    window.__API_BASE__ ||
-    "http://localhost:3000";
+  const API_BASE = "https://csi400-2025-1.onrender.com/api";
   const [filters, setFilters] = useState({
     categories: [],
     prices: [],

@@ -71,7 +71,7 @@ export default function ProfilePage() {
 
     try {
       // 1️⃣ Upload ไป Cloudinary
-      const res = await fetch("http://localhost:3000/api/upload/profile", {
+      const res = await fetch("https://csi400-2025-1.onrender.com/api/upload/profile", {
         method: "POST",
         body: formData,
       });
@@ -80,7 +80,7 @@ export default function ProfilePage() {
       if (data.url) {
         // 2️⃣ Update avatar ใน DB
         const resDb = await fetch(
-          `http://localhost:3000/api/users/${userId}/avatar`,
+          `https://csi400-2025-1.onrender.com/api/users/${userId}/avatar`,
           {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
