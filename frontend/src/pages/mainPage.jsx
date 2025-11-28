@@ -1,4 +1,4 @@
-import RecommendedProducts from "../components/RecommendedProducts";
+import RecommendedProducts from "../components/recommendedProducts";
 
 import { useState, useEffect, useRef } from "react";
 
