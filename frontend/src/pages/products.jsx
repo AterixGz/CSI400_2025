@@ -83,7 +83,7 @@ export default function ProductsPage({ onAdd, favorites = [], onFavorite }) {
         if (sort) params.set("sort", sort);
         if (filters.categories.length > 0)
           params.set("audience", filters.categories.join(","));
-        const res = await fetch(`/api/products?${params.toString()}`, {
+        const res = await fetch(`${API_BASE}/products?${params.toString()}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         const rows = await res.json();

@@ -92,7 +92,7 @@ export default function LoginPage() {
       return;
     }
     try {
-      const res = await fetch("http://localhost:3000/register", {
+      const res = await fetch("https://csi400-2025-1.onrender.com/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(registerData),
@@ -179,7 +179,7 @@ export default function LoginPage() {
       return;
     }
     try {
-      const res = await fetch("http://localhost:3000/login", {
+      const res = await fetch("https://csi400-2025-1.onrender.com/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
