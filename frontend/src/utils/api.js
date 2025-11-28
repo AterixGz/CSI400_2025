@@ -1,4 +1,4 @@
-const BASE = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) || window.__API_BASE__ || "http://localhost:3000";
+const BASE = "https://csi400-2025-1.onrender.com/api";
 
 function _parseJwtPayload(token) {
   if (!token) return null;
