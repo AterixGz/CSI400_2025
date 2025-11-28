@@ -7,10 +7,7 @@ import Carousel from "react-multi-carousel";
 import "react-multi-carousel/lib/styles.css";
 import "./recommendedProducts.css";
 
-const API_BASE =
-  import.meta.env.VITE_API_BASE ||
-  window.__API_BASE__ ||
-  "/api";
+const API_BASE = "https://csi400-2025.onrender.com/api";
 
 // แปลง row จาก API -> โครงสร้างที่ ProductCard ใช้
 function adaptProduct(row) {
